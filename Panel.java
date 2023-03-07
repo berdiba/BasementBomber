@@ -60,7 +60,22 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         Toolkit.getDefaultToolkit().sync(); //Supposedly makes game run smoother.
     }
+    
+    public void menu()
+    {
+        
+    }
 
+    public void move()
+    {
+        
+    }
+    
+    public void checkCollisions()
+    {
+        
+    }
+    
     public void keyTyped(KeyEvent e) {}
 
     public void keyPressed(KeyEvent e)
@@ -86,4 +101,19 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void mouseDragged(MouseEvent e) {} 
 
     public void mouseMoved(MouseEvent e) {}
+    
+    public void newPlayer()
+    {
+        
+    }
+    
+    public void newRoom()
+    {
+    
+    }
+    
+    public void newEnemy()
+    {
+        
+    }
 }
