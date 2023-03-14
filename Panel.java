@@ -38,6 +38,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     //Images.
     Image playerImg;
+    Image playerItemImg;
 
     //Classes.
     Player player;
@@ -54,7 +55,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         addMouseMotionListener(this);
 
         //Setup images.
-        playerImg = new ImageIcon("garfield.png").getImage();
+        playerImg = new ImageIcon("player.png").getImage();
+        playerItemImg = new ImageIcon("bazooka.png").getImage();
+        
         playerWidth = playerImg.getWidth(null); //Null because theres no specified image observer.
         playerHeight = playerImg.getHeight(null);
 
@@ -100,15 +103,19 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g.setColor(new Color(80, 200, 255)); //Paint background. This needs to be done first so it appears at the back.
         g.fillRect(0,0,WIDTH,HEIGHT);
 
-        g.setColor(Color.BLACK); 
+        g.setColor(new Color(80, 80, 80)); //Paint ground.
         g.fillRect(ground.x,ground.y,ground.width,ground.height);
+        g.setColor(new Color(100, 100, 100)); 
+        g2D.setStroke(new BasicStroke(5));
+        g.drawLine(ground.x, ground.y + 2, ground.width,ground.y + 2);
 
-        g.setColor(Color.GREEN);
-        g2D.setStroke(new BasicStroke(2));
-        g.drawRect(playerBox.x, playerBox.y, playerBox.width, playerBox.height);
+        //g.setColor(Color.green); //Code to draw player hitbox.
+        //g2D.setStroke(new BasicStroke(2));
+        //g.drawRect(playerBox.x, playerBox.y, playerBox.width, playerBox.height);
 
         //Painting images
-        g2D.drawImage(playerImg, playerX, playerY, null);
+        g2D.drawImage(playerImg, playerX, playerY, playerWidth, playerHeight, null);
+        g2D.drawImage(playerItemImg, playerX, playerY, playerWidth, playerHeight, null);
     }
 
     public void menu()
@@ -139,7 +146,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         System.out.println("PlayerJump: " + playerJump);
         System.out.println("PlayerY: " + playerY);
-        
+
         if(playerBox.intersects(ground)) 
         {
             touchingGround = true;
@@ -149,7 +156,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             touchingGround = false;
             playerUp = playerJump;
         }
-        
+
         if(playerBox.intersects(ground.x, ground.y + 1, ground.width, ground.height)) //Checks ground.y + 1 so that player still intersects with ground and doesent get pulled back into ground by gravity.
             playerY--; //Pushes player back up out of the ground, as gravity clips player into ground.
     }
@@ -185,6 +192,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 break;
             case 68: movingRight = false;
                 break;
+            case 32: playerJumped = false;
         }
     }
 
@@ -225,9 +233,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void jump()
     {
-        playerJump = -16;
-        playerJumped = true;
-        System.out.println("Jumped");
+        if(!playerJumped)
+        {
+            playerJump = -20;
+            playerJumped = true;
+        }
     }
 
     public void newRoom()
