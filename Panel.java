@@ -16,25 +16,25 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     //Panel variables.
     Thread gameThread;
 
-    final static int WIDTH = 1400;
-    final static int HEIGHT = 600;
+    final static int WIDTH = 1400, HEIGHT = 600;
 
     //Integers.
-    int playerX;
-    int playerY;
-    int playerWidth;
-    int playerHeight;
+    int playerX, playerY, playerWidth, playerHeight;
 
-    int playerSpeed = 6;
-    int playerLeft = 0;
-    int playerRight = 0;
+    int playerSpeed = 10;
+    int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
+
+    int gravity = 10;
 
     //Booleans.
-    boolean movingLeft = false;
-    boolean movingRight = false;
+    boolean movingLeft = false, movingRight = false, touchingGround = true,  playerJumped = false;
 
     //Characters.
     char key;
+
+    //Rectangles
+    Rectangle ground = new Rectangle(0,HEIGHT/2,WIDTH,HEIGHT *2);
+    Rectangle playerBox;
 
     //Images.
     Image playerImg;
@@ -57,8 +57,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         playerImg = new ImageIcon("garfield.png").getImage();
         playerWidth = playerImg.getWidth(null); //Null because theres no specified image observer.
         playerHeight = playerImg.getHeight(null);
+
+        playerBox = new Rectangle(playerX + 4, playerY + 4, playerWidth - 4, playerHeight - 4);
+
         playerX = WIDTH / 2 - playerWidth / 2;
-        playerY = playerHeight;
+        playerY = -WIDTH/2;
 
         gameThread = new Thread(this);
         gameThread.start(); 
@@ -94,10 +97,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         Toolkit.getDefaultToolkit().sync(); //Supposedly makes game run smoother.
 
-        g.setColor(Color.PINK);
-        g2D.setStroke(new BasicStroke(6));
-        Line2D line2 = new Line2D.Float(0, 0, WIDTH, HEIGHT);
-        g2D.draw(line2);
+        g.setColor(new Color(80, 200, 255)); //Paint background. This needs to be done first so it appears at the back.
+        g.fillRect(0,0,WIDTH,HEIGHT);
+
+        g.setColor(Color.BLACK); 
+        g.fillRect(ground.x,ground.y,ground.width,ground.height);
+
+        g.setColor(Color.GREEN);
+        g2D.setStroke(new BasicStroke(2));
+        g.drawRect(playerBox.x, playerBox.y, playerBox.width, playerBox.height);
 
         //Painting images
         g2D.drawImage(playerImg, playerX, playerY, null);
@@ -116,19 +124,42 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void move()
     {
         playerX = playerX + playerLeft + playerRight;
+        playerY = playerY + playerUp + gravity;
+
+        playerBox.x = playerX;
+        playerBox.y = playerY;
+
         accelarate();
-        gravity();
     }
 
     public void checkCollisions()
     {
+        if(playerJumped && !touchingGround)
+        {
+            System.out.println(playerJump);
+            playerJump++;
+        } 
+        if(playerJump == 0)
+        {
+            playerJumped = false;
+        }
 
+        if(playerBox.intersects(ground)) 
+        {
+            touchingGround = true;
+            playerUp = playerJump - gravity; //Subtract gravity to counteract its effects locally just within player when touching ground.
+        }else
+        {
+            touchingGround = false;
+            playerUp = playerJump;
+        }
     }
 
     public void keyTyped(KeyEvent e) {}
 
     public void keyPressed(KeyEvent e) 
     {
+        //System.out.println(e.getKeyCode());
         switch(e.getKeyCode())
         {
             case 65: key = 'a';
@@ -137,6 +168,13 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             case 68: key = 'd';
                 movingRight = true;
                 break;
+            case 32: 
+                break;
+        }
+        if(e.getKeyCode() == 32)
+        {
+            if(touchingGround)
+                jump();
         }
     }
 
@@ -174,7 +212,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     playerLeft--;
         }else
         if(playerLeft < 0)
-                playerLeft++;
+            playerLeft++;
 
         if(movingRight)
         {
@@ -183,12 +221,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     playerRight++;
         }else
         if(playerRight > 0)
-                playerRight--;
+            playerRight--;
     }
-    
-    public void gravity()
+
+    public void jump()
     {
-        
+        playerJump = -16;
+        playerJumped = true;
+        System.out.println("Jumped");
     }
 
     public void newRoom()
