@@ -134,16 +134,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void checkCollisions()
     {
-        if(playerJumped && !touchingGround)
-        {
-            System.out.println(playerJump);
+        if(playerJump < 0) //Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
-        } 
-        if(playerJump == 0)
-        {
-            playerJumped = false;
-        }
 
+        System.out.println("PlayerJump: " + playerJump);
+        System.out.println("PlayerY: " + playerY);
+        
         if(playerBox.intersects(ground)) 
         {
             touchingGround = true;
@@ -153,6 +149,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             touchingGround = false;
             playerUp = playerJump;
         }
+        
+        if(playerBox.intersects(ground.x, ground.y + 1, ground.width, ground.height)) //Checks ground.y + 1 so that player still intersects with ground and doesent get pulled back into ground by gravity.
+            playerY--; //Pushes player back up out of the ground, as gravity clips player into ground.
     }
 
     public void keyTyped(KeyEvent e) {}
