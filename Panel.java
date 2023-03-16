@@ -1,3 +1,4 @@
+
 /**
  * Panel which runs all graphics.
  *
@@ -11,14 +12,13 @@ import javax.swing.*;
 import java.lang.Math;
 import java.awt.geom.*;
 
-public class Panel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener
-{
-    //Panel variables.
+public class Panel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
+    // Panel variables.
     Thread gameThread;
 
     final static int WIDTH = 1400, HEIGHT = 600;
 
-    //Integers.
+    // Integers.
     int playerX, playerY, playerWidth, playerHeight;
 
     int playerSpeed = 10;
@@ -26,64 +26,63 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     int gravity = 10;
 
-    //Booleans.
-    boolean movingLeft = false, movingRight = false, touchingGround = true,  playerJumped = false;
+    // Booleans.
+    boolean movingLeft = false, movingRight = false, touchingGround = true, playerJumped = false, facingLeft = false;
 
-    //Characters.
+    // Characters.
     char key;
 
-    //Rectangles
-    Rectangle ground = new Rectangle(0,HEIGHT/2,WIDTH,HEIGHT *2);
+    // Rectangles
+    Rectangle ground = new Rectangle(0, HEIGHT / 2, WIDTH, HEIGHT * 2);
     Rectangle playerBox;
 
-    //Images.
+    // Images.
+    Image backgroundImg;
     Image playerImg;
     Image playerItemImg;
 
-    //Classes.
-    Player player;
+    // Classes.
+    Projectile projectile;
     Room room;
     Enemy enemy;
 
-    public Panel()
-    {
-        this.setPreferredSize(new Dimension(WIDTH,HEIGHT));    
-        //this.setBackground(BGColour);
+    public Panel() {
+        this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        // this.setBackground(BGColour);
 
-        addKeyListener(this); //Setting up listeners here as they are used throughought the whole game.
+        addKeyListener(this); // Setting up listeners here as they are used throughought the whole game.
         addMouseListener(this);
         addMouseMotionListener(this);
 
-        //Setup images.
+        // Setup images.
+        backgroundImg = new ImageIcon("background.png").getImage();
         playerImg = new ImageIcon("player.png").getImage();
         playerItemImg = new ImageIcon("bazooka.png").getImage();
-        
-        playerWidth = playerImg.getWidth(null); //Null because theres no specified image observer.
+
+        playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
         playerHeight = playerImg.getHeight(null);
 
         playerBox = new Rectangle(playerX + 4, playerY + 4, playerWidth - 4, playerHeight - 4);
 
         playerX = WIDTH / 2 - playerWidth / 2;
-        playerY = -WIDTH/2;
+        playerY = -WIDTH / 2;
 
         gameThread = new Thread(this);
-        gameThread.start(); 
+        gameThread.start();
     }
 
-    public void run() //Game loop.
+    public void run() // Game loop.
     {
         long lastTime = System.nanoTime();
         double Ticks = 60.0;
         double ns = 1000000000 / Ticks;
         double delta = 0;
-        while(true)
-        {
+        while (true) {
             long now = System.nanoTime();
-            delta += (now - lastTime)/ns;
+            delta += (now - lastTime) / ns;
             lastTime = now;
 
-            if(delta >= 1)
-            {
+            if (delta >= 1) {
                 repaint();
                 move();
                 checkCollisions();
@@ -92,44 +91,44 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
     }
 
-    public void paint(Graphics g)
-    {
-        super.paint(g); //Paints the background using the parent class.
+    public void paint(Graphics g) {
+        super.paint(g); // Paints the background using the parent class.
 
         Graphics2D g2D = (Graphics2D) g;
 
-        Toolkit.getDefaultToolkit().sync(); //Supposedly makes game run smoother.
+        Toolkit.getDefaultToolkit().sync(); // Supposedly makes game run smoother.
 
-        g.setColor(new Color(80, 200, 255)); //Paint background. This needs to be done first so it appears at the back.
-        g.fillRect(0,0,WIDTH,HEIGHT);
+        g2D.drawImage(backgroundImg, 0, 0, null);
 
-        g.setColor(new Color(80, 80, 80)); //Paint ground.
-        g.fillRect(ground.x,ground.y,ground.width,ground.height);
-        g.setColor(new Color(100, 100, 100)); 
+        g.setColor(new Color(80, 80, 80)); // Paint ground.
+        g.fillRect(ground.x, ground.y, ground.width, ground.height);
+        g.setColor(new Color(100, 100, 100));
         g2D.setStroke(new BasicStroke(5));
-        g.drawLine(ground.x, ground.y + 2, ground.width,ground.y + 2);
+        g.drawLine(ground.x, ground.y + 2, ground.width, ground.y + 2);
 
-        //g.setColor(Color.green); //Code to draw player hitbox.
-        //g2D.setStroke(new BasicStroke(2));
-        //g.drawRect(playerBox.x, playerBox.y, playerBox.width, playerBox.height);
+        // g.setColor(Color.green); //Code to draw player hitbox.
+        // g2D.setStroke(new BasicStroke(2));
+        // g.drawRect(playerBox.x, playerBox.y, playerBox.width, playerBox.height);
 
-        //Painting images
-        g2D.drawImage(playerImg, playerX, playerY, playerWidth, playerHeight, null);
-        g2D.drawImage(playerItemImg, playerX, playerY, playerWidth, playerHeight, null);
+        // Painting images
+        if (facingLeft) {
+            g2D.drawImage(playerImg, playerX + playerWidth, playerY, -playerWidth, playerHeight, null);
+            g2D.drawImage(playerItemImg, playerX + playerWidth, playerY, -playerWidth, playerHeight, null);
+        } else {
+            g2D.drawImage(playerImg, playerX, playerY, playerWidth, playerHeight, null);
+            g2D.drawImage(playerItemImg, playerX, playerY, playerWidth, playerHeight, null);
+        }
     }
 
-    public void menu()
-    {
+    public void menu() {
         startGame();
     }
 
-    public void startGame()
-    {
-        //newPlayer();
+    public void startGame() {
+
     }
 
-    public void move()
-    {
+    public void move() {
         playerX = playerX + playerLeft + playerRight;
         playerY = playerY + playerUp + gravity;
 
@@ -139,118 +138,121 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         accelarate();
     }
 
-    public void checkCollisions()
-    {
-        if(playerJump < 0) //Constantly increase playerjump towards 0 if it is less than 1.
+    public void checkCollisions() {
+        if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
 
-        System.out.println("PlayerJump: " + playerJump);
-        System.out.println("PlayerY: " + playerY);
-
-        if(playerBox.intersects(ground)) 
-        {
+        if (playerBox.intersects(ground.x, ground.y - 1, ground.width, ground.height)) {
             touchingGround = true;
-            playerUp = playerJump - gravity; //Subtract gravity to counteract its effects locally just within player when touching ground.
-        }else
-        {
+            playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player when touching ground.
+        } else {
             touchingGround = false;
             playerUp = playerJump;
         }
 
-        if(playerBox.intersects(ground.x, ground.y + 1, ground.width, ground.height)) //Checks ground.y + 1 so that player still intersects with ground and doesent get pulled back into ground by gravity.
-            playerY--; //Pushes player back up out of the ground, as gravity clips player into ground.
+        if (playerBox.intersects(ground)) // Checks ground.y + 1 so that player still intersects with ground and doesent get pulled back into ground by gravity.
+            playerY--; // Pushes player back up out of the ground, as gravity clips player into ground.
     }
 
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+    }
 
-    public void keyPressed(KeyEvent e) 
-    {
-        //System.out.println(e.getKeyCode());
-        switch(e.getKeyCode())
-        {
-            case 65: key = 'a';
+    public void keyPressed(KeyEvent e) {
+        // System.out.println(e.getKeyCode());
+        switch (e.getKeyCode()) {
+            case 65:
+                key = 'a';
                 movingLeft = true;
                 break;
-            case 68: key = 'd';
+            case 68:
+                key = 'd';
                 movingRight = true;
                 break;
-            case 32: 
+            case 87:
                 break;
         }
-        if(e.getKeyCode() == 32)
-        {
-            if(touchingGround)
+        if (e.getKeyCode() == 87) {
+            if (touchingGround)
                 jump();
         }
     }
 
-    public void keyReleased(KeyEvent e)
-    {
-        switch(e.getKeyCode())
-        {
-            case 65: movingLeft = false;
+    public void keyReleased(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case 65:
+                movingLeft = false;
+                if(movingRight)
+                facingLeft = false;
                 break;
-            case 68: movingRight = false;
+            case 68:
+                movingRight = false;
+                if(movingLeft)
+                facingLeft = true;
                 break;
-            case 32: playerJumped = false;
+            case 87:
+                playerJumped = false;
         }
     }
 
-    public void mouseClicked(MouseEvent e) {}
+    public void mouseClicked(MouseEvent e) {
+    }
 
-    public void mouseEntered(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {
+    }
 
-    public void mouseExited(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {
+    }
 
-    public void mousePressed(MouseEvent e) {}
+    public void mousePressed(MouseEvent e) {
+    }
 
-    public void mouseReleased(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {
+    }
 
-    public void mouseDragged(MouseEvent e) {} 
+    public void mouseDragged(MouseEvent e) {
+    }
 
-    public void mouseMoved(MouseEvent e) {}
+    public void mouseMoved(MouseEvent e) {
+    }
 
-    public void accelarate()
-    {
-        if(movingLeft)
-        {
-            if(playerLeft > -playerSpeed)
-                if(key == 'a')
+    public void accelarate() {
+        if (movingLeft) {
+            if (playerLeft > -playerSpeed)
+                if (key == 'a') {
                     playerLeft--;
-        }else
-        if(playerLeft < 0)
+                    if (!movingRight)
+                    facingLeft = true;
+                }
+        } else if (playerLeft < 0)
             playerLeft++;
 
-        if(movingRight)
-        {
-            if(playerRight < playerSpeed)
-                if(key == 'd')
+        if (movingRight) {
+            if (playerRight < playerSpeed)
+                if (key == 'd') {
                     playerRight++;
-        }else
-        if(playerRight > 0)
+                    if (!movingLeft)
+                    facingLeft = false;
+                }
+        } else if (playerRight > 0)
             playerRight--;
     }
 
-    public void jump()
-    {
-        if(!playerJumped)
-        {
+    public void jump() {
+        if (!playerJumped) {
             playerJump = -20;
             playerJumped = true;
         }
     }
 
-    public void newRoom()
-    {
+    public void newRoom() {
 
     }
 
-    public void newEnemy()
-    {
+    public void newEnemy() {
 
     }
 
-    public boolean isFocusTraversable() //Lets JPanel accept users input.
+    public boolean isFocusTraversable() // Lets JPanel accept users input.
     {
         return true;
     }
