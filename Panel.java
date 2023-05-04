@@ -128,6 +128,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             g2D.drawImage(playerImg, playerX, playerY, playerWidth, playerHeight, null);
             g2D.drawImage(playerItemImg, playerX, playerY, playerWidth, playerHeight, null);
         }
+        if(projectile != null)
+        projectile.paint(g);
     }
 
     public void menu() {
@@ -151,6 +153,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         fogX = -WIDTH;
         if (fogX2 >= WIDTH)
         fogX2 = -WIDTH;
+
+        if(projectile != null)
+        projectile.move();
 
         accelarate();
     }
@@ -252,6 +257,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void shoot()
     {
         projectile = new Projectile(facingLeft, playerX, playerY, "bazooka");
+        System.out.println(facingLeft);
     }
 
     public void newRoom() {

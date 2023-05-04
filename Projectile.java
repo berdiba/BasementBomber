@@ -12,7 +12,7 @@ public class Projectile {
     int WIDTH = 12;
     int HEIGHT = 4;
     int X, Y;
-    int projectileSpeed = 16;
+    int projectileSpeed = 32;
     int damage, blastRadius;
 
     boolean facingLeft;
@@ -26,6 +26,7 @@ public class Projectile {
         projectileRect = new Rectangle(X, Y, WIDTH, HEIGHT);
         projectileImg = new ImageIcon("bazookaProjectile.png").getImage();
 
+        this.facingLeft = facingLeft;
         this.X = X;
         this.Y = Y;
         this.type = type;
@@ -33,19 +34,16 @@ public class Projectile {
 
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
-
-        System.out.println("SHOOT");
-
-
-        g2D.fillRect(0, 0, 1000, 1000);
         g2D.drawImage(projectileImg, X, Y, null);
     }
 
     public void move() {
         if (facingLeft)
-            X--;
+            X = X - projectileSpeed;
         else
-            X++;
+            X = X + projectileSpeed;
+            System.out.println(facingLeft);
+
     }
 
     public void hit() {
