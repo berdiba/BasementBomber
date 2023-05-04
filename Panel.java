@@ -10,6 +10,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.lang.Math;
 import java.awt.geom.*;
+import java.util.ArrayList;
 
 public class Panel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
     // Panel variables.
@@ -18,7 +19,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     final static int WIDTH = 1400, HEIGHT = 600;
 
     // Integers.
-    int playerX, playerY, playerWidth, playerHeight;
+    static int playerX, playerY, playerWidth, playerHeight;
+    int playerBoxXOffset = 8;
 
     int fogX = 0;
     int fogX2 = -WIDTH; //Position of duplicate fog placed behind the original to create seamless fog movement across screen.
@@ -46,9 +48,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     Image playerItemImg;
 
     // Classes.
-    Projectile projectile;
     Room room;
     Enemy enemy;
+
+    //ArrayLists
+    ArrayList<Projectile> projectile = new ArrayList<Projectile>();
+
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -128,8 +133,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             g2D.drawImage(playerImg, playerX, playerY, playerWidth, playerHeight, null);
             g2D.drawImage(playerItemImg, playerX, playerY, playerWidth, playerHeight, null);
         }
-        if(projectile != null)
-        projectile.paint(g);
+
+        for (int i=0; i<projectile.size(); i++)
+        projectile.get(i).paint(g);
     }
 
     public void menu() {
@@ -144,7 +150,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         playerX = playerX + playerLeft + playerRight;
         playerY = playerY + playerUp + gravity;
 
-        playerBox.x = playerX + 8;
+        playerBox.x = playerX + playerBoxXOffset;
         playerBox.y = playerY;
 
         fogX = fogX + fogSpeed;
@@ -154,8 +160,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         if (fogX2 >= WIDTH)
         fogX2 = -WIDTH;
 
-        if(projectile != null)
-        projectile.move();
+        for (int i=0; i<projectile.size(); i++)
+        projectile.get(i).move();
 
         accelarate();
     }
@@ -256,7 +262,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void shoot()
     {
-        projectile = new Projectile(facingLeft, playerX, playerY, "bazooka");
+        projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
         System.out.println(facingLeft);
     }
 

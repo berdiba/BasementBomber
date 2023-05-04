@@ -27,14 +27,25 @@ public class Projectile {
         projectileImg = new ImageIcon("bazookaProjectile.png").getImage();
 
         this.facingLeft = facingLeft;
+
+        if(facingLeft)
         this.X = X;
-        this.Y = Y;
+        else
+        this.X = X + Panel.playerWidth;
+
+        this.Y = Y + Panel.playerHeight * 19 / 32;
         this.type = type;
+        System.out.println(Panel.playerHeight);
     }
 
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
-        g2D.drawImage(projectileImg, X, Y, null);
+
+        if (facingLeft)
+        g2D.drawImage(projectileImg, X + WIDTH, Y, -WIDTH, HEIGHT, null);
+        else
+        g2D.drawImage(projectileImg, X, Y, WIDTH, HEIGHT, null);
+
     }
 
     public void move() {
