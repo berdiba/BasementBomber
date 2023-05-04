@@ -1,12 +1,9 @@
-------------------------------------------------------------------------
-This is the project README file. Here, you should describe your project.
-Tell the reader (someone who does not know anything about this project)
-all they need to know. The comments should usually include at least:
-------------------------------------------------------------------------
+PROJECT TITLE: BASEMENT Bomber
+VERSION or DATE: 7/03/2023
+AUTHOR: BAXTER BERDINNER
 
-PROJECT TITLE:
-PURPOSE OF PROJECT:
-VERSION or DATE:
-HOW TO START THIS PROJECT:
-AUTHORS:
-USER INSTRUCTIONS:
+------------------------------------------------------------------------
+BASEMENT BOMBER is a 2D platformer game. Control your character through
+a maze of basements, defeating enemies as you go. Use W, A, and D keys
+to move around, and SPACE to fire your weapon.
+------------------------------------------------------------------------

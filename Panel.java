@@ -1,4 +1,3 @@
-
 /**
  * Panel which runs all graphics.
  *
@@ -21,6 +20,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     // Integers.
     int playerX, playerY, playerWidth, playerHeight;
 
+    int fogX = 0;
+    int fogX2 = -WIDTH; //Position of duplicate fog placed behind the original to create seamless fog movement across screen.
+    int fogSpeed = 1;
+
     int playerSpeed = 10;
     int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
 
@@ -38,6 +41,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     // Images.
     Image backgroundImg;
+    Image fogImg;
     Image playerImg;
     Image playerItemImg;
 
@@ -56,16 +60,19 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         // Setup images.
         backgroundImg = new ImageIcon("background.png").getImage();
+        fogImg = new ImageIcon("fog.png").getImage();
         playerImg = new ImageIcon("player.png").getImage();
         playerItemImg = new ImageIcon("bazooka.png").getImage();
+
 
         playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
         playerHeight = playerImg.getHeight(null);
 
-        playerBox = new Rectangle(playerX + 4, playerY + 4, playerWidth - 4, playerHeight - 4);
-
         playerX = WIDTH / 2 - playerWidth / 2;
         playerY = -WIDTH / 2;
+
+        playerBox = new Rectangle(0, 0, playerWidth - 16, playerHeight - 4); //X and Y pos determined by moving player.
+
 
         gameThread = new Thread(this);
         gameThread.start();
@@ -99,6 +106,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         Toolkit.getDefaultToolkit().sync(); // Supposedly makes game run smoother.
 
         g2D.drawImage(backgroundImg, 0, 0, null);
+        g2D.drawImage(fogImg, fogX, -HEIGHT/2, null);
+        g2D.drawImage(fogImg, fogX2, -HEIGHT/2, null);
+
 
         g.setColor(new Color(80, 80, 80)); // Paint ground.
         g.fillRect(ground.x, ground.y, ground.width, ground.height);
@@ -106,9 +116,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g2D.setStroke(new BasicStroke(5));
         g.drawLine(ground.x, ground.y + 2, ground.width, ground.y + 2);
 
-        // g.setColor(Color.green); //Code to draw player hitbox.
-        // g2D.setStroke(new BasicStroke(2));
-        // g.drawRect(playerBox.x, playerBox.y, playerBox.width, playerBox.height);
+        g.setColor(Color.green); //Code to draw player hitbox.
+        g2D.setStroke(new BasicStroke(2));
+        g.drawRect(playerBox.x, playerBox.y, playerBox.width, playerBox.height);
 
         // Painting images
         if (facingLeft) {
@@ -132,8 +142,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         playerX = playerX + playerLeft + playerRight;
         playerY = playerY + playerUp + gravity;
 
-        playerBox.x = playerX;
+        playerBox.x = playerX + 8;
         playerBox.y = playerY;
+
+        fogX = fogX + fogSpeed;
+        fogX2 = fogX2 + fogSpeed;
+        if (fogX >= WIDTH)
+        fogX = -WIDTH;
+        if (fogX2 >= WIDTH)
+        fogX2 = -WIDTH;
 
         accelarate();
     }
@@ -168,7 +185,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 key = 'd';
                 movingRight = true;
                 break;
-            case 87:
+            case 32:
+            shoot();
                 break;
         }
         if (e.getKeyCode() == 87) {
@@ -194,26 +212,13 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
     }
 
-    public void mouseClicked(MouseEvent e) {
-    }
-
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    public void mouseExited(MouseEvent e) {
-    }
-
-    public void mousePressed(MouseEvent e) {
-    }
-
-    public void mouseReleased(MouseEvent e) {
-    }
-
-    public void mouseDragged(MouseEvent e) {
-    }
-
-    public void mouseMoved(MouseEvent e) {
-    }
+    public void mouseClicked(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {}
+    public void mousePressed(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {}
+    public void mouseDragged(MouseEvent e) {}
+    public void mouseMoved(MouseEvent e) {}
 
     public void accelarate() {
         if (movingLeft) {
@@ -242,6 +247,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerJump = -20;
             playerJumped = true;
         }
+    }
+
+    public void shoot()
+    {
+        projectile = new Projectile(facingLeft, playerX, playerY, "bazooka");
     }
 
     public void newRoom() {
