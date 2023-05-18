@@ -22,7 +22,9 @@ public class Frame extends JFrame implements ActionListener
 
     public Frame()
     {
-        panel = new Panel();
+        panel = new Panel(); //Creates a new instance of panel class.
+
+        //!!!!!!!!!!!!!!!BEFORE MAKING THE PANEL DO THE SEPERATE MENU CLASS FIRST. or not. maybe find another solution.
 
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.add(panel);

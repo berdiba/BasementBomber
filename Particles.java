@@ -9,15 +9,30 @@
  import java.awt.event.*;
  import javax.swing.*;
  import java.lang.Math;
- import java.awt.geom.*;
+import java.util.Random;
+import java.awt.geom.*;
  
  public class Particles
  {
-    int center;
+    // Center coordinates
+    double centerX = 0;
+    double centerY = 0;
 
-     public Particles(int x, int y, int width, int height)
+    double radius = 1;
+
+    // Random number generator
+    Random random = new Random();
+
+     public Particles(int originX, int originY, int width, int height)
      {
-        center = width/2;
-        //Made it so particles are propelled farther outwards from center the farther away they start from center. Print row and collum of particles with dimensions 4x4. Particles affect by gravity and also collisions, and will have a random ammount if time that they despawn in. Add colours later on.
-     }
+        
+        // Generate a random angle in radians
+        double angle = random.nextDouble() * Math.PI * 2;
+
+        // Calculate x and y coordinates around the circle
+        double x = centerX + radius * Math.cos(angle);
+        double y = centerY + radius * Math.sin(angle);
+
+        System.out.println("Direction of travel: (" + x + ", " + y + ")");
+    }
  }
