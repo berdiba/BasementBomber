@@ -1,3 +1,4 @@
+
 /**
  * Panel which runs all graphics.
  *
@@ -11,6 +12,7 @@ import javax.swing.*;
 import java.lang.Math;
 import java.awt.geom.*;
 import java.util.ArrayList;
+import java.awt.Cursor;
 
 public class Panel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
     // Panel variables.
@@ -20,11 +22,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     // Integers.
     static int playerX, playerY, playerWidth, playerHeight;
-    int playerColXOffset = 8;
-    int playerColYOffset = 2;
+    int playerColXOffset = 8, playerColYOffset = 2;
 
     int fogX = 0;
-    int fogX2 = -WIDTH; //Position of duplicate fog placed behind the original to create seamless fog movement across screen.
+    int fog2X = -WIDTH; // Position of duplicate fog placed behind the original to create seamless fog
+                        // movement across screen.
     int fogSpeed = 1;
 
     int playerSpeed = 10;
@@ -32,35 +34,35 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     int gravity = 10;
 
+    int gameTime = 0;
+
     // Booleans.
-    boolean movingLeft = false, movingRight = false, touchingGround = true, playerJumped = false, facingLeft = false;
+    boolean movingLeft = false, movingRight = false, touchingGround = true, playerJumped = false, facingLeft = false,
+            showControlls = true, onLadder = false;
 
     // Characters.
     char key;
 
     // Rectangles
-    Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, HEIGHT * 2); //Collision for ground.
-    Rectangle playerCol; //Collision box for player.
-    Rectangle ladderCol; //Collision box for ladders.
+    Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, HEIGHT * 2); // Collision for ground.
+    Rectangle playerCol; // Collision box for player.
 
     // Images.
-    Image backgroundImg;
-    Image groundImg;
-    Image fogImg;
-    Image playerImg;
-    Image playerItemImg;
-    Image ladderImg;
+    Image backgroundImg, groundImg, fogImg, playerImg, playerItemImg, buttonsImg;
 
     // Classes.
     Room room;
     Enemy enemy;
 
-    //ArrayLists
+    // ArrayLists
     ArrayList<Projectile> projectile = new ArrayList<Projectile>();
-
+    ArrayList<Ladder> ladder = new ArrayList<Ladder>();
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        // this.setCursor(HAND_CURSOR);
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!WORK ON
+        // LATER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         addKeyListener(this); // Setting up listeners here as they are used throughought the whole game.
         addMouseListener(this);
@@ -72,7 +74,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         fogImg = new ImageIcon("fog.png").getImage();
         playerImg = new ImageIcon("player.png").getImage();
         playerItemImg = new ImageIcon("bazooka.png").getImage();
-        ladderImg = new ImageIcon("ladder.png").getImage();
+        // buttonsImg set up later on.
 
         playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
         playerHeight = playerImg.getHeight(null);
@@ -80,18 +82,17 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         playerX = WIDTH / 2 - playerWidth / 2;
         playerY = -WIDTH / 2;
 
-        playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2, playerHeight - playerColYOffset * 2); //X and Y pos determined by moving player.
+        playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2, playerHeight - playerColYOffset * 2);
+        // X and Y pos determined my moving player.
 
-
-        gameThread = new Thread(this);
-        gameThread.start();
+        menu();
     }
 
     public void run() // Game loop.
     {
         long lastTime = System.nanoTime();
-        double Ticks = 60.0;
-        double ns = 1000000000 / Ticks;
+        double ticks = 60.0;
+        double ns = 1000000000 / ticks;
         double delta = 0;
         while (true) {
             long now = System.nanoTime();
@@ -103,6 +104,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 move();
                 checkCollisions();
                 delta--;
+                gameTime++;
             }
         }
     }
@@ -114,16 +116,34 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         Toolkit.getDefaultToolkit().sync(); // Supposedly makes game run smoother.
 
+        // Paint background.
         g2D.drawImage(backgroundImg, 0, 0, null);
-        g2D.drawImage(fogImg, fogX, -HEIGHT/2, null);
-        g2D.drawImage(fogImg, fogX2, -HEIGHT/2, null);
+        g2D.drawImage(fogImg, fogX, -HEIGHT / 2, null);
+        g2D.drawImage(fogImg, fog2X, -HEIGHT / 2, null);
+        // Paint foreground.
         g2D.drawImage(groundImg, groundCol.x, groundCol.y, null);
+        for (int i = 0; i < ladder.size(); i++)
+            ladder.get(i).paint(g);
+        
+        // Paint UI.
+        if (showControlls) {
+             // Using Math.sin() gives a value that switches between negative and positive at a controlled rate.
+            if (Math.sin(gameTime / 4) > 0) 
+                buttonsImg = new ImageIcon("buttons1.png").getImage();
+            else
+                buttonsImg = new ImageIcon("buttons2.png").getImage();
+            g2D.drawImage(buttonsImg, CHUNK/2, CHUNK/2, null);
+        }
 
-        g2D.drawImage(ladderImg, CHUNK*18, CHUNK*4, null);
+        g.setColor(Color.green); //Code to draw player hitbox.
+        g2D.setStroke(new BasicStroke(2));
+        g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
 
-        //g.setColor(Color.green); //Code to draw player hitbox.
-        //g2D.setStroke(new BasicStroke(2));
-        //g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
+        for (int i = 0; i < ladder.size(); i++)
+        {
+            g.drawRect(ladder.get(i).ladderCol.x, ladder.get(i).ladderCol.y, ladder.get(i).ladderCol.width, ladder.get(i).ladderCol.height);
+        }
+        
 
         // Painting images
         if (facingLeft) {
@@ -134,8 +154,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             g2D.drawImage(playerItemImg, playerX, playerY, playerWidth, playerHeight, null);
         }
 
-        for (int i=0; i<projectile.size(); i++)
-        projectile.get(i).paint(g);
+        for (int i = 0; i < projectile.size(); i++)
+            projectile.get(i).paint(g);
     }
 
     public void menu() {
@@ -143,6 +163,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void startGame() {
+        //Upon starting the game, add ladders in nessecary positions to arraylist of ladders.
+        ladder.add(new Ladder(CHUNK*18, CHUNK*4)); 
+
+        gameThread = new Thread(this);
+        gameThread.start();
     }
 
     public void move() {
@@ -153,14 +178,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         playerCol.y = playerY + playerColYOffset;
 
         fogX = fogX + fogSpeed;
-        fogX2 = fogX2 + fogSpeed;
+        fog2X = fog2X + fogSpeed;
         if (fogX >= WIDTH)
-        fogX = -WIDTH;
-        if (fogX2 >= WIDTH)
-        fogX2 = -WIDTH;
+            fogX = -WIDTH;
+        if (fog2X >= WIDTH)
+            fog2X = -WIDTH;
 
-        for (int i=0; i<projectile.size(); i++)
-        projectile.get(i).move();
+        for (int i = 0; i < projectile.size(); i++)
+            projectile.get(i).move();
 
         accelarate();
     }
@@ -169,20 +194,33 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
 
-        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height)) {
+        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height) && !onLadder) {
             touchingGround = true;
-            playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player when touching groundCol.
+            playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player
+                                             // when touching groundCol.
         } else {
             touchingGround = false;
             playerUp = playerJump;
         }
 
-        if (playerCol.intersects(groundCol)) // Checks groundCol.y + 1 so that player still intersects with groundCol and doesent get pulled back into groundCol by gravity.
-            playerY--; // Pushes player back up out of the groundCol, as gravity clips player into groundCol.
+        if (playerCol.intersects(groundCol) && !onLadder) // Checks groundCol.y + 1 so that player still intersects with groundCol and doesent get pulled back into groundCol by gravity.
+            playerY--; // Pushes player back up out of the groundCol, as gravity clips player into
+                       // groundCol.
 
-        for (int i=0; i<projectile.size(); i++)
-        if(projectile.get(i).X < -WIDTH || projectile.get(i).X > WIDTH * 2)
-            projectile.remove(i);
+        for (int i = 0; i < ladder.size(); i++)
+        if (ladder.get(i).ladderCol.contains(playerCol))
+        onLadder = true;
+        else
+        onLadder = false;
+
+        if (onLadder)
+        gravity = 0;
+        else
+        gravity = 10;
+
+        for (int j = 0; j < projectile.size(); j++)
+            if (projectile.get(j).X < -WIDTH || projectile.get(j).X > WIDTH * 2)
+                projectile.remove(j); //Remove projectiles that travel off the screen.
     }
 
     public void keyTyped(KeyEvent e) {
@@ -200,7 +238,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 movingRight = true;
                 break;
             case 32:
-            shoot();
+                shoot();
                 break;
         }
         if (e.getKeyCode() == 87) {
@@ -213,26 +251,39 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         switch (e.getKeyCode()) {
             case 65:
                 movingLeft = false;
-                if(movingRight)
-                facingLeft = false;
+                if (movingRight)
+                    facingLeft = false;
                 break;
             case 68:
                 movingRight = false;
-                if(movingLeft)
-                facingLeft = true;
+                if (movingLeft)
+                    facingLeft = true;
                 break;
             case 87:
                 playerJumped = false;
         }
     }
 
-    public void mouseClicked(MouseEvent e) {}
-    public void mouseEntered(MouseEvent e) {}
-    public void mouseExited(MouseEvent e) {}
-    public void mousePressed(MouseEvent e) {}
-    public void mouseReleased(MouseEvent e) {}
-    public void mouseDragged(MouseEvent e) {}
-    public void mouseMoved(MouseEvent e) {}
+    public void mouseClicked(MouseEvent e) {
+    }
+
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    public void mouseExited(MouseEvent e) {
+    }
+
+    public void mousePressed(MouseEvent e) {
+    }
+
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    public void mouseDragged(MouseEvent e) {
+    }
+
+    public void mouseMoved(MouseEvent e) {
+    }
 
     public void accelarate() {
         if (movingLeft) {
@@ -240,7 +291,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 if (key == 'a') {
                     playerLeft--;
                     if (!movingRight)
-                    facingLeft = true;
+                        facingLeft = true;
                 }
         } else if (playerLeft < 0)
             playerLeft++;
@@ -250,7 +301,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 if (key == 'd') {
                     playerRight++;
                     if (!movingLeft)
-                    facingLeft = false;
+                        facingLeft = false;
                 }
         } else if (playerRight > 0)
             playerRight--;
@@ -263,8 +314,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
     }
 
-    public void shoot()
-    {
+    public void shoot() {
         projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
         System.out.println(facingLeft);
     }

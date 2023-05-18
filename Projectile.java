@@ -19,13 +19,11 @@ public class Projectile {
 
     String type;
 
-    Rectangle projectileRect;
     Image projectileImg;
+    Rectangle projectileRect;
+
 
     public Projectile(boolean facingLeft, int X, int Y, String type) {
-        projectileRect = new Rectangle(X, Y, WIDTH, HEIGHT);
-        projectileImg = new ImageIcon("bazookaProjectile.png").getImage();
-
         this.facingLeft = facingLeft;
 
         if(facingLeft)
@@ -35,7 +33,9 @@ public class Projectile {
 
         this.Y = Y + Panel.playerHeight * 19 / 32;
         this.type = type;
-        System.out.println(Panel.playerHeight);
+
+        projectileImg = new ImageIcon("bazookaProjectile.png").getImage();
+        projectileRect = new Rectangle(X, Y, WIDTH, HEIGHT);
     }
 
     public void paint(Graphics g) {
