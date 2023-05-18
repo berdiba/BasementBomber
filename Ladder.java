@@ -21,7 +21,7 @@ public class Ladder {
         this.Y = Y;
 
         ladderImg = new ImageIcon("ladder.png").getImage();
-        ladderCol = new Rectangle(X - offset, Y - offset*2, ladderImg.getWidth(null) + offset * 2, ladderImg.getHeight(null) + offset * 2);
+        ladderCol = new Rectangle(X - offset, Y - offset, ladderImg.getWidth(null) + offset * 2, ladderImg.getHeight(null) + offset * 2);
     }
 
     public void paint(Graphics g) {

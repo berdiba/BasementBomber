@@ -30,6 +30,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     int fogSpeed = 1;
 
     int playerSpeed = 10;
+    int playerClimbSpeed = 0;
     int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
 
     int gravity = 10;
@@ -172,7 +173,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void move() {
         playerX = playerX + playerLeft + playerRight;
-        playerY = playerY + playerUp + gravity;
+        playerY = playerY + playerUp + gravity + playerClimbSpeed;
 
         playerCol.x = playerX + playerColXOffset;
         playerCol.y = playerY + playerColYOffset;
@@ -184,6 +185,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         if (fog2X >= WIDTH)
             fog2X = -WIDTH;
 
+        if (!onLadder)
+        playerClimbSpeed = 0; 
+        //Define this here so when someone holds down climb the player will stop climbing when they leave a ladder.
+
         for (int i = 0; i < projectile.size(); i++)
             projectile.get(i).move();
 
@@ -194,7 +199,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
 
-        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height) && !onLadder) {
+        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height)) {
             touchingGround = true;
             playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player
                                              // when touching groundCol.
@@ -237,6 +242,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 key = 'd';
                 movingRight = true;
                 break;
+            case 38:
+                if (onLadder)
+                playerClimbSpeed = -6;
+                break;
+            case 40:
+                if (onLadder)
+                playerClimbSpeed = 6;
+                break;
             case 32:
                 shoot();
                 break;
@@ -258,6 +271,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 movingRight = false;
                 if (movingLeft)
                     facingLeft = true;
+                break;
+            case 38:
+                playerClimbSpeed = 0;
+                break;
+            case 40:
+                playerClimbSpeed = 0;
                 break;
             case 87:
                 playerJumped = false;
