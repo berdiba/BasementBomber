@@ -15,34 +15,33 @@ import java.util.ArrayList;
 import java.awt.Cursor;
 
 public class Panel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
-    // Panel variables.
+    // World variables.
     Thread gameThread;
 
     final static int WIDTH = 1400, HEIGHT = 600, CHUNK = 64;
 
-    // Integers.
-    static int playerX, playerY, playerWidth, playerHeight;
-    int playerColXOffset = 8, playerColYOffset = 2;
-
-    int fogX = 0;
-    int fog2X = -WIDTH; // Position of duplicate fog placed behind the original to create seamless fog
-                        // movement across screen.
-    int fogSpeed = 1;
-
-    int playerSpeed = 10;
-    int playerClimbSpeed = 0;
-    int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
-
     int gravity = 10;
-
     int gameTime = 0;
 
-    // Booleans.
-    boolean movingLeft = false, movingRight = false, touchingGround = true, playerJumped = false, facingLeft = false,
-            showControlls = true, onLadder = false;
-
-    // Characters.
     char key;
+
+    // Integers.
+    static int playerX, playerY, playerWidth, playerHeight;
+    int playerColXOffset = 8, playerColYOffset = 2; // X and Y offsets of player collider.
+
+    int playerSpeed = 10, playerJumpHeight = -20, playerClimbSpeed = 0;
+    int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
+    int playerWobble = 0; // Controlls the bobbing up and down of player when walking.
+
+    int fogX = 0;
+    int fog2X = -WIDTH; // Duplicate fog placed behind original to create seamless fog movement.
+    int fogSpeed = 1;
+
+    // Booleans.
+    boolean movingLeft = false, movingRight = false, facingLeft = false;
+    boolean touchingGround = true, playerJumped = false;
+    boolean onLadder = false, onLadderTop = false, onLadderBottom = false;
+    boolean showControlls = true;
 
     // Rectangles
     Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, HEIGHT * 2); // Collision for ground.
@@ -50,10 +49,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     // Images.
     Image backgroundImg, groundImg, fogImg, playerImg, playerItemImg, buttonsImg;
-
-    // Classes.
-    Room room;
-    Enemy enemy;
 
     // ArrayLists
     ArrayList<Projectile> projectile = new ArrayList<Projectile>();
@@ -125,34 +120,43 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g2D.drawImage(groundImg, groundCol.x, groundCol.y, null);
         for (int i = 0; i < ladder.size(); i++)
             ladder.get(i).paint(g);
-        
+
         // Paint UI.
         if (showControlls) {
-             // Using Math.sin() gives a value that switches between negative and positive at a controlled rate.
-            if (Math.sin(gameTime / 4) > 0) 
+            // Using Math.sin() gives a value that switches between negative and positive at
+            // a controlled rate.
+            if (Math.sin(gameTime / 4) > 0)
                 buttonsImg = new ImageIcon("buttons1.png").getImage();
             else
                 buttonsImg = new ImageIcon("buttons2.png").getImage();
-            g2D.drawImage(buttonsImg, CHUNK/2, CHUNK/2, null);
+            g2D.drawImage(buttonsImg, CHUNK / 2, CHUNK / 2, null);
         }
 
-        g.setColor(Color.green); //Code to draw player hitbox.
-        g2D.setStroke(new BasicStroke(2));
-        g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
-
-        for (int i = 0; i < ladder.size(); i++)
-        {
-            g.drawRect(ladder.get(i).ladderCol.x, ladder.get(i).ladderCol.y, ladder.get(i).ladderCol.width, ladder.get(i).ladderCol.height);
-        }
-        
+        // Draw collision boxes
+        // g.setColor(Color.green); // Code to draw player hitbox.
+        // g2D.setStroke(new BasicStroke(2));
+        // g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
+        // for (int i = 0; i < ladder.size(); i++) {
+        // g.setColor(Color.blue); // Code to draw player hitbox.
+        // g.drawRect(ladder.get(i).ladderCol.x, ladder.get(i).ladderCol.y,
+        // ladder.get(i).ladderCol.width,
+        // ladder.get(i).ladderCol.height);
+        // g.setColor(Color.yellow); // Code to draw player hitbox.
+        // g.drawRect(ladder.get(i).ladderTopCol.x, ladder.get(i).ladderTopCol.y,
+        // ladder.get(i).ladderTopCol.width,
+        // ladder.get(i).ladderTopCol.height);
+        // g.drawRect(ladder.get(i).ladderBottomCol.x, ladder.get(i).ladderBottomCol.y,
+        // ladder.get(i).ladderBottomCol.width, ladder.get(i).ladderBottomCol.height);
+        // }
 
         // Painting images
         if (facingLeft) {
-            g2D.drawImage(playerImg, playerX + playerWidth, playerY, -playerWidth, playerHeight, null);
-            g2D.drawImage(playerItemImg, playerX + playerWidth, playerY, -playerWidth, playerHeight, null);
+            g2D.drawImage(playerImg, playerX + playerWidth, playerY + playerWobble, -playerWidth, playerHeight, null);
+            g2D.drawImage(playerItemImg, playerX + playerWidth, playerY + playerWobble, -playerWidth, playerHeight,
+                    null);
         } else {
-            g2D.drawImage(playerImg, playerX, playerY, playerWidth, playerHeight, null);
-            g2D.drawImage(playerItemImg, playerX, playerY, playerWidth, playerHeight, null);
+            g2D.drawImage(playerImg, playerX, playerY + playerWobble, playerWidth, playerHeight, null);
+            g2D.drawImage(playerItemImg, playerX, playerY + playerWobble, playerWidth, playerHeight, null);
         }
 
         for (int i = 0; i < projectile.size(); i++)
@@ -164,8 +168,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void startGame() {
-        //Upon starting the game, add ladders in nessecary positions to arraylist of ladders.
-        ladder.add(new Ladder(CHUNK*18, CHUNK*4)); 
+        // Upon starting the game, add ladders to arraylist of ladders.
+        ladder.add(new Ladder(CHUNK * 18, CHUNK * 4));
+    
 
         gameThread = new Thread(this);
         gameThread.start();
@@ -174,9 +179,19 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void move() {
         playerX = playerX + playerLeft + playerRight;
         playerY = playerY + playerUp + gravity + playerClimbSpeed;
-
         playerCol.x = playerX + playerColXOffset;
         playerCol.y = playerY + playerColYOffset;
+
+        if (movingLeft || movingRight) {
+            playerWobble = (int) (Math.sin(gameTime) * 2);
+        } // Alternates between 1 and -1 to create a bobbing up and down motion.
+
+        if (onLadder) {
+            playerSpeed = 2;
+            playerWobble = 0;
+        } else {
+            playerSpeed = 10;
+        }
 
         fogX = fogX + fogSpeed;
         fog2X = fog2X + fogSpeed;
@@ -186,8 +201,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             fog2X = -WIDTH;
 
         if (!onLadder)
-        playerClimbSpeed = 0; 
-        //Define this here so when someone holds down climb the player will stop climbing when they leave a ladder.
+            playerClimbSpeed = 0;
+        // Define this here so when someone holds down climb player will stop climbing
+        // when they leave ladder. Needs to be defined here so it's constantly updating.
 
         for (int i = 0; i < projectile.size(); i++)
             projectile.get(i).move();
@@ -196,6 +212,40 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void checkCollisions() {
+        for (int i = 0; i < ladder.size(); i++) {
+            if (ladder.get(i).ladderCol.contains(playerCol)) { // Check to see if player is colliding with any of the
+                                                             // ladders.
+                onLadder = true; // Set onLadder to true. Important this is done before gravity is calculated.
+                break; // Important to break. This stops onLadder from being set to false unessesarily.
+            } else
+                onLadder = false;
+        }
+
+        for (int i = 0; i < ladder.size(); i++)
+            if (ladder.get(i).ladderTopCol.contains(playerCol)) { // Check to see if player is colliding with tops of the
+                                                                // ladders.
+                onLadderTop = true;
+                break;
+            // Set onLadderTop to true. This variable controlls jittering that happens if
+            // player is holiding down buttons when on ladder.
+            } else
+                onLadderTop = false;
+
+        for (int i = 0; i < ladder.size(); i++)
+            if (ladder.get(i).ladderBottomCol.contains(playerCol)) { // Check to see if player is colliding with bottoms
+                                                                   // of the ladders.
+                onLadderBottom = true;
+                break;
+            // Set onLadderTop to true. This variable controlls jittering that happens if
+            // player is holiding down buttons when on ladder.
+            } else
+                onLadderBottom = false;
+
+        if (onLadder)
+            gravity = 0;
+        else
+            gravity = 10;
+
         if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
 
@@ -208,24 +258,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerUp = playerJump;
         }
 
-        if (playerCol.intersects(groundCol) && !onLadder) // Checks groundCol.y + 1 so that player still intersects with groundCol and doesent get pulled back into groundCol by gravity.
+        if (playerCol.intersects(groundCol) && !onLadder) // Checks groundCol.y + 1 so that player still intersects with
+                                                          // groundCol and doesent get pulled back into groundCol by
+                                                          // gravity.
             playerY--; // Pushes player back up out of the groundCol, as gravity clips player into
                        // groundCol.
 
-        for (int i = 0; i < ladder.size(); i++)
-        if (ladder.get(i).ladderCol.contains(playerCol))
-        onLadder = true;
-        else
-        onLadder = false;
-
-        if (onLadder)
-        gravity = 0;
-        else
-        gravity = 10;
-
         for (int j = 0; j < projectile.size(); j++)
             if (projectile.get(j).X < -WIDTH || projectile.get(j).X > WIDTH * 2)
-                projectile.remove(j); //Remove projectiles that travel off the screen.
+                projectile.remove(j); // Remove projectiles that travel off the screen.
     }
 
     public void keyTyped(KeyEvent e) {
@@ -242,20 +283,22 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 key = 'd';
                 movingRight = true;
                 break;
-            case 38:
-                if (onLadder)
-                playerClimbSpeed = -6;
+            case 38: // If player on ladder and ladder top, player wont fall but can not climb any
+                     // higher.
+                if (onLadder && !onLadderTop)
+                    playerClimbSpeed = -6;
                 break;
-            case 40:
-                if (onLadder)
-                playerClimbSpeed = 6;
+            case 40: // If player on ladder and ladder bottom, player wont fall but can not climb any
+                     // lower.
+                if (onLadder && !onLadderBottom)
+                    playerClimbSpeed = 6;
                 break;
             case 32:
                 shoot();
                 break;
         }
         if (e.getKeyCode() == 87) {
-            if (touchingGround)
+            if (touchingGround && !onLadder) // Player cannot jump while on ladder.
                 jump();
         }
     }
@@ -305,10 +348,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void accelarate() {
-        if (movingLeft) {
-            if (playerLeft > -playerSpeed)
-                if (key == 'a') {
-                    playerLeft--;
+        if (movingLeft) { // Check direction.
+            if (playerLeft > -playerSpeed) // Check if player can accelarate any more.
+                if (key == 'a') { // Check to see if key pressed is 'a'.
+                    playerLeft--; // Accelarate player up to player speed.
                     if (!movingRight)
                         facingLeft = true;
                 }
@@ -327,15 +370,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void jump() {
-        if (!playerJumped) {
-            playerJump = -20;
+        if (!playerJumped) { // Player cannot jump in mid-air.
+            playerJump = playerJumpHeight;
             playerJumped = true;
         }
     }
 
     public void shoot() {
         projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
-        System.out.println(facingLeft);
+        // System.out.println(facingLeft);
     }
 
     public void newRoom() {
