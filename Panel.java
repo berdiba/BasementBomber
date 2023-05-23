@@ -56,9 +56,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        // this.setCursor(HAND_CURSOR);
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!WORK ON
-        // LATER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         addKeyListener(this); // Setting up listeners here as they are used throughought the whole game.
         addMouseListener(this);
@@ -170,7 +167,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void startGame() {
         // Upon starting the game, add ladders to arraylist of ladders.
         ladder.add(new Ladder(CHUNK * 18, CHUNK * 4));
-    
 
         gameThread = new Thread(this);
         gameThread.start();
@@ -214,7 +210,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void checkCollisions() {
         for (int i = 0; i < ladder.size(); i++) {
             if (ladder.get(i).ladderCol.contains(playerCol)) { // Check to see if player is colliding with any of the
-                                                             // ladders.
+                                                               // ladders.
                 onLadder = true; // Set onLadder to true. Important this is done before gravity is calculated.
                 break; // Important to break. This stops onLadder from being set to false unessesarily.
             } else
@@ -222,22 +218,23 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         for (int i = 0; i < ladder.size(); i++)
-            if (ladder.get(i).ladderTopCol.contains(playerCol)) { // Check to see if player is colliding with tops of the
-                                                                // ladders.
+            if (ladder.get(i).ladderTopCol.contains(playerCol)) { // Check to see if player is colliding with tops of
+                                                                  // the
+                                                                  // ladders.
                 onLadderTop = true;
                 break;
-            // Set onLadderTop to true. This variable controlls jittering that happens if
-            // player is holiding down buttons when on ladder.
+                // Set onLadderTop to true. This variable controlls jittering that happens if
+                // player is holiding down buttons when on ladder.
             } else
                 onLadderTop = false;
 
         for (int i = 0; i < ladder.size(); i++)
             if (ladder.get(i).ladderBottomCol.contains(playerCol)) { // Check to see if player is colliding with bottoms
-                                                                   // of the ladders.
+                                                                     // of the ladders.
                 onLadderBottom = true;
                 break;
-            // Set onLadderTop to true. This variable controlls jittering that happens if
-            // player is holiding down buttons when on ladder.
+                // Set onLadderTop to true. This variable controlls jittering that happens if
+                // player is holiding down buttons when on ladder.
             } else
                 onLadderBottom = false;
 
@@ -283,12 +280,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 key = 'd';
                 movingRight = true;
                 break;
-            case 38: // If player on ladder and ladder top, player wont fall but can not climb any
-                     // higher.
-                if (onLadder && !onLadderTop)
-                    playerClimbSpeed = -6;
-                break;
-            case 40: // If player on ladder and ladder bottom, player wont fall but can not climb any
+            case 83: // If player on ladder and ladder bottom, player wont fall but can't climb any
                      // lower.
                 if (onLadder && !onLadderBottom)
                     playerClimbSpeed = 6;
@@ -300,6 +292,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         if (e.getKeyCode() == 87) {
             if (touchingGround && !onLadder) // Player cannot jump while on ladder.
                 jump();
+            else if (onLadder && !onLadderTop)
+                playerClimbSpeed = -6;
+            // If player on ladder and ladder top, player wont fall but can not climb any
+            // higher.
         }
     }
 
@@ -315,14 +311,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 if (movingLeft)
                     facingLeft = true;
                 break;
-            case 38:
-                playerClimbSpeed = 0;
-                break;
-            case 40:
+            case 83:
                 playerClimbSpeed = 0;
                 break;
             case 87:
                 playerJumped = false;
+                playerClimbSpeed = 0;
         }
     }
 
