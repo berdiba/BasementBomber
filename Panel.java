@@ -163,7 +163,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             }
         } else { // Draw player differently when on ladder.
             if (climbingLadder)
-                if (Math.sin(gameTime / 2) > 0)
+                if (Math.sin(gameTime) > 0)
                     g2D.drawImage(playerClimbImg, playerX, playerY, playerWidth, playerHeight, null);
                 else
                     g2D.drawImage(playerOnLadderImg, playerX, playerY, playerWidth, playerHeight, null);
