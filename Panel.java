@@ -40,7 +40,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     // Booleans.
     boolean movingLeft = false, movingRight = false, facingLeft = false;
     boolean touchingGround = true, playerJumped = false;
-    boolean onLadder = false, onLadderTop = false, onLadderBottom = false;
+    boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
     boolean showControlls = true;
 
     // Rectangles
@@ -48,7 +48,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     Rectangle playerCol; // Collision box for player.
 
     // Images.
-    Image backgroundImg, groundImg, fogImg, playerImg, playerItemImg, buttonsImg;
+    Image backgroundImg, groundImg, fogImg, buttonsImg;
+    Image playerImg, playerOnLadderImg, playerClimbImg, playerItemImg;
 
     // ArrayLists
     ArrayList<Projectile> projectile = new ArrayList<Projectile>();
@@ -65,7 +66,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         backgroundImg = new ImageIcon("background.png").getImage();
         groundImg = new ImageIcon("ground.png").getImage();
         fogImg = new ImageIcon("fog.png").getImage();
+
         playerImg = new ImageIcon("player.png").getImage();
+        playerOnLadderImg = new ImageIcon("playerOnLadder.png").getImage();
+        playerClimbImg = new ImageIcon("playerClimb.png").getImage();
         playerItemImg = new ImageIcon("bazooka.png").getImage();
         // buttonsImg set up later on.
 
@@ -146,14 +150,25 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         // ladder.get(i).ladderBottomCol.width, ladder.get(i).ladderBottomCol.height);
         // }
 
-        // Painting images
-        if (facingLeft) {
-            g2D.drawImage(playerImg, playerX + playerWidth, playerY + playerWobble, -playerWidth, playerHeight, null);
-            g2D.drawImage(playerItemImg, playerX + playerWidth, playerY + playerWobble, -playerWidth, playerHeight,
-                    null);
-        } else {
-            g2D.drawImage(playerImg, playerX, playerY + playerWobble, playerWidth, playerHeight, null);
-            g2D.drawImage(playerItemImg, playerX, playerY + playerWobble, playerWidth, playerHeight, null);
+        // Drawing player.
+        if (!onLadder) {
+            if (facingLeft) {
+                g2D.drawImage(playerImg, playerX + playerWidth, playerY + playerWobble, -playerWidth, playerHeight,
+                        null);
+                g2D.drawImage(playerItemImg, playerX + playerWidth, playerY + playerWobble, -playerWidth, playerHeight,
+                        null);
+            } else {
+                g2D.drawImage(playerImg, playerX, playerY + playerWobble, playerWidth, playerHeight, null);
+                g2D.drawImage(playerItemImg, playerX, playerY + playerWobble, playerWidth, playerHeight, null);
+            }
+        } else { // Draw player differently when on ladder.
+            if (climbingLadder)
+                if (Math.sin(gameTime / 2) > 0)
+                    g2D.drawImage(playerClimbImg, playerX, playerY, playerWidth, playerHeight, null);
+                else
+                    g2D.drawImage(playerOnLadderImg, playerX, playerY, playerWidth, playerHeight, null);
+            else
+                g2D.drawImage(playerOnLadderImg, playerX, playerY, playerWidth, playerHeight, null);
         }
 
         for (int i = 0; i < projectile.size(); i++)
@@ -219,8 +234,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         for (int i = 0; i < ladder.size(); i++)
             if (ladder.get(i).ladderTopCol.contains(playerCol)) { // Check to see if player is colliding with tops of
-                                                                  // the
-                                                                  // ladders.
+                                                                  // the ladders.
                 onLadderTop = true;
                 break;
                 // Set onLadderTop to true. This variable controlls jittering that happens if
@@ -282,18 +296,24 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 break;
             case 83: // If player on ladder and ladder bottom, player wont fall but can't climb any
                      // lower.
-                if (onLadder && !onLadderBottom)
+                if (onLadder && !onLadderBottom) {
                     playerClimbSpeed = 6;
+                    climbingLadder = true;
+                }
                 break;
             case 32:
-                shoot();
+                if (!onLadder)
+                    shoot();
                 break;
         }
         if (e.getKeyCode() == 87) {
             if (touchingGround && !onLadder) // Player cannot jump while on ladder.
                 jump();
-            else if (onLadder && !onLadderTop)
+            else if (onLadder && !onLadderTop) {
                 playerClimbSpeed = -6;
+                climbingLadder = true;
+
+            }
             // If player on ladder and ladder top, player wont fall but can not climb any
             // higher.
         }
@@ -313,10 +333,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 break;
             case 83:
                 playerClimbSpeed = 0;
+                climbingLadder = false;
                 break;
             case 87:
                 playerJumped = false;
                 playerClimbSpeed = 0;
+                climbingLadder = false;
         }
     }
 
