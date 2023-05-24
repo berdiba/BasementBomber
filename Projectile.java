@@ -20,7 +20,7 @@ public class Projectile {
     String type;
 
     Image projectileImg;
-    Rectangle projectileRect;
+    Rectangle projectileCol;
 
 
     public Projectile(boolean facingLeft, int X, int Y, String type) {
@@ -34,8 +34,8 @@ public class Projectile {
         this.Y = Y + Panel.playerHeight * 19 / 32;
         this.type = type;
 
-        projectileImg = new ImageIcon("bazookaProjectile.png").getImage();
-        projectileRect = new Rectangle(X, Y, WIDTH, HEIGHT);
+        projectileImg = new ImageIcon(type+"Projectile.png").getImage();
+        projectileCol = new Rectangle(X, Y, WIDTH, HEIGHT);
     }
 
     public void paint(Graphics g) {
@@ -53,7 +53,6 @@ public class Projectile {
             X = X - projectileSpeed;
         else
             X = X + projectileSpeed;
-            System.out.println(facingLeft);
 
     }
 

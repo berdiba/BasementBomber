@@ -39,7 +39,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     // Booleans.
     boolean movingLeft = false, movingRight = false, facingLeft = false;
-    boolean touchingGround = true, playerJumped = false;
+    boolean touchingGround = true, playerJumped = false, inRoom = false;
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
     boolean showControlls = true;
 
@@ -54,6 +54,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     // ArrayLists
     ArrayList<Projectile> projectile = new ArrayList<Projectile>();
     ArrayList<Ladder> ladder = new ArrayList<Ladder>();
+    ArrayList<Room> room = new ArrayList<Room>();
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -85,8 +86,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         menu();
     }
 
-    public void run() // Game loop.
-    {
+    public void run() { // Game loop.
         long lastTime = System.nanoTime();
         double ticks = 60.0;
         double ns = 1000000000 / ticks;
@@ -117,8 +117,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g2D.drawImage(backgroundImg, 0, 0, null);
         g2D.drawImage(fogImg, fogX, -HEIGHT / 2, null);
         g2D.drawImage(fogImg, fog2X, -HEIGHT / 2, null);
+
         // Paint foreground.
         g2D.drawImage(groundImg, groundCol.x, groundCol.y, null);
+
+        for (int i = 0; i < room.size(); i++)
+            room.get(i).paint(g);
         for (int i = 0; i < ladder.size(); i++)
             ladder.get(i).paint(g);
 
@@ -134,21 +138,29 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         // Draw collision boxes
-        // g.setColor(Color.green); // Code to draw player hitbox.
-        // g2D.setStroke(new BasicStroke(2));
-        // g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
-        // for (int i = 0; i < ladder.size(); i++) {
-        // g.setColor(Color.blue); // Code to draw player hitbox.
-        // g.drawRect(ladder.get(i).ladderCol.x, ladder.get(i).ladderCol.y,
-        // ladder.get(i).ladderCol.width,
-        // ladder.get(i).ladderCol.height);
-        // g.setColor(Color.yellow); // Code to draw player hitbox.
-        // g.drawRect(ladder.get(i).ladderTopCol.x, ladder.get(i).ladderTopCol.y,
-        // ladder.get(i).ladderTopCol.width,
-        // ladder.get(i).ladderTopCol.height);
-        // g.drawRect(ladder.get(i).ladderBottomCol.x, ladder.get(i).ladderBottomCol.y,
-        // ladder.get(i).ladderBottomCol.width, ladder.get(i).ladderBottomCol.height);
-        // }
+        g.setColor(Color.green); // Code to draw player hitbox.
+        g2D.setStroke(new BasicStroke(2));
+
+        g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
+
+        for (int i = 0; i < ladder.size(); i++) {
+            g.setColor(Color.blue); // Code to draw player hitbox.
+            g.drawRect(ladder.get(i).ladderCol.x, ladder.get(i).ladderCol.y,
+                    ladder.get(i).ladderCol.width,
+                    ladder.get(i).ladderCol.height);
+
+            g.setColor(Color.yellow); // Code to draw player hitbox.
+            g.drawRect(ladder.get(i).ladderTopCol.x, ladder.get(i).ladderTopCol.y,
+                    ladder.get(i).ladderTopCol.width,
+                    ladder.get(i).ladderTopCol.height);
+
+            g.drawRect(ladder.get(i).ladderBottomCol.x, ladder.get(i).ladderBottomCol.y,
+                    ladder.get(i).ladderBottomCol.width, ladder.get(i).ladderBottomCol.height);
+        }
+
+        for (int i = 0; i < room.size(); i++) {
+            g.drawRect(room.get(i).X, room.get(i).Y, room.get(i).WIDTH, room.get(i).HEIGHT);
+        }
 
         // Drawing player.
         if (!onLadder) {
@@ -182,6 +194,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void startGame() {
         // Upon starting the game, add ladders to arraylist of ladders.
         ladder.add(new Ladder(CHUNK * 18, CHUNK * 4));
+        ladder.add(new Ladder(CHUNK * 3, CHUNK * 8));
+        room.add(new Room(CHUNK * 2, CHUNK * 6, 1));
 
         gameThread = new Thread(this);
         gameThread.start();
@@ -260,7 +274,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
 
-        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height)) {
+        for (int i = 0; i < room.size(); i++)
+            if (room.get(i).roomCol.contains(playerCol)) {
+                inRoom = true;
+                break;
+            } else
+                inRoom = false;
+
+        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height) && !inRoom) {
             touchingGround = true;
             playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player
                                              // when touching groundCol.
