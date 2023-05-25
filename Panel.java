@@ -137,7 +137,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             ladder.get(i).paint(g);
 
         paintUI(g, g2D);
-        //paintCol(g, g2D);
+        paintCol(g, g2D);
         paintPlayer(g, g2D);
 
         for (int i = 0; i < projectile.size(); i++)
@@ -159,37 +159,46 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void paintCol(Graphics g, Graphics2D g2D) {
+        /**
+         * PLAYER drawn in GREEN.
+         * MAJOR COLLISION BOXES drawn in BLUE.
+         * MINOR COLLISION BOXES drawn in CYAN.
+         * MAIN-AOE BOXES drawn in YELLOW.
+         * SUB-AOE BOXES drawn in ORANGE.
+         */
+
         // Draw collision boxes
-        g.setColor(Color.green); // Code to draw player hitbox.
         g2D.setStroke(new BasicStroke(2));
 
-        g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
+        g.setColor(Color.green);
+        g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height); // Player hitbox.
 
-        for (int i = 0; i < ladder.size(); i++) {
-            g.setColor(Color.blue); // Code to draw player hitbox.
-            g.drawRect(ladder.get(i).ladderCol.x, ladder.get(i).ladderCol.y,
-                    ladder.get(i).ladderCol.width,
-                    ladder.get(i).ladderCol.height);
-
-            g.setColor(Color.yellow); // Code to draw player hitbox.
-            g.drawRect(ladder.get(i).ladderTopCol.x, ladder.get(i).ladderTopCol.y,
-                    ladder.get(i).ladderTopCol.width,
+        for (int i = 0; i < ladder.size(); i++) { // Draw all ladder colliders
+            g.setColor(Color.orange);
+            g.drawRect(ladder.get(i).ladderTopCol.x, ladder.get(i).ladderTopCol.y, ladder.get(i).ladderTopCol.width,
                     ladder.get(i).ladderTopCol.height);
-
             g.drawRect(ladder.get(i).ladderBottomCol.x, ladder.get(i).ladderBottomCol.y,
                     ladder.get(i).ladderBottomCol.width, ladder.get(i).ladderBottomCol.height);
+            g.setColor(Color.cyan);
+            g.drawRect(ladder.get(i).ladderLeftCol.x, ladder.get(i).ladderLeftCol.y,
+                    ladder.get(i).ladderLeftCol.width, ladder.get(i).ladderLeftCol.height);
+            g.drawRect(ladder.get(i).ladderRightCol.x, ladder.get(i).ladderRightCol.y,
+                    ladder.get(i).ladderRightCol.width, ladder.get(i).ladderRightCol.height);
+            g.setColor(Color.yellow);
+            g.drawRect(ladder.get(i).ladderCol.x, ladder.get(i).ladderCol.y, ladder.get(i).ladderCol.width,
+                    ladder.get(i).ladderCol.height);
         }
 
         for (int i = 0; i < room.size(); i++) {
             g.setColor(Color.yellow);
             g.drawRect(room.get(i).roomCol.x, room.get(i).roomCol.y, room.get(i).roomCol.width,
                     room.get(i).roomCol.height);
-            g.setColor(Color.cyan);
+            g.setColor(Color.blue);
             g.drawRect(room.get(i).floor.x, room.get(i).floor.y, room.get(i).floor.width,
                     room.get(i).floor.height);
         }
 
-        g.setColor(Color.cyan);
+        g.setColor(Color.blue);
         g.drawRect(wallLeftCol.x, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height);
         g.drawRect(wallRightCol.x, wallRightCol.y, wallRightCol.width, wallRightCol.height);
     }
@@ -328,15 +337,17 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             room.get(i).floor.y = room.get(i).Y + room.get(i).HEIGHT + parallax;
         }
 
-        for (int i = 0; i < ladder.size(); i++)
+        for (int i = 0; i < ladder.size(); i++) {
             ladder.get(i).ladderCol.y = ladder.get(i).Y - ladder.get(i).offset * 2 + parallax;
+            ladder.get(i).ladderTopCol.y = ladder.get(i).ladderCol.y - ladder.get(i).offset;
+            ladder.get(i).ladderBottomCol.y = ladder.get(i).ladderCol.y + ladder.get(i).ladderCol.height - playerHeight;
+            ladder.get(i).ladderLeftCol.y = ladder.get(i).ladderCol.y;
+            ladder.get(i).ladderRightCol.y = ladder.get(i).ladderCol.y;
+            // Parallax added to ladderCol, no need to add to ladderLeft or right a seconnd
+            // time.
+        }
         // Only need to add parallax to ladderCol, as ladderTop and BottomCol are tied
         // to ladderCol.
-        for (int i = 0; i < ladder.size(); i++)
-            ladder.get(i).ladderTopCol.y = ladder.get(i).ladderCol.y - ladder.get(i).offset;
-
-        for (int i = 0; i < ladder.size(); i++)
-            ladder.get(i).ladderBottomCol.y = ladder.get(i).ladderCol.y + ladder.get(i).ladderCol.height - playerHeight;
     }
 
     public void accelarate() {
@@ -362,7 +373,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void checkCollisions() {
-        if (playerCol.intersects(wallLeftCol)) {
+        // Code for intersecting with left and right colliders.
+        if (playerCol.intersects(wallLeftCol)) { 
             inWallLeft = true; // Stops player from being able to move left.
             playerLeft = 0;
         } else
@@ -373,6 +385,21 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerRight = 0;
         } else
             inWallRight = false;
+
+        // Code for intersecting with left and right ladder colliders.
+        for (int i = 0; i < ladder.size(); i++) {
+            if (playerCol.intersects(ladder.get(i).ladderLeftCol) && inRoom < 0 && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) { 
+                inWallLeft = true; // Stops player from being able to move left.
+                playerLeft = 0;
+            } else
+                inWallLeft = false;
+    
+            if (playerCol.intersects(ladder.get(i).ladderRightCol) && inRoom < 0 && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
+                inWallRight = true;
+                playerRight = 0;
+            } else
+                inWallRight = false;
+        }
 
         for (int i = 0; i < ladder.size(); i++) {
             if (ladder.get(i).ladderCol.contains(playerCol)) { // Check to see if player is colliding with any of the

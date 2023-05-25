@@ -9,6 +9,8 @@
  import javax.swing.*;
 
 public class Ladder {
+    int CHUNK = Panel.CHUNK;
+
     int X, Y;
     int offset = 24;
     
@@ -16,6 +18,8 @@ public class Ladder {
     Rectangle ladderCol;
     Rectangle ladderTopCol;
     Rectangle ladderBottomCol;
+    Rectangle ladderLeftCol;
+    Rectangle ladderRightCol;
 
     public Ladder(int X, int Y){
         this.X = X;
@@ -23,9 +27,11 @@ public class Ladder {
 
         ladderImg = new ImageIcon("ladder.png").getImage();
         ladderCol = new Rectangle(X - offset, Y - offset * 2, ladderImg.getWidth(null) + offset * 2, ladderImg.getHeight(null) + offset * 2);
-        ladderTopCol = new Rectangle((int)ladderCol.getX(), (int)ladderCol.getY() - offset, (int)ladderCol.getWidth(), offset * 4 );
-        ladderBottomCol = new Rectangle((int)ladderCol.getX(), (int)ladderCol.getY() + (int)ladderCol.getHeight() - Panel.playerHeight, (int)ladderCol.getWidth(), offset * 4);
+        ladderTopCol = new Rectangle(ladderCol.x, ladderCol.y - offset, ladderCol.width, offset * 4 );
+        ladderBottomCol = new Rectangle(ladderCol.x, ladderCol.y + ladderCol.height - Panel.playerHeight, ladderCol.width, offset * 4);
         // ladderTop and ladderBottom offset above and below ladder.
+        ladderLeftCol = new Rectangle(ladderCol.x - CHUNK + CHUNK / 4, ladderCol.y, CHUNK, ladderCol.height);
+        ladderRightCol = new Rectangle(ladderCol.x + ladderCol.width - CHUNK / 4, ladderCol.y, CHUNK, ladderCol.height);
     }
 
     public void paint(Graphics g) {
