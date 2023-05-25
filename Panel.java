@@ -45,10 +45,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean movingLeft = false, movingRight = false, facingLeft = false;
     boolean touchingGround = true, playerJumped = false;
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
-    boolean showControlls = true, panYAccelerating = false, panY = false;
+    boolean showControlls = true, panYAccelerating = false, panYDone = false;
 
     // Rectangles
-    Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, HEIGHT * 2); // Collision for ground.
+    Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, CHUNK); // Collision for ground.
     Rectangle playerCol; // Collision box for player.
 
     // Images.
@@ -125,7 +125,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         // Paint foreground.
         g.setColor(new Color(39, 46, 69)); // Set colour to ground colour.
-        g2D.fillRect(groundCol.x, groundCol.y, groundCol.width, groundCol.height);
+        g2D.fillRect(groundCol.x, groundCol.y, groundCol.width, HEIGHT * 16);
         g2D.drawImage(groundImg, groundCol.x, groundCol.y, null);
 
         for (int i = 0; i < room.size(); i++)
@@ -225,12 +225,19 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void move() {
-        if (lastInRoom != inRoom) { // Check to see if player is in a new room.
-            if (lastInRoom > inRoom)
-                panY(inRoom, true); // Pan down to specified room.
-            else
-                panY(inRoom, false);
-        }
+        System.out.println("lastInRoom: " + lastInRoom);
+        System.out.println("inRoom " + inRoom);
+
+        if (inRoom >= 0) // Makes sure pan only triggers when player is in a room.
+            if (lastInRoom != inRoom) { // Check to see if player is in a new room.
+                panYDone = false;
+                if (lastInRoom > inRoom)
+                    panY(inRoom, false); // Pan down to specified room.
+                else
+                    panY(inRoom, true);
+                if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
+                    lastInRoom = inRoom;
+            }
 
         playerX = playerX + playerLeft + playerRight;
         playerY = playerY + playerUp + gravity + playerClimbSpeed;
@@ -268,43 +275,45 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void panY(int level, Boolean up) {
-        panY = true; // After accelaration has finished, panY is set to false to stop it from
-                     // re-triggering in the other direction.
-        if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 > HEIGHT / 2 && panY) {
-            panYAccelerating = true;
-            // Check center of room against center of screen.
-            if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
-                parallax -= panYSpeed; // Reduce parallax.
-                panYSpeed++; // Increase panYSpeed towards maximum of 32.
-            } else {
-                panYAccelerating = false;
-                // Set panYAccelerating to be false, stopping above statement re-triggering.
-                if (panYSpeed >= 8) {
+        if (up) { // If up is true.
+            if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 > HEIGHT / 2) {
+                panYAccelerating = true;
+                // Check center of room against center of screen.
+                if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
                     parallax -= panYSpeed; // Reduce parallax.
-                    panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                    panYSpeed++; // Increase panYSpeed towards maximum of 32.
+                } else {
+                    panYAccelerating = false;
+                    // Set panYAccelerating to be false, stopping above statement re-triggering.
+                    if (panYSpeed >= 8) {
+                        parallax -= panYSpeed; // Reduce parallax.
+                        panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                    }
                 }
-            }
-            panY = false; // Makes sure this will not trigger until it has been called again.
-        }
-        if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 < HEIGHT / 2) {
-            // Check center of room against center of screen.
-            if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
-                parallax += panYSpeed; // Increase parallax.
-                panYSpeed++; // Increase panYSpeed towards maximum of 32.
-            } else {
-                panYAccelerating = false;
-                // Set panYAccelerating to be false, stopping above statement re-triggering.
-                if (panYSpeed >= 8) {
+            } else
+                panYDone = true; // Once finished panning, set panYDone to true.
+        } else { // If up is false.
+            if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 < HEIGHT / 2) {
+                // Check center of room against center of screen.
+                if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
                     parallax += panYSpeed; // Increase parallax.
-                    panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                    panYSpeed++; // Increase panYSpeed towards maximum of 32.
+                } else {
+                    panYAccelerating = false;
+                    // Set panYAccelerating to be false, stopping above statement re-triggering.
+                    if (panYSpeed >= 8) {
+                        parallax += panYSpeed; // Increase parallax.
+                        panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                    }
                 }
-            }
+            } else
+                panYDone = true;
         }
 
     }
 
     public void moveCol() { // Adds parallax effect to colliders.
-        groundCol = new Rectangle(0, HEIGHT / 2 + parallax, WIDTH, HEIGHT * 16);
+        groundCol = new Rectangle(0, HEIGHT / 2 + parallax, WIDTH, CHUNK);
 
         for (int i = 0; i < room.size(); i++)
             room.get(i).roomCol.y = room.get(i).Y + parallax;
