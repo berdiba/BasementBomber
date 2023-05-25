@@ -17,7 +17,6 @@ public class Ladder {
     Rectangle ladderTopCol;
     Rectangle ladderBottomCol;
 
-
     public Ladder(int X, int Y){
         this.X = X;
         this.Y = Y;

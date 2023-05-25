@@ -51,7 +51,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     // Rectangles
     Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, CHUNK); // Collision for ground.
     Rectangle playerCol; // Collision box for player.
-    Rectangle wallLeftCol = new Rectangle(0, 0, CHUNK * 2, HEIGHT);
+    Rectangle wallLeftCol = new Rectangle(0, 0, CHUNK * 2 + 8, HEIGHT);
     Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, 0, CHUNK * 2, HEIGHT);
 
     // Images.
@@ -137,7 +137,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             ladder.get(i).paint(g);
 
         paintUI(g, g2D);
-        paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintPlayer(g, g2D);
 
         for (int i = 0; i < projectile.size(); i++)
@@ -252,7 +252,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         playerCol.x = playerX + playerColXOffset;
         playerCol.y = playerY + playerColYOffset + parallax;
 
-        if (movingLeft || movingRight) {
+        if (movingLeft && !inWallLeft && !inWallLeft || movingRight && !inWallLeft && !inWallRight) {
             playerWobble = (int) (Math.sin(gameTime) * 2);
         } // Alternates between 1 and -1 to create a bobbing up and down motion.
 
@@ -340,7 +340,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void accelarate() {
-        if (movingLeft && !inWallLeft) { // Check direction. 
+        if (movingLeft && !inWallLeft) { // Check direction.
             if (playerLeft > -playerSpeed) // Check if player can accelarate any more.
                 if (key == 'a') { // Check to see if key pressed is 'a'.
                     playerLeft--; // Accelarate player up to player speed.
@@ -350,7 +350,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         } else if (playerLeft < 0)
             playerLeft++;
 
-        if (movingRight) {
+        if (movingRight && !inWallRight) {
             if (playerRight < playerSpeed)
                 if (key == 'd') {
                     playerRight++;
@@ -362,14 +362,16 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void checkCollisions() {
-        if (playerCol.intersects(wallLeftCol))
+        if (playerCol.intersects(wallLeftCol)) {
             inWallLeft = true; // Stops player from being able to move left.
-        else
+            playerLeft = 0;
+        } else
             inWallLeft = false;
 
-        if (playerCol.intersects(wallRightCol))
+        if (playerCol.intersects(wallRightCol)) {
             inWallRight = true;
-        else
+            playerRight = 0;
+        } else
             inWallRight = false;
 
         for (int i = 0; i < ladder.size(); i++) {
