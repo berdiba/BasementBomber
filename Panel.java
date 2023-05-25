@@ -27,7 +27,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     static int parallax = 0;
     static int panYSpeed = 8;
-    static int inRoom = -1;
+    static int inRoom = -1, lastInRoom = inRoom;
 
     // Integers.
     static int playerX, playerY, playerWidth, playerHeight;
@@ -45,7 +45,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean movingLeft = false, movingRight = false, facingLeft = false;
     boolean touchingGround = true, playerJumped = false;
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
-    boolean showControlls = true, panYAccelerating = false;
+    boolean showControlls = true, panYAccelerating = false, panY = false;
 
     // Rectangles
     Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, HEIGHT * 2); // Collision for ground.
@@ -225,8 +225,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void move() {
-        if (inRoom > -1) // Check to see if player is in a room.
-            panY(inRoom); // Pan down to specified room.
+        if (lastInRoom != inRoom) { // Check to see if player is in a new room.
+            if (lastInRoom > inRoom)
+                panY(inRoom, true); // Pan down to specified room.
+            else
+                panY(inRoom, false);
+        }
 
         playerX = playerX + playerLeft + playerRight;
         playerY = playerY + playerUp + gravity + playerClimbSpeed;
@@ -263,9 +267,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         accelarate();
     }
 
-    public void panY(int level) {
-        System.out.println(panYSpeed);
-        if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 > HEIGHT / 2) {
+    public void panY(int level, Boolean up) {
+        panY = true; // After accelaration has finished, panY is set to false to stop it from
+                     // re-triggering in the other direction.
+        if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 > HEIGHT / 2 && panY) {
             panYAccelerating = true;
             // Check center of room against center of screen.
             if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
@@ -279,7 +284,23 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     panYSpeed--; // Increase panYSpeed towards maximum of 32.
                 }
             }
+            panY = false; // Makes sure this will not trigger until it has been called again.
         }
+        if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 < HEIGHT / 2) {
+            // Check center of room against center of screen.
+            if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
+                parallax += panYSpeed; // Increase parallax.
+                panYSpeed++; // Increase panYSpeed towards maximum of 32.
+            } else {
+                panYAccelerating = false;
+                // Set panYAccelerating to be false, stopping above statement re-triggering.
+                if (panYSpeed >= 8) {
+                    parallax += panYSpeed; // Increase parallax.
+                    panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                }
+            }
+        }
+
     }
 
     public void moveCol() { // Adds parallax effect to colliders.
