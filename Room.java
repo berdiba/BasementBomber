@@ -17,7 +17,9 @@ public class Room {
     int WIDTH = Panel.CHUNK * 18, HEIGHT = Panel.CHUNK * 3;
 
     Image roomImg;
+
     Rectangle roomCol;
+    Rectangle floor;
 
     public Room(int X, int Y, int level) {
         this.X = X;
@@ -27,6 +29,8 @@ public class Room {
         roomImg = new ImageIcon("room"+level+".png").getImage();
         //Images named "room1, room2..." each level will have different image.
         roomCol = new Rectangle(X, Y, WIDTH, HEIGHT); // Paralax added later in Panel.
+        floor = new Rectangle(X, Y + HEIGHT, WIDTH, Panel.CHUNK); 
+        // Creates rectangle 1 chunk tall at the bottom of a room.
     }
 
     public void paint(Graphics g) { //Will be called in Panel paint method.

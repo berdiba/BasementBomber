@@ -46,10 +46,13 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean touchingGround = true, playerJumped = false;
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
     boolean showControlls = true, panYAccelerating = false, panYDone = false;
+    boolean inWallLeft = false, inWallRight = false;
 
     // Rectangles
     Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, CHUNK); // Collision for ground.
     Rectangle playerCol; // Collision box for player.
+    Rectangle wallLeftCol = new Rectangle(0, 0, CHUNK * 2, HEIGHT);
+    Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, 0, CHUNK * 2, HEIGHT);
 
     // Images.
     Image backgroundImg, groundImg, fogImg, buttonsImg;
@@ -178,9 +181,17 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         for (int i = 0; i < room.size(); i++) {
+            g.setColor(Color.yellow);
             g.drawRect(room.get(i).roomCol.x, room.get(i).roomCol.y, room.get(i).roomCol.width,
                     room.get(i).roomCol.height);
+            g.setColor(Color.cyan);
+            g.drawRect(room.get(i).floor.x, room.get(i).floor.y, room.get(i).floor.width,
+                    room.get(i).floor.height);
         }
+
+        g.setColor(Color.cyan);
+        g.drawRect(wallLeftCol.x, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height);
+        g.drawRect(wallRightCol.x, wallRightCol.y, wallRightCol.width, wallRightCol.height);
     }
 
     public void paintPlayer(Graphics g, Graphics2D g2D) {
@@ -225,9 +236,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void move() {
-        System.out.println("lastInRoom: " + lastInRoom);
-        System.out.println("inRoom " + inRoom);
-
         if (inRoom >= 0) // Makes sure pan only triggers when player is in a room.
             if (lastInRoom != inRoom) { // Check to see if player is in a new room.
                 panYDone = false;
@@ -315,8 +323,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void moveCol() { // Adds parallax effect to colliders.
         groundCol = new Rectangle(0, HEIGHT / 2 + parallax, WIDTH, CHUNK);
 
-        for (int i = 0; i < room.size(); i++)
+        for (int i = 0; i < room.size(); i++) {
             room.get(i).roomCol.y = room.get(i).Y + parallax;
+            room.get(i).floor.y = room.get(i).Y + room.get(i).HEIGHT + parallax;
+        }
 
         for (int i = 0; i < ladder.size(); i++)
             ladder.get(i).ladderCol.y = ladder.get(i).Y - ladder.get(i).offset * 2 + parallax;
@@ -330,7 +340,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void accelarate() {
-        if (movingLeft) { // Check direction.
+        if (movingLeft && !inWallLeft) { // Check direction. 
             if (playerLeft > -playerSpeed) // Check if player can accelarate any more.
                 if (key == 'a') { // Check to see if key pressed is 'a'.
                     playerLeft--; // Accelarate player up to player speed.
@@ -352,6 +362,16 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void checkCollisions() {
+        if (playerCol.intersects(wallLeftCol))
+            inWallLeft = true; // Stops player from being able to move left.
+        else
+            inWallLeft = false;
+
+        if (playerCol.intersects(wallRightCol))
+            inWallRight = true;
+        else
+            inWallRight = false;
+
         for (int i = 0; i < ladder.size(); i++) {
             if (ladder.get(i).ladderCol.contains(playerCol)) { // Check to see if player is colliding with any of the
                                                                // ladders.
@@ -396,20 +416,32 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             } else
                 inRoom = -1;
 
-        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height) && inRoom < 0) {
+        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height)) {
             touchingGround = true;
             playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player
                                              // when touching groundCol.
-        } else {
-            touchingGround = false;
-            playerUp = playerJump;
-        }
+        } else
+            for (int i = 0; i < room.size(); i++)
+                if (playerCol.intersects(room.get(i).floor.x, room.get(i).floor.y - 1, room.get(i).floor.width,
+                        room.get(i).floor.height)) {
+                    touchingGround = true;
+                    playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within
+                                                     // player when touching groundCol.
+                    break;
+                } else {
+                    touchingGround = false;
+                    playerUp = playerJump;
+                }
 
         if (playerCol.intersects(groundCol) && !onLadder) // Checks groundCol.y + 1 so that player still intersects with
                                                           // groundCol and doesent get pulled back into groundCol by
                                                           // gravity.
             playerY--; // Pushes player back up out of the groundCol, as gravity clips player into
                        // groundCol.
+
+        for (int i = 0; i < room.size(); i++)
+            if (playerCol.intersects(room.get(i).floor) && !onLadder)
+                playerY--;
 
         for (int j = 0; j < projectile.size(); j++)
             if (projectile.get(j).X < -WIDTH || projectile.get(j).X > WIDTH * 2)
@@ -423,12 +455,16 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         // System.out.println(e.getKeyCode());
         switch (e.getKeyCode()) {
             case 65:
-                key = 'a';
-                movingLeft = true;
+                if (!inWallLeft) {
+                    key = 'a';
+                    movingLeft = true;
+                }
                 break;
             case 68:
-                key = 'd';
-                movingRight = true;
+                if (!inWallRight) {
+                    key = 'd';
+                    movingRight = true;
+                }
                 break;
             case 83: // If player on ladder and ladder bottom, player wont fall but can't climb any
                      // lower.
