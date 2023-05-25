@@ -31,7 +31,7 @@ public class Projectile {
         else
         this.X = X + Panel.playerWidth;
 
-        this.Y = Y + Panel.playerHeight * 19 / 32;
+        this.Y = Y + Panel.playerHeight * 19 / 32 + Panel.parallax;
         this.type = type;
 
         projectileImg = new ImageIcon(type+"Projectile.png").getImage();

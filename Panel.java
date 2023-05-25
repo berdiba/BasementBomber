@@ -25,6 +25,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     char key;
 
+    static int parallax = 0;
+    static int panYSpeed = 8;
+    static int inRoom = -1;
+
     // Integers.
     static int playerX, playerY, playerWidth, playerHeight;
     int playerColXOffset = 8, playerColYOffset = 2; // X and Y offsets of player collider.
@@ -39,9 +43,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     // Booleans.
     boolean movingLeft = false, movingRight = false, facingLeft = false;
-    boolean touchingGround = true, playerJumped = false, inRoom = false;
+    boolean touchingGround = true, playerJumped = false;
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
-    boolean showControlls = true;
+    boolean showControlls = true, panYAccelerating = false;
 
     // Rectangles
     Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, HEIGHT * 2); // Collision for ground.
@@ -58,6 +62,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        this.setBackground(new Color(175, 207, 194));
 
         addKeyListener(this); // Setting up listeners here as they are used throughought the whole game.
         addMouseListener(this);
@@ -88,7 +93,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void run() { // Game loop.
         long lastTime = System.nanoTime();
-        double ticks = 60.0;
+        double ticks = 60.0; // Game will refresh 60 times per second.
         double ns = 1000000000 / ticks;
         double delta = 0;
         while (true) {
@@ -114,11 +119,13 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         Toolkit.getDefaultToolkit().sync(); // Supposedly makes game run smoother.
 
         // Paint background.
-        g2D.drawImage(backgroundImg, 0, 0, null);
-        g2D.drawImage(fogImg, fogX, -HEIGHT / 2, null);
-        g2D.drawImage(fogImg, fog2X, -HEIGHT / 2, null);
+        g2D.drawImage(backgroundImg, 0, parallax / 2, null);
+        g2D.drawImage(fogImg, fogX, -HEIGHT / 2 + parallax, null);
+        g2D.drawImage(fogImg, fog2X, -HEIGHT / 2 + parallax, null);
 
         // Paint foreground.
+        g.setColor(new Color(39, 46, 69)); // Set colour to ground colour.
+        g2D.fillRect(groundCol.x, groundCol.y, groundCol.width, groundCol.height);
         g2D.drawImage(groundImg, groundCol.x, groundCol.y, null);
 
         for (int i = 0; i < room.size(); i++)
@@ -126,6 +133,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         for (int i = 0; i < ladder.size(); i++)
             ladder.get(i).paint(g);
 
+        paintUI(g, g2D);
+        paintCol(g, g2D);
+        paintPlayer(g, g2D);
+
+        for (int i = 0; i < projectile.size(); i++)
+            projectile.get(i).paint(g);
+    }
+
+    public void paintUI(Graphics g, Graphics2D g2D) {
         // Paint UI.
         if (showControlls) {
             // Using Math.sin() gives a value that switches between negative and positive at
@@ -134,9 +150,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 buttonsImg = new ImageIcon("buttons1.png").getImage();
             else
                 buttonsImg = new ImageIcon("buttons2.png").getImage();
-            g2D.drawImage(buttonsImg, CHUNK / 2, CHUNK / 2, null);
+            g2D.drawImage(buttonsImg, CHUNK / 2 + parallax * 8, CHUNK / 2, null);
+            // When parallax increases, buttons are moved to the side.
         }
+    }
 
+    public void paintCol(Graphics g, Graphics2D g2D) {
         // Draw collision boxes
         g.setColor(Color.green); // Code to draw player hitbox.
         g2D.setStroke(new BasicStroke(2));
@@ -159,32 +178,35 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         for (int i = 0; i < room.size(); i++) {
-            g.drawRect(room.get(i).X, room.get(i).Y, room.get(i).WIDTH, room.get(i).HEIGHT);
+            g.drawRect(room.get(i).roomCol.x, room.get(i).roomCol.y, room.get(i).roomCol.width,
+                    room.get(i).roomCol.height);
         }
+    }
 
+    public void paintPlayer(Graphics g, Graphics2D g2D) {
         // Drawing player.
         if (!onLadder) {
             if (facingLeft) {
-                g2D.drawImage(playerImg, playerX + playerWidth, playerY + playerWobble, -playerWidth, playerHeight,
+                g2D.drawImage(playerImg, playerX + playerWidth, playerY + playerWobble + parallax, -playerWidth,
+                        playerHeight,
                         null);
-                g2D.drawImage(playerItemImg, playerX + playerWidth, playerY + playerWobble, -playerWidth, playerHeight,
+                g2D.drawImage(playerItemImg, playerX + playerWidth, playerY + playerWobble + parallax, -playerWidth,
+                        playerHeight,
                         null);
             } else {
-                g2D.drawImage(playerImg, playerX, playerY + playerWobble, playerWidth, playerHeight, null);
-                g2D.drawImage(playerItemImg, playerX, playerY + playerWobble, playerWidth, playerHeight, null);
+                g2D.drawImage(playerImg, playerX, playerY + playerWobble + parallax, playerWidth, playerHeight, null);
+                g2D.drawImage(playerItemImg, playerX, playerY + playerWobble + parallax, playerWidth, playerHeight,
+                        null);
             }
         } else { // Draw player differently when on ladder.
             if (climbingLadder)
                 if (Math.sin(gameTime) > 0)
-                    g2D.drawImage(playerClimbImg, playerX, playerY, playerWidth, playerHeight, null);
+                    g2D.drawImage(playerClimbImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
                 else
-                    g2D.drawImage(playerOnLadderImg, playerX, playerY, playerWidth, playerHeight, null);
+                    g2D.drawImage(playerOnLadderImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
             else
-                g2D.drawImage(playerOnLadderImg, playerX, playerY, playerWidth, playerHeight, null);
+                g2D.drawImage(playerOnLadderImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
         }
-
-        for (int i = 0; i < projectile.size(); i++)
-            projectile.get(i).paint(g);
     }
 
     public void menu() {
@@ -195,17 +217,21 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         // Upon starting the game, add ladders to arraylist of ladders.
         ladder.add(new Ladder(CHUNK * 18, CHUNK * 4));
         ladder.add(new Ladder(CHUNK * 3, CHUNK * 8));
-        room.add(new Room(CHUNK * 2, CHUNK * 6, 1));
+        room.add(new Room(CHUNK * 2, CHUNK * 6, 0)); // Start at level 0 as index starts at 0.
+        room.add(new Room(CHUNK * 2, CHUNK * 10, 1)); // Start at level 0 as index starts at 0.
 
         gameThread = new Thread(this);
         gameThread.start();
     }
 
     public void move() {
+        if (inRoom > -1) // Check to see if player is in a room.
+            panY(inRoom); // Pan down to specified room.
+
         playerX = playerX + playerLeft + playerRight;
         playerY = playerY + playerUp + gravity + playerClimbSpeed;
         playerCol.x = playerX + playerColXOffset;
-        playerCol.y = playerY + playerColYOffset;
+        playerCol.y = playerY + playerColYOffset + parallax;
 
         if (movingLeft || movingRight) {
             playerWobble = (int) (Math.sin(gameTime) * 2);
@@ -233,7 +259,66 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         for (int i = 0; i < projectile.size(); i++)
             projectile.get(i).move();
 
+        moveCol();
         accelarate();
+    }
+
+    public void panY(int level) {
+        System.out.println(panYSpeed);
+        if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 > HEIGHT / 2) {
+            panYAccelerating = true;
+            // Check center of room against center of screen.
+            if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
+                parallax -= panYSpeed; // Reduce parallax.
+                panYSpeed++; // Increase panYSpeed towards maximum of 32.
+            } else {
+                panYAccelerating = false;
+                // Set panYAccelerating to be false, stopping above statement re-triggering.
+                if (panYSpeed >= 8) {
+                    parallax -= panYSpeed; // Reduce parallax.
+                    panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                }
+            }
+        }
+    }
+
+    public void moveCol() { // Adds parallax effect to colliders.
+        groundCol = new Rectangle(0, HEIGHT / 2 + parallax, WIDTH, HEIGHT * 16);
+
+        for (int i = 0; i < room.size(); i++)
+            room.get(i).roomCol.y = room.get(i).Y + parallax;
+
+        for (int i = 0; i < ladder.size(); i++)
+            ladder.get(i).ladderCol.y = ladder.get(i).Y - ladder.get(i).offset * 2 + parallax;
+        // Only need to add parallax to ladderCol, as ladderTop and BottomCol are tied
+        // to ladderCol.
+        for (int i = 0; i < ladder.size(); i++)
+            ladder.get(i).ladderTopCol.y = ladder.get(i).ladderCol.y - ladder.get(i).offset;
+
+        for (int i = 0; i < ladder.size(); i++)
+            ladder.get(i).ladderBottomCol.y = ladder.get(i).ladderCol.y + ladder.get(i).ladderCol.height - playerHeight;
+    }
+
+    public void accelarate() {
+        if (movingLeft) { // Check direction.
+            if (playerLeft > -playerSpeed) // Check if player can accelarate any more.
+                if (key == 'a') { // Check to see if key pressed is 'a'.
+                    playerLeft--; // Accelarate player up to player speed.
+                    if (!movingRight)
+                        facingLeft = true;
+                }
+        } else if (playerLeft < 0)
+            playerLeft++;
+
+        if (movingRight) {
+            if (playerRight < playerSpeed)
+                if (key == 'd') {
+                    playerRight++;
+                    if (!movingLeft)
+                        facingLeft = false;
+                }
+        } else if (playerRight > 0)
+            playerRight--;
     }
 
     public void checkCollisions() {
@@ -276,12 +361,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         for (int i = 0; i < room.size(); i++)
             if (room.get(i).roomCol.contains(playerCol)) {
-                inRoom = true;
+                inRoom = room.get(i).level;
                 break;
             } else
-                inRoom = false;
+                inRoom = -1;
 
-        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height) && !inRoom) {
+        if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height) && inRoom < 0) {
             touchingGround = true;
             playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player
                                              // when touching groundCol.
@@ -384,28 +469,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void mouseMoved(MouseEvent e) {
     }
 
-    public void accelarate() {
-        if (movingLeft) { // Check direction.
-            if (playerLeft > -playerSpeed) // Check if player can accelarate any more.
-                if (key == 'a') { // Check to see if key pressed is 'a'.
-                    playerLeft--; // Accelarate player up to player speed.
-                    if (!movingRight)
-                        facingLeft = true;
-                }
-        } else if (playerLeft < 0)
-            playerLeft++;
-
-        if (movingRight) {
-            if (playerRight < playerSpeed)
-                if (key == 'd') {
-                    playerRight++;
-                    if (!movingLeft)
-                        facingLeft = false;
-                }
-        } else if (playerRight > 0)
-            playerRight--;
-    }
-
     public void jump() {
         if (!playerJumped) { // Player cannot jump in mid-air.
             playerJump = playerJumpHeight;
@@ -416,14 +479,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void shoot() {
         projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
         // System.out.println(facingLeft);
-    }
-
-    public void newRoom() {
-
-    }
-
-    public void newEnemy() {
-
     }
 
     public boolean isFocusTraversable() // Lets JPanel accept users input.

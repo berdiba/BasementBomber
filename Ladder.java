@@ -32,6 +32,6 @@ public class Ladder {
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
 
-        g2D.drawImage(ladderImg, X, Y, null);
+        g2D.drawImage(ladderImg, X, Y + Panel.parallax, null);
     }
 }

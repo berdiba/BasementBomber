@@ -26,12 +26,12 @@ public class Room {
 
         roomImg = new ImageIcon("room"+level+".png").getImage();
         //Images named "room1, room2..." each level will have different image.
-        roomCol = new Rectangle(X, Y, WIDTH, HEIGHT);
+        roomCol = new Rectangle(X, Y, WIDTH, HEIGHT); // Paralax added later in Panel.
     }
 
     public void paint(Graphics g) { //Will be called in Panel paint method.
         Graphics2D g2D = (Graphics2D) g;
 
-        g2D.drawImage(roomImg, X, Y, WIDTH, HEIGHT, null);
+        g2D.drawImage(roomImg, X, Y + Panel.parallax, WIDTH, HEIGHT, null);
     }
 }
