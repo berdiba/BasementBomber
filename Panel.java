@@ -35,7 +35,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     int playerSpeed = 10, playerJumpHeight = -20, playerClimbSpeed = 0;
     int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
-    int playerWobble = 0; // Controlls the bobbing up and down of player when walking.
+    int playerWobble = 0; // Controls the bobbing up and down of player when walking.
+    int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
 
     int fogX = 0;
     int fog2X = -WIDTH; // Duplicate fog placed behind original to create seamless fog movement.
@@ -137,11 +138,16 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             ladder.get(i).paint(g);
 
         paintUI(g, g2D);
-        paintCol(g, g2D);
+        // paintCol(g, g2D);
         paintPlayer(g, g2D);
 
-        for (int i = 0; i < projectile.size(); i++)
+        g.setColor(new Color(39, 46, 69));
+        for (int i = 0; i < projectile.size(); i++) {
             projectile.get(i).paint(g);
+            g.drawRect(projectile.get(i).X, projectile.get(i).Y - 1, projectile.get(i).WIDTH,
+                    projectile.get(i).HEIGHT + 1);
+            // Draw outline for projectile to make it more visible.
+        }
     }
 
     public void paintUI(Graphics g, Graphics2D g2D) {
@@ -207,15 +213,17 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         // Drawing player.
         if (!onLadder) {
             if (facingLeft) {
-                g2D.drawImage(playerImg, playerX + playerWidth, playerY + playerWobble + parallax, -playerWidth,
+                g2D.drawImage(playerImg, playerX + playerWidth - recoil / 2, playerY + playerWobble + parallax, -playerWidth,
                         playerHeight,
                         null);
-                g2D.drawImage(playerItemImg, playerX + playerWidth, playerY + playerWobble + parallax, -playerWidth,
+                g2D.drawImage(playerItemImg, playerX + playerWidth - recoil, playerY + playerWobble + parallax,
+                        -playerWidth,
                         playerHeight,
                         null);
             } else {
-                g2D.drawImage(playerImg, playerX, playerY + playerWobble + parallax, playerWidth, playerHeight, null);
-                g2D.drawImage(playerItemImg, playerX, playerY + playerWobble + parallax, playerWidth, playerHeight,
+                g2D.drawImage(playerImg, playerX + recoil / 2, playerY + playerWobble + parallax, playerWidth, playerHeight, null);
+                g2D.drawImage(playerItemImg, playerX + recoil, playerY + playerWobble + parallax, playerWidth,
+                        playerHeight,
                         null);
             }
         } else { // Draw player differently when on ladder.
@@ -286,6 +294,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         for (int i = 0; i < projectile.size(); i++)
             projectile.get(i).move();
+
+        if (recoil < 0)
+            recoil++;
+        // When recoil is set to be recoilMax, slowly push gun back to original
+        // position.
 
         moveCol();
         accelarate();
@@ -374,7 +387,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void checkCollisions() {
         // Code for intersecting with left and right colliders.
-        if (playerCol.intersects(wallLeftCol)) { 
+        if (playerCol.intersects(wallLeftCol)) {
             inWallLeft = true; // Stops player from being able to move left.
             playerLeft = 0;
         } else
@@ -388,13 +401,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         // Code for intersecting with left and right ladder colliders.
         for (int i = 0; i < ladder.size(); i++) {
-            if (playerCol.intersects(ladder.get(i).ladderLeftCol) && inRoom < 0 && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) { 
+            if (playerCol.intersects(ladder.get(i).ladderLeftCol) && inRoom < 0
+                    && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
                 inWallLeft = true; // Stops player from being able to move left.
                 playerLeft = 0;
             } else
                 inWallLeft = false;
-    
-            if (playerCol.intersects(ladder.get(i).ladderRightCol) && inRoom < 0 && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
+
+            if (playerCol.intersects(ladder.get(i).ladderRightCol) && inRoom < 0
+                    && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
                 inWallRight = true;
                 playerRight = 0;
             } else
@@ -573,7 +588,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void shoot() {
         projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
-        // System.out.println(facingLeft);
+        recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
     }
 
     public boolean isFocusTraversable() // Lets JPanel accept users input.
