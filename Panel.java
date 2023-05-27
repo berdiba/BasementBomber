@@ -21,7 +21,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     final static int WIDTH = 1400, HEIGHT = 600, CHUNK = 64;
 
     int gravity = 10;
-    int gameTime = 0;
+    static int gameTime = 0;
 
     char key;
 
@@ -159,7 +159,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 buttonsImg = new ImageIcon("buttons1.png").getImage();
             else
                 buttonsImg = new ImageIcon("buttons2.png").getImage();
-            g2D.drawImage(buttonsImg, CHUNK / 2 + parallax * 8, CHUNK / 2, null);
+            g2D.drawImage(buttonsImg, CHUNK / 2 + parallax * 2, CHUNK / 2, null);
             // When parallax increases, buttons are moved to the side.
         }
     }
@@ -243,8 +243,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void startGame() {
         // Upon starting the game, add ladders to arraylist of ladders.
-        ladder.add(new Ladder(CHUNK * 18, CHUNK * 4));
-        ladder.add(new Ladder(CHUNK * 3, CHUNK * 8));
+        ladder.add(new Ladder(CHUNK * 18, CHUNK * 4, 0));
+        ladder.add(new Ladder(CHUNK * 3, CHUNK * 8, 1));
         room.add(new Room(CHUNK * 2, CHUNK * 6, 0)); // Start at level 0 as index starts at 0.
         room.add(new Room(CHUNK * 2, CHUNK * 10, 1)); // Start at level 0 as index starts at 0.
 
