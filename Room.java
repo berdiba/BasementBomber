@@ -36,14 +36,15 @@ public class Room {
     public void paint(Graphics g) { // Will be called in Panel paint method.
         Graphics2D g2D = (Graphics2D) g;
 
-        if (Panel.inRoom == level) {
+        if (Panel.roomLevel == level) {
             if (level == 0 & Panel.gameTime % 2 == 0)
                 // This will constantly flick between true and false for level 0, and always be
                 // false for other levels.
                 roomImg = new ImageIcon("room" + level + "Flicker.png").getImage();
             else
                 roomImg = new ImageIcon("room" + level + ".png").getImage();
-        }
+        } else
+        roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
 
         g2D.drawImage(roomImg, X, Y + Panel.parallax, WIDTH, HEIGHT, null);
     }

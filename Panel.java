@@ -27,7 +27,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     static int parallax = 0;
     static int panYSpeed = 8;
-    static int inRoom = -1, lastInRoom = inRoom;
+    static int inRoom = -1, lastInRoom = inRoom, roomLevel = -1;
 
     // Integers.
     static int playerX, playerY, playerWidth, playerHeight;
@@ -456,6 +456,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         for (int i = 0; i < room.size(); i++)
             if (room.get(i).roomCol.contains(playerCol)) {
                 inRoom = room.get(i).level;
+                roomLevel = room.get(i).level; // Used for illumination.
                 break;
             } else
                 inRoom = -1;
