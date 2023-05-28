@@ -12,23 +12,24 @@ import javax.swing.*;
 public class Ladder {
     int CHUNK = Panel.CHUNK;
 
-    int X, Y, level;
+    int x, y, level;
     int offset = 24;
 
     Image ladderImg;
+    
     Rectangle ladderCol;
     Rectangle ladderTopCol;
     Rectangle ladderBottomCol;
     Rectangle ladderLeftCol;
     Rectangle ladderRightCol;
 
-    public Ladder(int X, int Y, int level) {
-        this.X = X;
-        this.Y = Y;
+    public Ladder(int x, int y, int level) {
+        this.x = x;
+        this.y = y;
         this.level = level;
 
         ladderImg = new ImageIcon("ladder.png").getImage();
-        ladderCol = new Rectangle(X - offset, Y - offset * 2, ladderImg.getWidth(null) + offset * 2,
+        ladderCol = new Rectangle(x - offset, y - offset * 2, ladderImg.getWidth(null) + offset * 2,
                 ladderImg.getHeight(null) + offset * 2);
         ladderTopCol = new Rectangle(ladderCol.x, ladderCol.y - offset, ladderCol.width, offset * 4);
         ladderBottomCol = new Rectangle(ladderCol.x, ladderCol.y + ladderCol.height - Panel.playerHeight,
@@ -54,6 +55,6 @@ public class Ladder {
             // Triggers when player is in only room0.
             ladderImg = new ImageIcon("ladder.png").getImage();
 
-        g2D.drawImage(ladderImg, X, Y + Panel.parallax, null);
+        g2D.drawImage(ladderImg, x, y + Panel.parallax, null);
     }
 }

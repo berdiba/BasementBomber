@@ -13,23 +13,23 @@ import java.lang.Math;
 import java.awt.geom.*;
 
 public class Room {
-    int X, Y, level;
-    int WIDTH = Panel.CHUNK * 18, HEIGHT = Panel.CHUNK * 3;
+    int x, y, level;
+    int width = Panel.CHUNK * 18, height = Panel.CHUNK * 3;
 
     Image roomImg;
 
     Rectangle roomCol;
     Rectangle floor;
 
-    public Room(int X, int Y, int level) {
-        this.X = X;
-        this.Y = Y; // Setting X, Y, level to be ints passed from Panel.
+    public Room(int x, int y, int level) {
+        this.x = x;
+        this.y = y; // Setting x, y, level to be ints passed from Panel.
         this.level = level;
 
         roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
         // Images named "room1, room2..." each level will have different image.
-        roomCol = new Rectangle(X, Y, WIDTH, HEIGHT); // Paralax added later in Panel.
-        floor = new Rectangle(X, Y + HEIGHT, WIDTH, Panel.CHUNK);
+        roomCol = new Rectangle(x, y, width, height); // Paralax added later in Panel.
+        floor = new Rectangle(x, y + height, width, Panel.CHUNK);
         // Creates rectangle 1 chunk tall at the bottom of a room.
     }
 
@@ -44,8 +44,8 @@ public class Room {
             else
                 roomImg = new ImageIcon("room" + level + ".png").getImage();
         } else
-        roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
+            roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
 
-        g2D.drawImage(roomImg, X, Y + Panel.parallax, WIDTH, HEIGHT, null);
+        g2D.drawImage(roomImg, x, y + Panel.parallax, width, height, null);
     }
 }

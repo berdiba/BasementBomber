@@ -31,7 +31,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     // Integers.
     static int playerX, playerY, playerWidth, playerHeight;
-    int playerColXOffset = 8, playerColYOffset = 2; // X and Y offsets of player collider.
+    int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
     int playerSpeed = 10, playerJumpHeight = -20, playerClimbSpeed = 0;
     int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
@@ -61,8 +61,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     // ArrayLists
     ArrayList<Projectile> projectile = new ArrayList<Projectile>();
-    ArrayList<Ladder> ladder = new ArrayList<Ladder>();
     ArrayList<Room> room = new ArrayList<Room>();
+    ArrayList<Ladder> ladder = new ArrayList<Ladder>();
+    ArrayList<Enemy> enemy = new ArrayList<Enemy>();
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -90,7 +91,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         playerY = -WIDTH / 2;
 
         playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2, playerHeight - playerColYOffset * 2);
-        // X and Y pos determined my moving player.
+        // x and y pos determined my moving player.
 
         menu();
     }
@@ -136,18 +137,20 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             room.get(i).paint(g);
         for (int i = 0; i < ladder.size(); i++)
             ladder.get(i).paint(g);
-
-        paintUI(g, g2D);
-        // paintCol(g, g2D);
-        paintPlayer(g, g2D);
+        for (int i = 0; i < enemy.size(); i++)
+            enemy.get(i).paint(g);
 
         g.setColor(new Color(39, 46, 69));
+        g2D.setStroke(new BasicStroke(2));
         for (int i = 0; i < projectile.size(); i++) {
+            g.drawRect(projectile.get(i).x, projectile.get(i).y - 1, projectile.get(i).width,
+                    projectile.get(i).height + 1); // Draw outline for projectile to make it more visible.
             projectile.get(i).paint(g);
-            g.drawRect(projectile.get(i).X, projectile.get(i).Y - 1, projectile.get(i).WIDTH,
-                    projectile.get(i).HEIGHT + 1);
-            // Draw outline for projectile to make it more visible.
         }
+
+        paintUI(g, g2D);
+        paintCol(g, g2D);
+        paintPlayer(g, g2D);
     }
 
     public void paintUI(Graphics g, Graphics2D g2D) {
@@ -175,9 +178,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         // Draw collision boxes
         g2D.setStroke(new BasicStroke(2));
-
         g.setColor(Color.green);
         g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height); // Player hitbox.
+        for (int i = 0; i < enemy.size(); i++) 
+        g.drawRect(enemy.get(i).enemyCol.x, enemy.get(i).enemyCol.y, enemy.get(i).enemyCol.width, enemy.get(i).enemyCol.height);
+        
 
         for (int i = 0; i < ladder.size(); i++) { // Draw all ladder colliders
             g.setColor(Color.orange);
@@ -213,7 +218,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         // Drawing player.
         if (!onLadder) {
             if (facingLeft) {
-                g2D.drawImage(playerImg, playerX + playerWidth - recoil / 2, playerY + playerWobble + parallax, -playerWidth,
+                g2D.drawImage(playerImg, playerX + playerWidth - recoil / 2, playerY + playerWobble + parallax,
+                        -playerWidth,
                         playerHeight,
                         null);
                 g2D.drawImage(playerItemImg, playerX + playerWidth - recoil, playerY + playerWobble + parallax,
@@ -221,7 +227,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                         playerHeight,
                         null);
             } else {
-                g2D.drawImage(playerImg, playerX + recoil / 2, playerY + playerWobble + parallax, playerWidth, playerHeight, null);
+                g2D.drawImage(playerImg, playerX + recoil / 2, playerY + playerWobble + parallax, playerWidth,
+                        playerHeight, null);
                 g2D.drawImage(playerItemImg, playerX + recoil, playerY + playerWobble + parallax, playerWidth,
                         playerHeight,
                         null);
@@ -246,10 +253,21 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         ladder.add(new Ladder(CHUNK * 18, CHUNK * 4, 0));
         ladder.add(new Ladder(CHUNK * 3, CHUNK * 8, 1));
         room.add(new Room(CHUNK * 2, CHUNK * 6, 0)); // Start at level 0 as index starts at 0.
-        room.add(new Room(CHUNK * 2, CHUNK * 10, 1)); // Start at level 0 as index starts at 0.
+        room.add(new Room(CHUNK * 2, CHUNK * 10, 1));
+        for (int i = 0; i < room.size(); i++)
+            populate(i);
 
         gameThread = new Thread(this);
         gameThread.start();
+    }
+
+    public void populate(int level) { // Adds enemies to each level.
+        for (int i = 0; i < level * 3 + 400; i++) {
+            enemy.add(new Enemy(0, 0, level));
+            enemy.get(i).x = (int) (Math.random() * room.get(level).width + room.get(level).x);
+            enemy.get(i).y = room.get(level).y + room.get(level).height - enemy.get(i).height / 2;
+            // Enemy height has to be subracted after its creation.
+        }
     }
 
     public void move() {
@@ -346,12 +364,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         groundCol = new Rectangle(0, HEIGHT / 2 + parallax, WIDTH, CHUNK);
 
         for (int i = 0; i < room.size(); i++) {
-            room.get(i).roomCol.y = room.get(i).Y + parallax;
-            room.get(i).floor.y = room.get(i).Y + room.get(i).HEIGHT + parallax;
+            room.get(i).roomCol.y = room.get(i).y + parallax;
+            room.get(i).floor.y = room.get(i).y + room.get(i).height + parallax;
         }
 
         for (int i = 0; i < ladder.size(); i++) {
-            ladder.get(i).ladderCol.y = ladder.get(i).Y - ladder.get(i).offset * 2 + parallax;
+            ladder.get(i).ladderCol.y = ladder.get(i).y - ladder.get(i).offset * 2 + parallax;
             ladder.get(i).ladderTopCol.y = ladder.get(i).ladderCol.y - ladder.get(i).offset;
             ladder.get(i).ladderBottomCol.y = ladder.get(i).ladderCol.y + ladder.get(i).ladderCol.height - playerHeight;
             ladder.get(i).ladderLeftCol.y = ladder.get(i).ladderCol.y;
@@ -361,6 +379,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
         // Only need to add parallax to ladderCol, as ladderTop and BottomCol are tied
         // to ladderCol.
+
+        for (int i = 0; i < enemy.size(); i++) {
+            enemy.get(i).enemyCol.y = enemy.get(i).y - enemy.get(i).y * 2 + parallax;
+        }
     }
 
     public void accelarate() {
@@ -489,7 +511,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 playerY--;
 
         for (int j = 0; j < projectile.size(); j++)
-            if (projectile.get(j).X < -WIDTH || projectile.get(j).X > WIDTH * 2)
+            if (projectile.get(j).x < -WIDTH || projectile.get(j).x > WIDTH * 2)
                 projectile.remove(j); // Remove projectiles that travel off the screen.
     }
 

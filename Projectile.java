@@ -9,9 +9,9 @@ import java.awt.*;
 import javax.swing.*;
 
 public class Projectile {
-    int WIDTH = 12;
-    int HEIGHT = 4;
-    int X, Y;
+    int width = 12;
+    int height = 4;
+    int x, y;
     int projectileSpeed = 32;
     int damage, blastRadius;
 
@@ -23,36 +23,36 @@ public class Projectile {
     Rectangle projectileCol;
 
 
-    public Projectile(boolean facingLeft, int X, int Y, String type) {
+    public Projectile(boolean facingLeft, int x, int y, String type) {
         this.facingLeft = facingLeft;
 
         if(facingLeft)
-        this.X = X;
+        this.x = x;
         else
-        this.X = X + Panel.playerWidth;
+        this.x = x + Panel.playerWidth;
 
-        this.Y = Y + Panel.playerHeight * 19 / 32 + Panel.parallax;
+        this.y = y + Panel.playerHeight * 19 / 32 + Panel.parallax;
         this.type = type;
 
         projectileImg = new ImageIcon(type+"Projectile.png").getImage();
-        projectileCol = new Rectangle(X, Y, WIDTH, HEIGHT);
+        projectileCol = new Rectangle(x, y, width, height);
     }
 
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
 
         if (facingLeft)
-        g2D.drawImage(projectileImg, X + WIDTH, Y, -WIDTH, HEIGHT, null);
+        g2D.drawImage(projectileImg, x + width, y, -width, height, null);
         else
-        g2D.drawImage(projectileImg, X, Y, WIDTH, HEIGHT, null);
+        g2D.drawImage(projectileImg, x, y, width, height, null);
 
     }
 
     public void move() {
         if (facingLeft)
-            X = X - projectileSpeed;
+            x = x - projectileSpeed;
         else
-            X = X + projectileSpeed;
+            x = x + projectileSpeed;
 
     }
 
