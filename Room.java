@@ -11,15 +11,19 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.lang.Math;
 import java.awt.geom.*;
+import java.util.ArrayList;
 
 public class Room {
     int x, y, level;
-    int width = Panel.CHUNK * 18, height = Panel.CHUNK * 3;
+    static int width = Panel.CHUNK * 18, height = Panel.CHUNK * 3;
 
     Image roomImg;
 
-    Rectangle roomCol;
+    Rectangle col;
     Rectangle floor;
+
+    ArrayList<Enemy> enemy = new ArrayList<Enemy>();
+
 
     public Room(int x, int y, int level) {
         this.x = x;
@@ -28,9 +32,11 @@ public class Room {
 
         roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
         // Images named "room1, room2..." each level will have different image.
-        roomCol = new Rectangle(x, y, width, height); // Paralax added later in Panel.
+        col = new Rectangle(x, y, width, height); // Paralax added later in Panel.
         floor = new Rectangle(x, y + height, width, Panel.CHUNK);
         // Creates rectangle 1 chunk tall at the bottom of a room.
+
+        populate();
     }
 
     public void paint(Graphics g) { // Will be called in Panel paint method.
@@ -47,5 +53,13 @@ public class Room {
             roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
 
         g2D.drawImage(roomImg, x, y + Panel.parallax, width, height, null);
+    }
+
+    public void populate() { // Adds enemies to the level.
+        for (int i = 0; i < level * 3 + 4; i++) {
+            enemy.add(new Enemy(level));
+        }
+
+        System.out.println(enemy.size());
     }
 }

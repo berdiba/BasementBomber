@@ -12,7 +12,6 @@ import javax.swing.*;
 import java.lang.Math;
 import java.awt.geom.*;
 import java.util.ArrayList;
-import java.awt.Cursor;
 
 public class Panel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
     // World variables.
@@ -28,6 +27,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int parallax = 0;
     static int panYSpeed = 8;
     static int inRoom = -1, lastInRoom = inRoom, roomLevel = -1;
+    static int roomX = CHUNK * 2, roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4;
 
     // Integers.
     static int playerX, playerY, playerWidth, playerHeight;
@@ -50,7 +50,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean inWallLeft = false, inWallRight = false;
 
     // Rectangles
-    Rectangle groundCol = new Rectangle(0, HEIGHT / 2, WIDTH, CHUNK); // Collision for ground.
+    Rectangle groundCol; // Collision for ground.
     Rectangle playerCol; // Collision box for player.
     Rectangle wallLeftCol = new Rectangle(0, 0, CHUNK * 2 + 8, HEIGHT);
     Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, 0, CHUNK * 2, HEIGHT);
@@ -60,10 +60,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     Image playerImg, playerOnLadderImg, playerClimbImg, playerItemImg;
 
     // ArrayLists
-    ArrayList<Projectile> projectile = new ArrayList<Projectile>();
-    ArrayList<Room> room = new ArrayList<Room>();
-    ArrayList<Ladder> ladder = new ArrayList<Ladder>();
-    ArrayList<Enemy> enemy = new ArrayList<Enemy>();
+    static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
+    static ArrayList<Room> room = new ArrayList<Room>();
+    static ArrayList<Ladder> ladder = new ArrayList<Ladder>();
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -137,9 +136,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             room.get(i).paint(g);
         for (int i = 0; i < ladder.size(); i++)
             ladder.get(i).paint(g);
-        for (int i = 0; i < enemy.size(); i++)
-            enemy.get(i).paint(g);
+        for (int i = 0; i < room.size(); i++)
+            for (int j = 0; j < room.get(i).enemy.size(); j++)
+                room.get(i).enemy.get(j).paint(g); // Paint enemies.
 
+        // Paint projectiles.
         g.setColor(new Color(39, 46, 69));
         g2D.setStroke(new BasicStroke(2));
         for (int i = 0; i < projectile.size(); i++) {
@@ -169,7 +170,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void paintCol(Graphics g, Graphics2D g2D) {
         /**
-         * PLAYER drawn in GREEN.
+         * PLAYER and ENEMIES drawn in GREEN.
          * MAJOR COLLISION BOXES drawn in BLUE.
          * MINOR COLLISION BOXES drawn in CYAN.
          * MAIN-AOE BOXES drawn in YELLOW.
@@ -180,30 +181,31 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g2D.setStroke(new BasicStroke(2));
         g.setColor(Color.green);
         g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height); // Player hitbox.
-        for (int i = 0; i < enemy.size(); i++) 
-        g.drawRect(enemy.get(i).enemyCol.x, enemy.get(i).enemyCol.y, enemy.get(i).enemyCol.width, enemy.get(i).enemyCol.height);
-        
+        for (int i = 0; i < room.size(); i++)
+            for (int j = 0; j < room.get(i).enemy.size(); j++)
+                g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
+                        room.get(i).enemy.get(j).col.width, room.get(i).enemy.get(j).col.height);
 
         for (int i = 0; i < ladder.size(); i++) { // Draw all ladder colliders
             g.setColor(Color.orange);
-            g.drawRect(ladder.get(i).ladderTopCol.x, ladder.get(i).ladderTopCol.y, ladder.get(i).ladderTopCol.width,
-                    ladder.get(i).ladderTopCol.height);
-            g.drawRect(ladder.get(i).ladderBottomCol.x, ladder.get(i).ladderBottomCol.y,
-                    ladder.get(i).ladderBottomCol.width, ladder.get(i).ladderBottomCol.height);
+            g.drawRect(ladder.get(i).topCol.x, ladder.get(i).topCol.y, ladder.get(i).topCol.width,
+                    ladder.get(i).topCol.height);
+            g.drawRect(ladder.get(i).bottomCol.x, ladder.get(i).bottomCol.y,
+                    ladder.get(i).bottomCol.width, ladder.get(i).bottomCol.height);
             g.setColor(Color.cyan);
-            g.drawRect(ladder.get(i).ladderLeftCol.x, ladder.get(i).ladderLeftCol.y,
-                    ladder.get(i).ladderLeftCol.width, ladder.get(i).ladderLeftCol.height);
-            g.drawRect(ladder.get(i).ladderRightCol.x, ladder.get(i).ladderRightCol.y,
-                    ladder.get(i).ladderRightCol.width, ladder.get(i).ladderRightCol.height);
+            g.drawRect(ladder.get(i).leftCol.x, ladder.get(i).leftCol.y,
+                    ladder.get(i).leftCol.width, ladder.get(i).leftCol.height);
+            g.drawRect(ladder.get(i).rightCol.x, ladder.get(i).rightCol.y,
+                    ladder.get(i).rightCol.width, ladder.get(i).rightCol.height);
             g.setColor(Color.yellow);
-            g.drawRect(ladder.get(i).ladderCol.x, ladder.get(i).ladderCol.y, ladder.get(i).ladderCol.width,
-                    ladder.get(i).ladderCol.height);
+            g.drawRect(ladder.get(i).col.x, ladder.get(i).col.y, ladder.get(i).col.width,
+                    ladder.get(i).col.height);
         }
 
         for (int i = 0; i < room.size(); i++) {
             g.setColor(Color.yellow);
-            g.drawRect(room.get(i).roomCol.x, room.get(i).roomCol.y, room.get(i).roomCol.width,
-                    room.get(i).roomCol.height);
+            g.drawRect(room.get(i).col.x, room.get(i).col.y, room.get(i).col.width,
+                    room.get(i).col.height);
             g.setColor(Color.blue);
             g.drawRect(room.get(i).floor.x, room.get(i).floor.y, room.get(i).floor.width,
                     room.get(i).floor.height);
@@ -252,22 +254,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         // Upon starting the game, add ladders to arraylist of ladders.
         ladder.add(new Ladder(CHUNK * 18, CHUNK * 4, 0));
         ladder.add(new Ladder(CHUNK * 3, CHUNK * 8, 1));
-        room.add(new Room(CHUNK * 2, CHUNK * 6, 0)); // Start at level 0 as index starts at 0.
-        room.add(new Room(CHUNK * 2, CHUNK * 10, 1));
-        for (int i = 0; i < room.size(); i++)
-            populate(i);
+        room.add(new Room(roomX, roomYBase + roomYLevel * 0, 0)); // Start at level 0 as index starts at 0.
+        room.add(new Room(roomX, roomYBase + roomYLevel * 1, 1));
 
         gameThread = new Thread(this);
         gameThread.start();
-    }
-
-    public void populate(int level) { // Adds enemies to each level.
-        for (int i = 0; i < level * 3 + 400; i++) {
-            enemy.add(new Enemy(0, 0, level));
-            enemy.get(i).x = (int) (Math.random() * room.get(level).width + room.get(level).x);
-            enemy.get(i).y = room.get(level).y + room.get(level).height - enemy.get(i).height / 2;
-            // Enemy height has to be subracted after its creation.
-        }
     }
 
     public void move() {
@@ -324,7 +315,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void panY(int level, Boolean up) {
         if (up) { // If up is true.
-            if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 > HEIGHT / 2) {
+            if (room.get(level).col.y + room.get(level).col.height / 2 > HEIGHT / 2) {
                 panYAccelerating = true;
                 // Check center of room against center of screen.
                 if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
@@ -341,7 +332,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             } else
                 panYDone = true; // Once finished panning, set panYDone to true.
         } else { // If up is false.
-            if (room.get(level).roomCol.y + room.get(level).roomCol.height / 2 < HEIGHT / 2) {
+            if (room.get(level).col.y + room.get(level).col.height / 2 < HEIGHT / 2) {
                 // Check center of room against center of screen.
                 if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
                     parallax += panYSpeed; // Increase parallax.
@@ -364,25 +355,23 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         groundCol = new Rectangle(0, HEIGHT / 2 + parallax, WIDTH, CHUNK);
 
         for (int i = 0; i < room.size(); i++) {
-            room.get(i).roomCol.y = room.get(i).y + parallax;
+            room.get(i).col.y = room.get(i).y + parallax;
             room.get(i).floor.y = room.get(i).y + room.get(i).height + parallax;
+            for (int j = 0; j < room.get(i).enemy.size(); j++)
+                room.get(i).enemy.get(j).col.y = room.get(i).enemy.get(j).y + parallax;
         }
 
         for (int i = 0; i < ladder.size(); i++) {
-            ladder.get(i).ladderCol.y = ladder.get(i).y - ladder.get(i).offset * 2 + parallax;
-            ladder.get(i).ladderTopCol.y = ladder.get(i).ladderCol.y - ladder.get(i).offset;
-            ladder.get(i).ladderBottomCol.y = ladder.get(i).ladderCol.y + ladder.get(i).ladderCol.height - playerHeight;
-            ladder.get(i).ladderLeftCol.y = ladder.get(i).ladderCol.y;
-            ladder.get(i).ladderRightCol.y = ladder.get(i).ladderCol.y;
-            // Parallax added to ladderCol, no need to add to ladderLeft or right a seconnd
+            ladder.get(i).col.y = ladder.get(i).y - ladder.get(i).offset * 2 + parallax;
+            ladder.get(i).topCol.y = ladder.get(i).col.y - ladder.get(i).offset;
+            ladder.get(i).bottomCol.y = ladder.get(i).col.y + ladder.get(i).col.height - playerHeight;
+            ladder.get(i).leftCol.y = ladder.get(i).col.y;
+            ladder.get(i).rightCol.y = ladder.get(i).col.y;
+            // Parallax added to col, no need to add to ladderLeft or right a seconnd
             // time.
         }
-        // Only need to add parallax to ladderCol, as ladderTop and BottomCol are tied
-        // to ladderCol.
-
-        for (int i = 0; i < enemy.size(); i++) {
-            enemy.get(i).enemyCol.y = enemy.get(i).y - enemy.get(i).y * 2 + parallax;
-        }
+        // Only need to add parallax to col, as ladderTop and BottomCol are tied
+        // to col.
     }
 
     public void accelarate() {
@@ -423,14 +412,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         // Code for intersecting with left and right ladder colliders.
         for (int i = 0; i < ladder.size(); i++) {
-            if (playerCol.intersects(ladder.get(i).ladderLeftCol) && inRoom < 0
+            if (playerCol.intersects(ladder.get(i).leftCol) && inRoom < 0
                     && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
                 inWallLeft = true; // Stops player from being able to move left.
                 playerLeft = 0;
             } else
                 inWallLeft = false;
 
-            if (playerCol.intersects(ladder.get(i).ladderRightCol) && inRoom < 0
+            if (playerCol.intersects(ladder.get(i).rightCol) && inRoom < 0
                     && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
                 inWallRight = true;
                 playerRight = 0;
@@ -439,8 +428,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         for (int i = 0; i < ladder.size(); i++) {
-            if (ladder.get(i).ladderCol.contains(playerCol)) { // Check to see if player is colliding with any of the
-                                                               // ladders.
+            if (ladder.get(i).col.contains(playerCol)) { // Check to see if player is colliding with any of the
+                                                         // ladders.
                 onLadder = true; // Set onLadder to true. Important this is done before gravity is calculated.
                 break; // Important to break. This stops onLadder from being set to false unessesarily.
             } else
@@ -448,8 +437,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         for (int i = 0; i < ladder.size(); i++)
-            if (ladder.get(i).ladderTopCol.contains(playerCol)) { // Check to see if player is colliding with tops of
-                                                                  // the ladders.
+            if (ladder.get(i).topCol.contains(playerCol)) { // Check to see if player is colliding with tops of
+                                                            // the ladders.
                 onLadderTop = true;
                 break;
                 // Set onLadderTop to true. This variable controlls jittering that happens if
@@ -458,8 +447,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 onLadderTop = false;
 
         for (int i = 0; i < ladder.size(); i++)
-            if (ladder.get(i).ladderBottomCol.contains(playerCol)) { // Check to see if player is colliding with bottoms
-                                                                     // of the ladders.
+            if (ladder.get(i).bottomCol.contains(playerCol)) { // Check to see if player is colliding with bottoms
+                                                               // of the ladders.
                 onLadderBottom = true;
                 break;
                 // Set onLadderTop to true. This variable controlls jittering that happens if
@@ -476,7 +465,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerJump++;
 
         for (int i = 0; i < room.size(); i++)
-            if (room.get(i).roomCol.contains(playerCol)) {
+            if (room.get(i).col.contains(playerCol)) {
                 inRoom = room.get(i).level;
                 roomLevel = room.get(i).level; // Used for illumination.
                 break;

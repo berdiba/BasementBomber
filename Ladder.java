@@ -17,11 +17,11 @@ public class Ladder {
 
     Image ladderImg;
     
-    Rectangle ladderCol;
-    Rectangle ladderTopCol;
-    Rectangle ladderBottomCol;
-    Rectangle ladderLeftCol;
-    Rectangle ladderRightCol;
+    Rectangle col;
+    Rectangle topCol;
+    Rectangle bottomCol;
+    Rectangle leftCol;
+    Rectangle rightCol;
 
     public Ladder(int x, int y, int level) {
         this.x = x;
@@ -29,14 +29,14 @@ public class Ladder {
         this.level = level;
 
         ladderImg = new ImageIcon("ladder.png").getImage();
-        ladderCol = new Rectangle(x - offset, y - offset * 2, ladderImg.getWidth(null) + offset * 2,
+        col = new Rectangle(x - offset, y - offset * 2, ladderImg.getWidth(null) + offset * 2,
                 ladderImg.getHeight(null) + offset * 2);
-        ladderTopCol = new Rectangle(ladderCol.x, ladderCol.y - offset, ladderCol.width, offset * 4);
-        ladderBottomCol = new Rectangle(ladderCol.x, ladderCol.y + ladderCol.height - Panel.playerHeight,
-                ladderCol.width, offset * 4);
+        topCol = new Rectangle(col.x, col.y - offset, col.width, offset * 4);
+        bottomCol = new Rectangle(col.x, col.y + col.height - Panel.playerHeight,
+                col.width, offset * 4);
         // ladderTop and ladderBottom offset above and below ladder.
-        ladderLeftCol = new Rectangle(ladderCol.x - CHUNK + CHUNK / 4, ladderCol.y, CHUNK, ladderCol.height);
-        ladderRightCol = new Rectangle(ladderCol.x + ladderCol.width - CHUNK / 4, ladderCol.y, CHUNK, ladderCol.height);
+        leftCol = new Rectangle(col.x - CHUNK + CHUNK / 4, col.y, CHUNK, col.height);
+        rightCol = new Rectangle(col.x + col.width - CHUNK / 4, col.y, CHUNK, col.height);
     }
 
     public void paint(Graphics g) {

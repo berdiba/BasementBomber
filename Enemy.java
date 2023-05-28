@@ -13,16 +13,16 @@ import java.lang.Math;
 import java.awt.geom.*;
 
 public class Enemy {
-    int x, y, level;
+    int level;
     int width, height;
+    int x, y;
+    int colXOffset = 8, colYOffset = 2;
 
     Image enemyImg;
 
-    Rectangle enemyCol;
+    Rectangle col;
 
-    public Enemy(int x, int y, int level) {
-        this.x = x;
-        this.y = y; //y = Panel.room.get(level).y + Panel.room.get(level).height
+    public Enemy(int level) {
         this.level = level;
 
         enemyImg = new ImageIcon("enemy"+level+".png").getImage();
@@ -30,11 +30,19 @@ public class Enemy {
         width = enemyImg.getWidth(null);
         height = enemyImg.getHeight(null);
 
-        enemyCol = new Rectangle(x, y + Panel.parallax, width, height);
+        x = (int) (Math.random() * (Room.width - width) + Panel.roomX);
+        y = Panel.roomYBase + Panel.roomYLevel * level + Room.height - height;
+
+        col = new Rectangle(x, y + Panel.parallax, width - colXOffset * 2, height - colYOffset * 2);
     }
 
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
+
+        if (Panel.lastInRoom == level)
+        enemyImg = new ImageIcon("enemy"+level+".png").getImage();
+        else
+        enemyImg = null;
 
         g2D.drawImage(enemyImg, x, y + Panel.parallax, null);
     }
