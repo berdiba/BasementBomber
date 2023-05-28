@@ -52,8 +52,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     // Rectangles
     Rectangle groundCol; // Collision for ground.
     Rectangle playerCol; // Collision box for player.
-    Rectangle wallLeftCol = new Rectangle(0, 0, CHUNK * 2 + 8, HEIGHT);
-    Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, 0, CHUNK * 2, HEIGHT);
+    static Rectangle wallLeftCol = new Rectangle(0, 0, CHUNK * 2 + 8, HEIGHT);
+    static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, 0, CHUNK * 2, HEIGHT);
 
     // Images.
     Image backgroundImg, groundImg, fogImg, buttonsImg;
@@ -150,7 +150,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         paintUI(g, g2D);
-        paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintPlayer(g, g2D);
     }
 
@@ -309,6 +309,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         // When recoil is set to be recoilMax, slowly push gun back to original
         // position.
 
+        for (int i = 0; i < room.size(); i++) {
+            for (int j = 0; j < room.get(i).enemy.size(); j++)
+                room.get(i).enemy.get(j).move(); // Move enemies.
+        }
         moveCol();
         accelarate();
     }
@@ -356,9 +360,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         for (int i = 0; i < room.size(); i++) {
             room.get(i).col.y = room.get(i).y + parallax;
-            room.get(i).floor.y = room.get(i).y + room.get(i).height + parallax;
-            for (int j = 0; j < room.get(i).enemy.size(); j++)
-                room.get(i).enemy.get(j).col.y = room.get(i).enemy.get(j).y + parallax;
+            room.get(i).floor.y = room.get(i).y + Room.height + parallax;
+            //Enemy col updated in enemy move function.
         }
 
         for (int i = 0; i < ladder.size(); i++) {
