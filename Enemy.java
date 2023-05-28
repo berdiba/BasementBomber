@@ -19,7 +19,8 @@ public class Enemy {
     int colXOffset = 8, colYOffset = 2;
     int speed = level + 3;
 
-    int decision, decisionTime = 0, decisionMax = 120, newDecision = (int) (Math.random() * decisionMax), moveDuration = 120;
+    int decision, decisionTime = 0, decisionMax = 120, newDecision = (int) (Math.random() * decisionMax),
+            moveDuration = 120;
     // DecisionMax measured in frames. 120 frames at 60 fps is 2 seconds.
 
     int growHeight = 0;
@@ -60,45 +61,47 @@ public class Enemy {
     }
 
     public void move() {
-        col = new Rectangle(x + colXOffset, y + Panel.parallax + colYOffset, width - colXOffset * 2, height - colYOffset * 2);
+        col = new Rectangle(x + colXOffset, y + Panel.parallax + colYOffset, width - colXOffset * 2,
+                height - colYOffset * 2);
+        // Update player collider.
 
-        if (decisionTime < newDecision && !takingAction)
-            decisionTime++;
+        if (decisionTime < newDecision && !takingAction) // Triggers only when player isnt taking an action.
+            decisionTime++; // Increace decisionTime until it reaches newDecision
         else {
-            takingAction = true;
+            takingAction = true; // When decisionTime = newDecision, take an action.
 
             if (decisionTime == newDecision)
-            decision = (int) (Math.random() * 3);
+                decision = (int) (Math.random() * 3); // Make a random decision.
 
             switch (decision) {
                 case 0:
-                    decisionTime = 0;
+                    decisionTime = 0; // Stay still
                     break;
                 case 1:
-                    moveLeft();
+                    moveLeft(); // Move left
                     break;
                 case 2:
-                    moveRight();
+                    moveRight(); // Move right
                     break;
             }
-            decisionTime--;
+            decisionTime--; // Enemy moves left / right until decisiontime reaches 0.
 
             if (decisionTime <= 0) {
-            takingAction = false;
-            newDecision = (int) (Math.random() * decisionMax);
+                takingAction = false; // Stop taking action.
+                newDecision = (int) (Math.random() * decisionMax); // Regenerate the decision.
             }
         }
     }
 
     public void moveLeft() {
-        x = x - speed;
+        x = x - speed; // Move left.
         if (col.intersects(Panel.wallLeftCol))
-        decision = 2; // Makes enemy move right instead.
+            decision = 2; // Makes enemy move right instead for remaining decision duration.
     }
 
     public void moveRight() {
         x = x + speed;
         if (col.intersects(Panel.wallRightCol))
-        decision = 1;
+            decision = 1;
     }
 }
