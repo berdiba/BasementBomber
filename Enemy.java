@@ -93,12 +93,12 @@ public class Enemy {
     public void moveLeft() {
         x = x - speed;
         if (col.intersects(Panel.wallLeftCol))
-        moveRight();
+        decision = 2; // Makes enemy move right instead.
     }
 
     public void moveRight() {
         x = x + speed;
         if (col.intersects(Panel.wallRightCol))
-        moveLeft();
+        decision = 1;
     }
 }
