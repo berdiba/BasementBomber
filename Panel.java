@@ -419,6 +419,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
                 inWallLeft = true; // Stops player from being able to move left.
                 playerLeft = 0;
+                playerX++;
             } else
                 inWallLeft = false;
 
@@ -426,6 +427,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
                 inWallRight = true;
                 playerRight = 0;
+                playerX--;
             } else
                 inWallRight = false;
         }

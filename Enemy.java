@@ -25,7 +25,7 @@ public class Enemy {
 
     int growHeight = 0;
 
-    Boolean takingAction = false;
+    Boolean takingAction = false, facingLeft = true;
 
     Image enemyImg;
 
@@ -51,12 +51,21 @@ public class Enemy {
         if (Panel.lastInRoom == level) { // Activate when player enters enemies level.
             if (growHeight < height) {
                 growHeight = growHeight + height / 4; // Increase growheight.
+                if (facingLeft)
+                    g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + width, -width, growHeight,
+                            null);
+                else
+                    g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + width, width, growHeight, null);
+            } else if (facingLeft)
+                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + width, -width, growHeight, null);
+            else
                 g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + width, width, growHeight, null);
-            } else
-                g2D.drawImage(enemyImg, x, y + Panel.parallax, null);
         } else if (growHeight > 0) {
             growHeight = growHeight - height / 4; // Decrease growheight.
-            g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + width, width, growHeight, null);
+            if (facingLeft)
+                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + width, -width, growHeight, null);
+            else
+                g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + width, width, growHeight, null);
         }
     }
 
@@ -94,12 +103,14 @@ public class Enemy {
     }
 
     public void moveLeft() {
+        facingLeft = true;
         x = x - speed; // Move left.
         if (col.intersects(Panel.wallLeftCol))
             decision = 2; // Makes enemy move right instead for remaining decision duration.
     }
 
     public void moveRight() {
+        facingLeft = false;
         x = x + speed;
         if (col.intersects(Panel.wallRightCol))
             decision = 1;

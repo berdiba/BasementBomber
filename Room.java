@@ -59,7 +59,5 @@ public class Room {
         for (int i = 0; i < level * 3 + 4; i++) {
             enemy.add(new Enemy(level));
         }
-
-        System.out.println(enemy.size());
     }
 }
