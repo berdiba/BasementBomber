@@ -19,7 +19,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     final static int WIDTH = 1400, HEIGHT = 600, CHUNK = 64;
 
-    int gravity = 10;
+    int gravityMax = 10, gravity = gravityMax;
     static int gameTime = 0;
 
     char key;
@@ -68,7 +68,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        this.setBackground(new Color(175, 207, 194));
+        this.setBackground(new Color(175, 207, 194)); // Sets background colour to be teal.
 
         addKeyListener(this); // Setting up listeners here as they are used throughought the whole game.
         addMouseListener(this);
@@ -97,6 +97,21 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         menu();
     }
 
+    public void menu() {
+        startGame();
+    }
+
+    public void startGame() {
+        // Upon starting the game, add ladders to arraylist of ladders.
+        ladder.add(new Ladder(CHUNK * 18, CHUNK * 4, 0));
+        ladder.add(new Ladder(CHUNK * 3, CHUNK * 8, 1));
+        room.add(new Room(roomX, roomYBase + roomYLevel * 0, 0)); // Start at level 0 as index starts at 0.
+        room.add(new Room(roomX, roomYBase + roomYLevel * 1, 1));
+
+        gameThread = new Thread(this);
+        gameThread.start();
+    }
+
     public void run() { // Game loop.
         long lastTime = System.nanoTime();
         double ticks = 60.0; // Game will refresh 60 times per second.
@@ -117,33 +132,44 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
     }
 
-    public void paint(Graphics g) {
+    public void paint(Graphics g) { // Controlls all graphics.
         super.paint(g); // Paints the background using the parent class.
 
         Graphics2D g2D = (Graphics2D) g;
 
         Toolkit.getDefaultToolkit().sync(); // Supposedly makes game run smoother.
 
-        // Paint background.
-        g2D.drawImage(backgroundImg, 0, parallax / 2, null);
+        paintBackground(g, g2D);
+        paintForeground(g, g2D);
+        paintProjectiles(g, g2D);
+        paintPlayer(g, g2D);
+        // paintCol(g, g2D);
+        paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
+    }
+
+    public void paintBackground(Graphics g, Graphics2D g2D) { // Paints background and fog.
+        g2D.drawImage(backgroundImg, 0, parallax / 4, null);
         g2D.drawImage(fogImg, fogX, -HEIGHT / 2 + parallax, null);
         g2D.drawImage(fogImg, fog2X, -HEIGHT / 2 + parallax, null);
+    }
 
-        // Paint foreground.
+    public void paintForeground(Graphics g, Graphics2D g2D) { // Paints ground, rooms, ladders, enemies.
         g.setColor(new Color(39, 46, 69)); // Set colour to ground colour.
         g2D.fillRect(groundCol.x, groundCol.y, groundCol.width, HEIGHT * 16);
         g2D.drawImage(groundImg, groundCol.x, groundCol.y, null);
 
         for (int i = 0; i < room.size(); i++) {
-            room.get(i).paint(g);
+            // Creates temp variable i, runs code until i is no longer < than room.size().
+            room.get(i).paint(g); // For every room i, call its paint method using Graphics g.
             ladder.get(i).paint(g);
         }
         for (int i = 0; i < room.size(); i++) {
             for (int j = 0; j < room.get(i).enemy.size(); j++)
                 room.get(i).enemy.get(j).paint(g); // Paint enemies.
         }
+    }
 
-        // Paint projectiles.
+    public void paintProjectiles(Graphics g, Graphics2D g2D) { // Paints player projectiles.
         g.setColor(new Color(39, 46, 69));
         g2D.setStroke(new BasicStroke(2));
         for (int i = 0; i < projectile.size(); i++) {
@@ -151,27 +177,33 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     projectile.get(i).height + 1); // Draw outline for projectile to make it more visible.
             projectile.get(i).paint(g);
         }
-
-        paintUI(g, g2D);
-        //paintCol(g, g2D);
-        paintPlayer(g, g2D);
     }
 
-    public void paintUI(Graphics g, Graphics2D g2D) {
-        // Paint UI.
-        if (showControlls) {
-            // Using Math.sin() gives a value that switches between negative and positive at
-            // a controlled rate.
-            if (Math.sin(gameTime / 4) > 0)
-                buttonsImg = new ImageIcon("buttons1.png").getImage();
+    public void paintPlayer(Graphics g, Graphics2D g2D) { // Paints player.
+        if (!onLadder) {
+            if (facingLeft) { // Player faces direction of travel.
+                g2D.drawImage(playerImg, playerX + playerWidth - recoil / 2, playerY + playerWobble + parallax,
+                        -playerWidth, playerHeight, null);
+                g2D.drawImage(playerItemImg, playerX + playerWidth - recoil, playerY + playerWobble + parallax,
+                        -playerWidth, playerHeight, null);
+            } else {
+                g2D.drawImage(playerImg, playerX + recoil / 2, playerY + playerWobble + parallax, playerWidth,
+                        playerHeight, null);
+                g2D.drawImage(playerItemImg, playerX + recoil, playerY + playerWobble + parallax, playerWidth,
+                        playerHeight, null);
+            }
+        } else { // Draw player differently when on ladder.
+            if (climbingLadder)
+                if (Math.sin(gameTime) > 0)
+                    g2D.drawImage(playerClimbImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
+                else
+                    g2D.drawImage(playerOnLadderImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
             else
-                buttonsImg = new ImageIcon("buttons2.png").getImage();
-            g2D.drawImage(buttonsImg, CHUNK / 2 + parallax * 2, CHUNK / 2, null);
-            // When parallax increases, buttons are moved to the side.
+                g2D.drawImage(playerOnLadderImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
         }
     }
 
-    public void paintCol(Graphics g, Graphics2D g2D) {
+    public void paintCol(Graphics g, Graphics2D g2D) { // Paints collision boxes for everything.
         /**
          * PLAYER and ENEMIES drawn in GREEN.
          * MAJOR COLLISION BOXES drawn in BLUE.
@@ -183,23 +215,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         // Draw collision boxes
         g2D.setStroke(new BasicStroke(2));
-        g.setColor(Color.green);
-        g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height); // Player hitbox.
-        for (int i = 0; i < room.size(); i++)
-            for (int j = 0; j < room.get(i).enemy.size(); j++) {
-                g.setColor(Color.orange);
-                g.drawRect(room.get(i).enemy.get(j).viewCol.x, room.get(i).enemy.get(j).viewCol.y,
-                        room.get(i).enemy.get(j).viewCol.width, room.get(i).enemy.get(j).viewCol.height);
-                g.setColor(Color.green);
-                g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
-                        room.get(i).enemy.get(j).col.width, room.get(i).enemy.get(j).col.height);
-                g.setColor(Color.red);
-                g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
-                        1, room.get(i).enemy.get(j).col.height);
-                g.drawRect(room.get(i).enemy.get(j).col.x + room.get(i).enemy.get(j).col.width,
-                        room.get(i).enemy.get(j).col.y, 1,
-                        room.get(i).enemy.get(j).col.height);
-            }
+
+        g.setColor(Color.blue);
+        g.drawRect(wallLeftCol.x, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height);
+        g.drawRect(wallRightCol.x, wallRightCol.y, wallRightCol.width, wallRightCol.height);
 
         for (int i = 0; i < ladder.size(); i++) { // Draw all ladder colliders
             g.setColor(Color.orange);
@@ -217,77 +236,52 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     ladder.get(i).col.height);
         }
 
-        for (int i = 0; i < room.size(); i++) {
-            g.setColor(Color.yellow);
-            g.drawRect(room.get(i).col.x, room.get(i).col.y, room.get(i).col.width,
-                    room.get(i).col.height);
-            g.setColor(Color.blue);
+        for (int i = 0; i < room.size(); i++) { // Draw room colliders
+            g.setColor(Color.blue); // Floor and ceiling colliders.
+            g.drawRect(room.get(i).ceiling.x, room.get(i).ceiling.y, room.get(i).ceiling.width,
+                    room.get(i).ceiling.height);
             g.drawRect(room.get(i).floor.x, room.get(i).floor.y, room.get(i).floor.width,
                     room.get(i).floor.height);
+            g.setColor(Color.yellow); // Room collider.
+            g.drawRect(room.get(i).col.x, room.get(i).col.y, room.get(i).col.width,
+                    room.get(i).col.height);
         }
 
-        g.setColor(Color.blue);
-        g.drawRect(wallLeftCol.x, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height);
-        g.drawRect(wallRightCol.x, wallRightCol.y, wallRightCol.width, wallRightCol.height);
-    }
-
-    public void paintPlayer(Graphics g, Graphics2D g2D) {
-        // Drawing player.
-        if (!onLadder) {
-            if (facingLeft) {
-                g2D.drawImage(playerImg, playerX + playerWidth - recoil / 2, playerY + playerWobble + parallax,
-                        -playerWidth,
-                        playerHeight,
-                        null);
-                g2D.drawImage(playerItemImg, playerX + playerWidth - recoil, playerY + playerWobble + parallax,
-                        -playerWidth,
-                        playerHeight,
-                        null);
-            } else {
-                g2D.drawImage(playerImg, playerX + recoil / 2, playerY + playerWobble + parallax, playerWidth,
-                        playerHeight, null);
-                g2D.drawImage(playerItemImg, playerX + recoil, playerY + playerWobble + parallax, playerWidth,
-                        playerHeight,
-                        null);
+        g.setColor(Color.green); // Player hitbox.
+        g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
+        for (int i = 0; i < room.size(); i++)
+            for (int j = 0; j < room.get(i).enemy.size(); j++) {
+                g.setColor(Color.orange); // Enemy view distance.
+                g.drawRect(room.get(i).enemy.get(j).viewCol.x, room.get(i).enemy.get(j).viewCol.y,
+                        room.get(i).enemy.get(j).viewCol.width, room.get(i).enemy.get(j).viewCol.height);
+                g.setColor(Color.green); // Enemy hitbox.
+                g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
+                        room.get(i).enemy.get(j).col.width, room.get(i).enemy.get(j).col.height);
+                g.setColor(Color.red); // Enemy damage collider.
+                g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
+                        1, room.get(i).enemy.get(j).col.height);
+                g.drawRect(room.get(i).enemy.get(j).col.x + room.get(i).enemy.get(j).col.width,
+                        room.get(i).enemy.get(j).col.y, 1,
+                        room.get(i).enemy.get(j).col.height);
             }
-        } else { // Draw player differently when on ladder.
-            if (climbingLadder)
-                if (Math.sin(gameTime) > 0)
-                    g2D.drawImage(playerClimbImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
-                else
-                    g2D.drawImage(playerOnLadderImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
+    }
+
+    public void paintUI(Graphics g, Graphics2D g2D) { // Paints user interface.
+        // Paint UI.
+        if (showControlls) {
+            // Using Math.sin() gives a value that switches between negative and positive at
+            // a controlled rate.
+            if (Math.sin(gameTime / 4) > 0)
+                buttonsImg = new ImageIcon("buttons1.png").getImage();
             else
-                g2D.drawImage(playerOnLadderImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
+                buttonsImg = new ImageIcon("buttons2.png").getImage();
+            g2D.drawImage(buttonsImg, CHUNK / 2 + parallax * 2, CHUNK / 2, null);
+            // When parallax increases, buttons are moved to the side.
         }
-    }
-
-    public void menu() {
-        startGame();
-    }
-
-    public void startGame() {
-        // Upon starting the game, add ladders to arraylist of ladders.
-        ladder.add(new Ladder(CHUNK * 18, CHUNK * 4, 0));
-        ladder.add(new Ladder(CHUNK * 3, CHUNK * 8, 1));
-        room.add(new Room(roomX, roomYBase + roomYLevel * 0, 0)); // Start at level 0 as index starts at 0.
-        room.add(new Room(roomX, roomYBase + roomYLevel * 1, 1));
-
-        gameThread = new Thread(this);
-        gameThread.start();
     }
 
     public void move() {
-        if (inRoom >= 0) // Makes sure pan only triggers when player is in a room.
-            if (lastInRoom != inRoom) { // Check to see if player is in a new room.
-                panYDone = false;
-                if (lastInRoom > inRoom)
-                    panY(inRoom, false); // Pan down to specified room.
-                else
-                    panY(inRoom, true);
-                if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
-                    lastInRoom = inRoom;
-            }
-
+        // Update player position.
         playerY = playerY + playerUp + gravity + playerClimbSpeed + -Math.abs(launchSpeed * 2 / 3);
         playerX = playerX + playerLeft + playerRight + launchSpeed;
         playerCol.x = playerX + playerColXOffset;
@@ -339,49 +333,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         accelarate();
     }
 
-    public void panY(int level, Boolean up) {
-        if (up) { // If up is true.
-            if (room.get(level).col.y + room.get(level).col.height / 2 > HEIGHT / 2) {
-                panYAccelerating = true;
-                // Check center of room against center of screen.
-                if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
-                    parallax -= panYSpeed; // Reduce parallax.
-                    panYSpeed++; // Increase panYSpeed towards maximum of 32.
-                } else {
-                    panYAccelerating = false;
-                    // Set panYAccelerating to be false, stopping above statement re-triggering.
-                    if (panYSpeed >= 8) {
-                        parallax -= panYSpeed; // Reduce parallax.
-                        panYSpeed--; // Increase panYSpeed towards maximum of 32.
-                    }
-                }
-            } else
-                panYDone = true; // Once finished panning, set panYDone to true.
-        } else { // If up is false.
-            if (room.get(level).col.y + room.get(level).col.height / 2 < HEIGHT / 2) {
-                // Check center of room against center of screen.
-                if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
-                    parallax += panYSpeed; // Increase parallax.
-                    panYSpeed++; // Increase panYSpeed towards maximum of 32.
-                } else {
-                    panYAccelerating = false;
-                    // Set panYAccelerating to be false, stopping above statement re-triggering.
-                    if (panYSpeed >= 8) {
-                        parallax += panYSpeed; // Increase parallax.
-                        panYSpeed--; // Increase panYSpeed towards maximum of 32.
-                    }
-                }
-            } else
-                panYDone = true;
-        }
-
-    }
-
     public void moveCol() { // Adds parallax effect to colliders.
         groundCol = new Rectangle(0, HEIGHT / 2 + parallax, WIDTH, CHUNK);
 
         for (int i = 0; i < room.size(); i++) {
             room.get(i).col.y = room.get(i).y + parallax;
+            room.get(i).ceiling.y = room.get(i).y - CHUNK / 2 + parallax;
             room.get(i).floor.y = room.get(i).y + Room.height + parallax;
             // Enemy col updated in enemy move function.
         }
@@ -437,8 +394,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         } else
             inWallRight = false;
 
+        checkPan();
         checkLadderCollisions();
         checkGroundCollisions();
+        checkEnemyCollisions();
 
         if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
@@ -451,37 +410,61 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             } else
                 inRoom = -1;
 
-        for (int i = 0; i < room.size(); i++)
-            for (int j = 0; j < room.get(i).enemy.size(); j++) {
-                room.get(i).enemy.get(j).checkCollisions(); // Move enemies.
-
-                if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor.x, room.get(i).floor.y - 1,
-                        room.get(i).floor.width, room.get(i).floor.height)) {
-                    // Check enemy col against room floor pushed down 1;
-                    room.get(i).enemy.get(j).up = -room.get(i).enemy.get(j).gravity; // Nullify enemy gravity.
-                } else
-                    room.get(i).enemy.get(j).up = 0; // Let enemy fall back down to ground.
-
-                if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
-                    room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
-
-                if (playerCol.intersects(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
-                        1, room.get(i).enemy.get(j).col.height)) {
-                    damage(false);
-                }
-                if (playerCol.intersects(room.get(i).enemy.get(j).col.x + room.get(i).enemy.get(j).col.width,
-                        room.get(i).enemy.get(j).col.y, 1,
-                        room.get(i).enemy.get(j).col.height)) {
-                    damage(true);
-                }
-            }
-
-        for (int j = 0; j < projectile.size(); j++)
-            if (projectile.get(j).x < -WIDTH || projectile.get(j).x > WIDTH * 2)
-                projectile.remove(j); // Remove projectiles that travel off the screen.
+        killStrayProjectiles();
     }
 
-    public void checkLadderCollisions() {
+    public void checkPan() { // Detects when panY should be triggered.
+        if (inRoom >= 0) // Makes sure pan only triggers when player is in a room.
+            if (lastInRoom != inRoom) { // Check to see if player is in a new room.
+                panYDone = false;
+                if (lastInRoom > inRoom)
+                    panY(inRoom, false); // Pan down to specified room.
+                else
+                    panY(inRoom, true);
+                if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
+                    lastInRoom = inRoom;
+            }
+    }
+
+    public void panY(int level, Boolean up) { // Moves camera up / down to room players in.
+        if (up) { // If up is true.
+            if (room.get(level).col.y + room.get(level).col.height / 2 > HEIGHT / 2) {
+                panYAccelerating = true;
+                // Check center of room against center of screen.
+                if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
+                    parallax -= panYSpeed; // Reduce parallax.
+                    panYSpeed++; // Increase panYSpeed towards maximum of 32.
+                } else {
+                    panYAccelerating = false;
+                    // Set panYAccelerating to be false, stopping above statement re-triggering.
+                    if (panYSpeed >= 8) {
+                        parallax -= panYSpeed; // Reduce parallax.
+                        panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                    }
+                }
+            } else
+                panYDone = true; // Once finished panning, set panYDone to true.
+        } else { // If up is false.
+            if (room.get(level).col.y + room.get(level).col.height / 2 < HEIGHT / 2) {
+                // Check center of room against center of screen.
+                if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
+                    parallax += panYSpeed; // Increase parallax.
+                    panYSpeed++; // Increase panYSpeed towards maximum of 32.
+                } else {
+                    panYAccelerating = false;
+                    // Set panYAccelerating to be false, stopping above statement re-triggering.
+                    if (panYSpeed >= 8) {
+                        parallax += panYSpeed; // Increase parallax.
+                        panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                    }
+                }
+            } else
+                panYDone = true;
+        }
+
+    }
+
+    public void checkLadderCollisions() { // Collisions between player and ladders.
         // Code for intersecting with left and right ladder colliders.
         for (int i = 0; i < ladder.size(); i++) {
             if (playerCol.intersects(ladder.get(i).leftCol) && inRoom < 0
@@ -531,9 +514,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 onLadderBottom = false;
 
         if (onLadder)
-            gravity = 0;
+            gravity = 0; // So that player can stay still while on ladder.
         else
-            gravity = 10;
+            gravity = gravityMax;
     }
 
     public void checkGroundCollisions() {
@@ -566,7 +549,35 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 playerY--;
     }
 
+    public void checkEnemyCollisions() { // Manages enemy collisions with ground, and hitting player.
+        for (int i = 0; i < room.size(); i++)
+            for (int j = 0; j < room.get(i).enemy.size(); j++) {
+                room.get(i).enemy.get(j).checkCollisions(); // Check enemy collisions.
+
+                if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor.x, room.get(i).floor.y - 1,
+                        room.get(i).floor.width, room.get(i).floor.height)) {
+                    // Check enemy col against room floor pushed down 1;
+                    room.get(i).enemy.get(j).up = -room.get(i).enemy.get(j).gravity; // Nullify enemy gravity.
+                } else
+                    room.get(i).enemy.get(j).up = 0; // Let enemy fall back down to ground.
+
+                if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
+                    room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
+
+                if (playerCol.intersects(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
+                        1, room.get(i).enemy.get(j).col.height)) {
+                    damage(false);
+                }
+                if (playerCol.intersects(room.get(i).enemy.get(j).col.x + room.get(i).enemy.get(j).col.width,
+                        room.get(i).enemy.get(j).col.y, 1,
+                        room.get(i).enemy.get(j).col.height)) {
+                    damage(true);
+                }
+            }
+    }
+
     public void damage(Boolean isLeft) {
+        playerJump = 0;
         if (isLeft) {
             launchSpeed = launchSpeedMax;
             playerLeft = 0;
@@ -576,6 +587,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerLeft = 0;
             playerRight = 0;
         }
+    }
+
+    public void killStrayProjectiles() {
+        for (int i = 0; i < projectile.size(); i++)
+            if (projectile.get(i).x < -WIDTH || projectile.get(i).x > WIDTH * 2)
+                projectile.remove(i); // Remove projectiles that travel off the screen.
     }
 
     public void keyTyped(KeyEvent e) {

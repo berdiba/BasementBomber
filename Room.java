@@ -20,7 +20,7 @@ public class Room {
     Image roomImg;
 
     Rectangle col;
-    Rectangle floor;
+    Rectangle ceiling, floor;
 
     ArrayList<Enemy> enemy = new ArrayList<Enemy>();
 
@@ -33,7 +33,8 @@ public class Room {
         roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
         // Images named "room1, room2..." each level will have different image.
         col = new Rectangle(x, y, width, height); // Paralax added later in Panel.
-        floor = new Rectangle(x, y + height, width, Panel.CHUNK);
+        ceiling = new Rectangle(x, y + height, width, Panel.CHUNK / 2);
+        floor = new Rectangle(x, y - Panel.CHUNK / 2, width, Panel.CHUNK / 2);
         // Creates rectangle 1 chunk tall at the bottom of a room.
 
         populate();
@@ -56,7 +57,7 @@ public class Room {
     }
 
     public void populate() { // Adds enemies to the level.
-        for (int i = 0; i < level * 3 + 1; i++) {
+        for (int i = 0; i < level * 3 + 4; i++) {
             enemy.add(new Enemy(level));
         }
     }
