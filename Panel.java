@@ -1,6 +1,6 @@
 
 /**
- * Panel which runs all graphics.
+ * Panel which manages most of the game.
  *
  * @author BAXTER BERDINNER
  * @version 20/02/2023
@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.lang.Math;
-import java.awt.geom.*;
+// import java.awt.geom.*; // Remove later on if never used.
 import java.util.ArrayList;
 
 public class Panel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
@@ -19,10 +19,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     final static int WIDTH = 1400, HEIGHT = 600, CHUNK = 64;
 
-    int gravityMax = 10, gravity = gravityMax;
+    static int gravityMax = 10, gravity = gravityMax;
     static int gameTime = 0;
 
-    char key;
+    char key; // Used for player movement left / right.
 
     static int parallax = 0;
     static int panYSpeed = 8;
@@ -31,12 +31,16 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     // Integers.
     static int playerX, playerY, playerWidth, playerHeight;
-    int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
+    static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
     int playerSpeed = 10, playerJumpHeight = -24, playerClimbSpeed = 0;
     int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
     int playerWobble = 0; // Controls the bobbing up and down of player when walking.
     int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
+
+    int healthMax = 6, health = healthMax;
+    int heartWobbleX, heartyWobbleY;
+    int damageFlashMax = 8, damageFlash;
 
     int launchSpeed, launchSpeedMax = playerSpeed * 2;
 
@@ -52,8 +56,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean inWallLeft = false, inWallRight = false;
 
     // Rectangles
-    static Rectangle groundCol; // Collision for ground.
     static Rectangle playerCol; // Collision box for player.
+    static Rectangle groundCol; // Collision for ground.
     static Rectangle wallLeftCol = new Rectangle(0, -HEIGHT * 8, CHUNK * 2 + 8, HEIGHT * 16);
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
 
@@ -61,10 +65,16 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     Image backgroundImg = new ImageIcon("background.png").getImage();
     Image groundImg = new ImageIcon("ground.png").getImage();
     Image fogImg = new ImageIcon("fog.png").getImage();
+
     Image playerImg = new ImageIcon("player.png").getImage();
     Image playerOnLadderImg = new ImageIcon("playerOnLadder.png").getImage();
     Image playerClimbImg = new ImageIcon("playerClimb.png").getImage();
     Image playerItemImg = new ImageIcon("bazooka.png").getImage();
+
+    Image heartEmptyImg = new ImageIcon("heartEmpty.png").getImage();
+    Image heartFullImg = new ImageIcon("heartFull.png").getImage();
+    Image heartEmptyDamageImg = new ImageIcon("heartEmptyDamage.png").getImage();
+    Image heartFullDamageImg = new ImageIcon("heartFullDamage.png").getImage();
     Image buttonsImg; // buttonsImg set up later on.
 
     // ArrayLists
@@ -277,6 +287,20 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             g2D.drawImage(buttonsImg, CHUNK / 2 + parallax * 2, CHUNK / 2, null);
             // When parallax increases, buttons are moved to the side.
         }
+
+        if (damageFlash > 0) {
+            for (int i = 0; i < healthMax; i++)
+                g2D.drawImage(heartEmptyDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + heartWobbleX,
+                        CHUNK / 4 + heartWobbleX, null);
+            for (int i = 0; i < health - 1; i++)
+                g2D.drawImage(heartFullDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + heartWobbleX,
+                        CHUNK / 4 + heartyWobbleY, null);
+        } else {
+            for (int i = 0; i < healthMax; i++)
+                g2D.drawImage(heartEmptyImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4, null);
+            for (int i = 0; i < health - 1; i++)
+                g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4, null);
+        }
     }
 
     public void move() {
@@ -289,6 +313,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         if (movingLeft && !inWallLeft && !inWallLeft || movingRight && !inWallLeft && !inWallRight) {
             playerWobble = (int) (Math.sin(gameTime) * 2);
         } // Alternates between 1 and -1 to create a bobbing up and down motion.
+
+        if (damageFlash > 0) {
+            heartWobbleX = (int) (Math.sin(gameTime) * 2);
+            heartyWobbleY = (int) (Math.sin(gameTime + 1) * 2);
+        }
 
         if (onLadder) {
             playerSpeed = 2;
@@ -587,12 +616,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     damage(true);
                 }
             }
+        if (damageFlash > 0)
+            damageFlash--; // Decrease damageFlash to 0.
     }
 
     public void damage(Boolean isLeft) {
-        playerJump = 0;
+        damageFlash = damageFlashMax; // Set damageFlash to its maximum value.
+        playerJump = 0; // Stops player from being able to be launched and jump at the same time.
         if (isLeft) {
-            launchSpeed = launchSpeedMax;
+            launchSpeed = launchSpeedMax; // Launches the player left.
             playerLeft = 0;
             playerRight = 0;
         } else {
@@ -686,6 +718,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
     }
 
+    // Theese will be used later on when making menu.
     public void mouseClicked(MouseEvent e) {
     }
 
@@ -707,8 +740,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void mouseMoved(MouseEvent e) {
     }
 
-    public boolean isFocusTraversable() // Lets JPanel accept users input.
-    {
+    public boolean isFocusTraversable() { // Lets JPanel accept users input.
         return true;
     }
 }
