@@ -33,10 +33,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int playerX, playerY, playerWidth, playerHeight;
     int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
-    int playerSpeed = 10, playerJumpHeight = -20, playerClimbSpeed = 0;
+    int playerSpeed = 10, playerJumpHeight = -24, playerClimbSpeed = 0;
     int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
     int playerWobble = 0; // Controls the bobbing up and down of player when walking.
     int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
+
+    int launchSpeed, launchSpeedMax = playerSpeed * 2;
 
     int fogX = 0;
     int fog2X = -WIDTH; // Duplicate fog placed behind original to create seamless fog movement.
@@ -50,10 +52,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean inWallLeft = false, inWallRight = false;
 
     // Rectangles
-    Rectangle groundCol; // Collision for ground.
-    Rectangle playerCol; // Collision box for player.
-    static Rectangle wallLeftCol = new Rectangle(0, 0, CHUNK * 2 + 8, HEIGHT);
-    static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, 0, CHUNK * 2, HEIGHT);
+    static Rectangle groundCol; // Collision for ground.
+    static Rectangle playerCol; // Collision box for player.
+    static Rectangle wallLeftCol = new Rectangle(0, -HEIGHT * 8, CHUNK * 2 + 8, HEIGHT * 16);
+    static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
 
     // Images.
     Image backgroundImg, groundImg, fogImg, buttonsImg;
@@ -132,13 +134,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g2D.fillRect(groundCol.x, groundCol.y, groundCol.width, HEIGHT * 16);
         g2D.drawImage(groundImg, groundCol.x, groundCol.y, null);
 
-        for (int i = 0; i < room.size(); i++)
+        for (int i = 0; i < room.size(); i++) {
             room.get(i).paint(g);
-        for (int i = 0; i < ladder.size(); i++)
             ladder.get(i).paint(g);
-        for (int i = 0; i < room.size(); i++)
+        }
+        for (int i = 0; i < room.size(); i++) {
             for (int j = 0; j < room.get(i).enemy.size(); j++)
                 room.get(i).enemy.get(j).paint(g); // Paint enemies.
+        }
 
         // Paint projectiles.
         g.setColor(new Color(39, 46, 69));
@@ -175,6 +178,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
          * MINOR COLLISION BOXES drawn in CYAN.
          * MAIN-AOE BOXES drawn in YELLOW.
          * SUB-AOE BOXES drawn in ORANGE.
+         * DAMAGE BOXES drawn in RED.
          */
 
         // Draw collision boxes
@@ -182,9 +186,20 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g.setColor(Color.green);
         g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height); // Player hitbox.
         for (int i = 0; i < room.size(); i++)
-            for (int j = 0; j < room.get(i).enemy.size(); j++)
+            for (int j = 0; j < room.get(i).enemy.size(); j++) {
+                g.setColor(Color.orange);
+                g.drawRect(room.get(i).enemy.get(j).viewCol.x, room.get(i).enemy.get(j).viewCol.y,
+                        room.get(i).enemy.get(j).viewCol.width, room.get(i).enemy.get(j).viewCol.height);
+                g.setColor(Color.green);
                 g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
                         room.get(i).enemy.get(j).col.width, room.get(i).enemy.get(j).col.height);
+                g.setColor(Color.red);
+                g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
+                        1, room.get(i).enemy.get(j).col.height);
+                g.drawRect(room.get(i).enemy.get(j).col.x + room.get(i).enemy.get(j).col.width,
+                        room.get(i).enemy.get(j).col.y, 1,
+                        room.get(i).enemy.get(j).col.height);
+            }
 
         for (int i = 0; i < ladder.size(); i++) { // Draw all ladder colliders
             g.setColor(Color.orange);
@@ -273,8 +288,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     lastInRoom = inRoom;
             }
 
-        playerX = playerX + playerLeft + playerRight;
-        playerY = playerY + playerUp + gravity + playerClimbSpeed;
+        playerY = playerY + playerUp + gravity + playerClimbSpeed + -Math.abs(launchSpeed * 2 / 3);
+        playerX = playerX + playerLeft + playerRight + launchSpeed;
         playerCol.x = playerX + playerColXOffset;
         playerCol.y = playerY + playerColYOffset + parallax;
 
@@ -313,6 +328,13 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             for (int j = 0; j < room.get(i).enemy.size(); j++)
                 room.get(i).enemy.get(j).move(); // Move enemies.
         }
+
+        if (launchSpeed != 0)
+            if (launchSpeed > 0)
+                launchSpeed--; // Constantly decrease launchSpeed if it above 0.
+            else
+                launchSpeed++;
+
         moveCol();
         accelarate();
     }
@@ -361,7 +383,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         for (int i = 0; i < room.size(); i++) {
             room.get(i).col.y = room.get(i).y + parallax;
             room.get(i).floor.y = room.get(i).y + Room.height + parallax;
-            //Enemy col updated in enemy move function.
+            // Enemy col updated in enemy move function.
         }
 
         for (int i = 0; i < ladder.size(); i++) {
@@ -404,19 +426,66 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         if (playerCol.intersects(wallLeftCol)) {
             inWallLeft = true; // Stops player from being able to move left.
             playerLeft = 0;
+            launchSpeed = Math.abs(launchSpeed);
         } else
             inWallLeft = false;
 
         if (playerCol.intersects(wallRightCol)) {
             inWallRight = true;
             playerRight = 0;
+            launchSpeed = -Math.abs(launchSpeed);
         } else
             inWallRight = false;
 
+        checkLadderCollisions();
+        checkGroundCollisions();
+
+        if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
+            playerJump++;
+
+        for (int i = 0; i < room.size(); i++)
+            if (room.get(i).col.contains(playerCol)) {
+                inRoom = room.get(i).level;
+                roomLevel = room.get(i).level; // Used for illumination.
+                break;
+            } else
+                inRoom = -1;
+
+        for (int i = 0; i < room.size(); i++)
+            for (int j = 0; j < room.get(i).enemy.size(); j++) {
+                room.get(i).enemy.get(j).checkCollisions(); // Move enemies.
+
+                if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor.x, room.get(i).floor.y - 1,
+                        room.get(i).floor.width, room.get(i).floor.height)) {
+                    // Check enemy col against room floor pushed down 1;
+                    room.get(i).enemy.get(j).up = -room.get(i).enemy.get(j).gravity; // Nullify enemy gravity.
+                } else
+                    room.get(i).enemy.get(j).up = 0; // Let enemy fall back down to ground.
+
+                if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
+                    room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
+
+                if (playerCol.intersects(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
+                        1, room.get(i).enemy.get(j).col.height)) {
+                    damage(false);
+                }
+                if (playerCol.intersects(room.get(i).enemy.get(j).col.x + room.get(i).enemy.get(j).col.width,
+                        room.get(i).enemy.get(j).col.y, 1,
+                        room.get(i).enemy.get(j).col.height)) {
+                    damage(true);
+                }
+            }
+
+        for (int j = 0; j < projectile.size(); j++)
+            if (projectile.get(j).x < -WIDTH || projectile.get(j).x > WIDTH * 2)
+                projectile.remove(j); // Remove projectiles that travel off the screen.
+    }
+
+    public void checkLadderCollisions() {
         // Code for intersecting with left and right ladder colliders.
         for (int i = 0; i < ladder.size(); i++) {
             if (playerCol.intersects(ladder.get(i).leftCol) && inRoom < 0
-                    && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
+                    && playerCol.y + playerCol.width > groundCol.y) {
                 inWallLeft = true; // Stops player from being able to move left.
                 playerLeft = 0;
                 playerX++;
@@ -424,7 +493,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 inWallLeft = false;
 
             if (playerCol.intersects(ladder.get(i).rightCol) && inRoom < 0
-                    && playerCol.y + playerCol.width * 2 / 3 > groundCol.y) {
+                    && playerCol.y + playerCol.width > groundCol.y) {
                 inWallRight = true;
                 playerRight = 0;
                 playerX--;
@@ -465,18 +534,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             gravity = 0;
         else
             gravity = 10;
+    }
 
-        if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
-            playerJump++;
-
-        for (int i = 0; i < room.size(); i++)
-            if (room.get(i).col.contains(playerCol)) {
-                inRoom = room.get(i).level;
-                roomLevel = room.get(i).level; // Used for illumination.
-                break;
-            } else
-                inRoom = -1;
-
+    public void checkGroundCollisions() {
         if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height)) {
             touchingGround = true;
             playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player
@@ -494,19 +554,28 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     playerUp = playerJump;
                 }
 
-        if (playerCol.intersects(groundCol) && !onLadder) // Checks groundCol.y + 1 so that player still intersects with
-                                                          // groundCol and doesent get pulled back into groundCol by
-                                                          // gravity.
-            playerY--; // Pushes player back up out of the groundCol, as gravity clips player into
-                       // groundCol.
+        if (playerCol.intersects(groundCol) && !onLadder)
+            // Checks groundCol.y + 1 so that player still intersects with and doesent get
+            // pulled back into groundCol by gravity.
+            playerY--;
+        // Pushes player back up out of the groundCol, as gravity clips player into
+        // groundCol.
 
         for (int i = 0; i < room.size(); i++)
             if (playerCol.intersects(room.get(i).floor) && !onLadder)
                 playerY--;
+    }
 
-        for (int j = 0; j < projectile.size(); j++)
-            if (projectile.get(j).x < -WIDTH || projectile.get(j).x > WIDTH * 2)
-                projectile.remove(j); // Remove projectiles that travel off the screen.
+    public void damage(Boolean isLeft) {
+        if (isLeft) {
+            launchSpeed = launchSpeedMax;
+            playerLeft = 0;
+            playerRight = 0;
+        } else {
+            launchSpeed = -launchSpeedMax;
+            playerLeft = 0;
+            playerRight = 0;
+        }
     }
 
     public void keyTyped(KeyEvent e) {
