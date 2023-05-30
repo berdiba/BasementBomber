@@ -58,8 +58,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
 
     // Images.
-    Image backgroundImg, groundImg, fogImg, buttonsImg;
-    Image playerImg, playerOnLadderImg, playerClimbImg, playerItemImg;
+    Image backgroundImg = new ImageIcon("background.png").getImage();
+    Image groundImg = new ImageIcon("ground.png").getImage();
+    Image fogImg = new ImageIcon("fog.png").getImage();
+    Image playerImg = new ImageIcon("player.png").getImage();
+    Image playerOnLadderImg = new ImageIcon("playerOnLadder.png").getImage();
+    Image playerClimbImg = new ImageIcon("playerClimb.png").getImage();
+    Image playerItemImg = new ImageIcon("bazooka.png").getImage();
+    Image buttonsImg; // buttonsImg set up later on.
 
     // ArrayLists
     static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
@@ -74,17 +80,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         addMouseListener(this);
         addMouseMotionListener(this);
 
-        // Setup images.
-        backgroundImg = new ImageIcon("background.png").getImage();
-        groundImg = new ImageIcon("ground.png").getImage();
-        fogImg = new ImageIcon("fog.png").getImage();
+        setVariables();
 
-        playerImg = new ImageIcon("player.png").getImage();
-        playerOnLadderImg = new ImageIcon("playerOnLadder.png").getImage();
-        playerClimbImg = new ImageIcon("playerClimb.png").getImage();
-        playerItemImg = new ImageIcon("bazooka.png").getImage();
-        // buttonsImg set up later on.
+        menu();
+    }
 
+    public void setVariables() { // Setup some variables related to images here.
         playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
         playerHeight = playerImg.getHeight(null);
 
@@ -93,8 +94,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2, playerHeight - playerColYOffset * 2);
         // x and y pos determined my moving player.
-
-        menu();
     }
 
     public void menu() {
@@ -394,6 +393,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         } else
             inWallRight = false;
 
+        if (playerCol.intersects(wallLeftCol.x - playerSpeed, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height)) {
+            playerX = playerX + playerWidth; // When player is launched into the wall, force it back out.
+        }
+        if (playerCol.intersects(wallRightCol.x + playerSpeed, wallRightCol.y, wallRightCol.width,
+                wallRightCol.height)) {
+            playerX = playerX - playerWidth;
+        }
+
         checkPan();
         checkLadderCollisions();
         checkGroundCollisions();
@@ -519,7 +526,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             gravity = gravityMax;
     }
 
-    public void checkGroundCollisions() {
+    public void checkGroundCollisions() { // Collisions between player and ground and ceilings.
         if (playerCol.intersects(groundCol.x, groundCol.y - 1, groundCol.width, groundCol.height)) {
             touchingGround = true;
             playerUp = playerJump - gravity; // Subtract gravity to counteract its effects locally just within player
@@ -544,9 +551,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         // Pushes player back up out of the groundCol, as gravity clips player into
         // groundCol.
 
-        for (int i = 0; i < room.size(); i++)
+        for (int i = 0; i < room.size(); i++) {
             if (playerCol.intersects(room.get(i).floor) && !onLadder)
                 playerY--;
+            if (playerCol.intersects(room.get(i).ceiling) && !onLadder) {
+                launchSpeed = -Math.abs(launchSpeed);
+                playerJump = -Math.abs(playerJump);
+                playerY = playerY + playerWidth;
+            }
+        }
     }
 
     public void checkEnemyCollisions() { // Manages enemy collisions with ground, and hitting player.
@@ -638,6 +651,18 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
     }
 
+    public void shoot() {
+        projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
+        recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
+    }
+
+    public void jump() {
+        if (!playerJumped) { // Player cannot jump in mid-air.
+            playerJump = playerJumpHeight;
+            playerJumped = true;
+        }
+    }
+
     public void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
             case 65:
@@ -680,18 +705,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void mouseMoved(MouseEvent e) {
-    }
-
-    public void jump() {
-        if (!playerJumped) { // Player cannot jump in mid-air.
-            playerJump = playerJumpHeight;
-            playerJumped = true;
-        }
-    }
-
-    public void shoot() {
-        projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
-        recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
     }
 
     public boolean isFocusTraversable() // Lets JPanel accept users input.

@@ -19,7 +19,8 @@ public class Enemy {
 
     int colXOffset = 8, colYOffset = 2;
 
-    int speed, wobble, viewDistance = 256;
+    int speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = idleSpeed + 2, wobble, viewDistance = 256;
+    // Speed determined by level + idleSpeed, or when chasing player + chaseSpeed.
 
     int gravity = 10, up = -gravity;
 
@@ -44,10 +45,10 @@ public class Enemy {
         width = enemyImg.getWidth(null);
         height = enemyImg.getHeight(null);
 
-        x = (int) (Math.random() * (Room.width - width) + Panel.roomX);
+        x = (int) (Math.random() * (Room.width - width) + Panel.roomX); // Set x to be random number within room bounds.
         y = Panel.roomYBase + Panel.roomYLevel * level + Room.height - height;
 
-        speed = level + 3;
+        speed = level + idleSpeed;
 
         col = new Rectangle(x, y, width, height);
         viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
@@ -136,13 +137,13 @@ public class Enemy {
     public void checkCollisions() {
         if (viewCol.intersects(Panel.playerCol)) { // Trigger when player is within enemies line of sight.
             decisionTime = decisionMax; // Reset decision.
-            speed = level + 5; // Increase speed.
+            speed = level + chaseSpeed; // Increase speed.
             if (viewCol.x + viewCol.width / 2 > Panel.playerCol.x + Panel.playerCol.width / 2) {
                 decision = 1; // Move left / right depending on where player is relative to enemy.
             } else {
                 decision = 2;
             }
         } else
-            speed = level + 3; // Set speed back to normal.
+            speed = level + idleSpeed; // Set speed back to normal.
     }
 }
