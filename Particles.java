@@ -19,11 +19,11 @@ public class Particles {
    int xOffset, yOffset;
    Color color;
 
-   int age = Panel.gameTime, ageMax = age + 60;
+   int age = Panel.gameTime, ageMax;
 
    Rectangle col;
 
-   public Particles(int x, int y, int width, int height, int xSpeed, int ySpeed, Color color) {
+   public Particles(int x, int y, int width, int height, int xSpeed, int ySpeed, Color color, int ageMax) {
       this.x = x;
       this.y = y;
       this.width = width;
@@ -36,6 +36,8 @@ public class Particles {
       this.ySpeed = ySpeed + (int) (Math.random() * height) / 4;
 
       this.color = color;
+
+      this.ageMax = age + ageMax;
 
       col = new Rectangle(x, y, particleWidth, particleHeight);
    }

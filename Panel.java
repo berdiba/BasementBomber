@@ -158,7 +158,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         paintProjectiles(g, g2D);
         paintPlayer(g, g2D);
         paintParticles(g, g2D);
-        //paintCol(g, g2D);
+        // paintCol(g, g2D);
         paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
     }
 
@@ -453,6 +453,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerX = playerX - playerWidth;
         }
 
+        for (int j = 0; j < particles.size(); j++) {
+            if (particles.get(j).col.intersects(wallLeftCol)) {
+                particles.get(j).xSpeed = Math.abs(particles.get(j).xSpeed);
+            }
+            if (particles.get(j).col.intersects(wallRightCol))
+                particles.get(j).xSpeed = -Math.abs(particles.get(j).xSpeed);
+        }
+
         checkPan();
         checkLadderCollisions();
         checkGroundCollisions();
@@ -460,7 +468,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
-
         for (int i = 0; i < room.size(); i++)
             if (room.get(i).col.contains(playerCol)) {
                 inRoom = room.get(i).level;
@@ -614,9 +621,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 playerJump = -Math.abs(playerJump);
                 playerY = playerY + playerWidth;
             }
+
             for (int j = 0; j < particles.size(); j++)
                 if (particles.get(j).col.intersects(room.get(i).floor)) { // Stop particles from phasing through floor.
-                    particles.get(j).ySpeed = particles.get(j).ySpeed / 4;
+                    particles.get(j).ySpeed = -Math.abs(particles.get(j).ySpeed / 2);
+                    particles.get(j).xSpeed = particles.get(j).xSpeed / 2;
                 }
         }
     }
@@ -658,13 +667,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerLeft = 0;
             playerRight = 0;
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++)
-                particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, -10, Color.red));
+                particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, -10,
+                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60));
         } else {
             launchSpeed = -launchSpeedMax;
             playerLeft = 0;
             playerRight = 0;
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++)
-                particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10, Color.red));
+                particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10,
+                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60));
         }
     }
 
