@@ -159,7 +159,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         paintProjectiles(g, g2D);
         paintPlayer(g, g2D);
         paintParticles(g, g2D);
-        // paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
     }
 
@@ -230,7 +230,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
          * MAIN-AOE BOXES drawn in YELLOW.
          * SUB-AOE BOXES drawn in ORANGE.
          * DAMAGE BOXES drawn in RED.
-         * PARTICLES drawn in PINK.
+         * PARTICLES and PROJECTILES drawn in PINK.
          */
 
         // Draw collision boxes
@@ -289,6 +289,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         for (int i = 0; i < particles.size(); i++)
             g.drawRect(particles.get(i).col.x, particles.get(i).col.y, particles.get(i).col.width,
                     particles.get(i).col.height);
+        for (int i = 0; i < projectile.size(); i++)
+            g.drawRect(projectile.get(i).col.x, projectile.get(i).col.y, projectile.get(i).col.width,
+                    projectile.get(i).col.height);
     }
 
     public void paintUI(Graphics g, Graphics2D g2D) { // Paints user interface.
@@ -399,11 +402,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             ladder.get(i).bottomCol.y = ladder.get(i).col.y + ladder.get(i).col.height - playerHeight;
             ladder.get(i).leftCol.y = ladder.get(i).col.y;
             ladder.get(i).rightCol.y = ladder.get(i).col.y;
-            // Parallax added to col, no need to add to ladderLeft or right a seconnd
-            // time.
+            // Parallax added to col, no need to add to ladderLeft or right a second time.
+            // Only need to add parallax to col, as ladderTop and BottomCol are tied to col.
         }
-        // Only need to add parallax to col, as ladderTop and BottomCol are tied
-        // to col.
     }
 
     public void accelarate() {
@@ -464,6 +465,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         checkLadderCollisions();
         checkGroundCollisions();
         checkEnemyCollisions();
+        checkProjectileCollisions();
 
         if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
@@ -676,6 +678,17 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10,
                         new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
         }
+    }
+
+    public void checkProjectileCollisions() {
+        for (int i = 0; i < projectile.size(); i++)
+            for (int j = 0; j < room.size(); j++)
+                for (int k = 0; k < room.get(j).enemy.size(); k++) { // Run thru every projectile and enemy per level.
+                    if (room.get(j).enemy.get(k).col.intersects(projectile.get(i).col)) {
+                        room.get(j).enemy.remove(k); // Remove enemy.
+                        projectile.get(i).x = WIDTH * 4; // Send it off screen to get killed.
+                    }
+                }
     }
 
     public void killStrayProjectiles() {

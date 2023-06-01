@@ -20,7 +20,7 @@ public class Projectile {
     String type;
 
     Image projectileImg;
-    Rectangle projectileCol;
+    Rectangle col;
 
 
     public Projectile(boolean facingLeft, int x, int y, String type) {
@@ -35,7 +35,7 @@ public class Projectile {
         this.type = type;
 
         projectileImg = new ImageIcon(type+"Projectile.png").getImage();
-        projectileCol = new Rectangle(x, y, width, height);
+        col = new Rectangle(x, y, width, height);
     }
 
     public void paint(Graphics g) {
@@ -49,11 +49,12 @@ public class Projectile {
     }
 
     public void move() {
+        col = new Rectangle(x, y, width, height);
+
         if (facingLeft)
             x = x - projectileSpeed;
         else
             x = x + projectileSpeed;
-
     }
 
     public void hit() {
