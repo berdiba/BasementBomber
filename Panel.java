@@ -60,6 +60,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int damageFlashMax = 8, damageFlash;
     static int UIParallax = -healthWidth;
 
+    int particlesMax = 4;
+
     int launchSpeed, launchSpeedMax = playerSpeed * 2;
 
     int fogX = 0;
@@ -83,6 +85,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
     static ArrayList<Room> room = new ArrayList<Room>();
     static ArrayList<Ladder> ladder = new ArrayList<Ladder>();
+    static ArrayList<Particles> particles = new ArrayList<Particles>();
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -154,6 +157,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         paintForeground(g, g2D);
         paintProjectiles(g, g2D);
         paintPlayer(g, g2D);
+        paintParticles(g, g2D);
         // paintCol(g, g2D);
         paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
     }
@@ -212,6 +216,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             else
                 g2D.drawImage(playerOnLadderImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
         }
+    }
+
+    public void paintParticles(Graphics g, Graphics2D g2D) { // Paints particles.
+        for (int i = 0; i < particles.size(); i++)
+            particles.get(i).paint(g);
     }
 
     public void paintCol(Graphics g, Graphics2D g2D) { // Paints collision boxes for everything.
@@ -346,6 +355,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         for (int i = 0; i < projectile.size(); i++)
             projectile.get(i).move();
 
+        for (int i = 0; i < particles.size(); i++)
+            particles.get(i).move();
+
         if (recoil < 0)
             recoil++;
         // When recoil is set to be recoilMax, slowly push gun back to original
@@ -452,6 +464,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 inRoom = -1;
 
         killStrayProjectiles();
+        killOldParticles();
     }
 
     public void checkPan() { // Detects when panY should be triggered.
@@ -504,7 +517,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         if (-parallax < (healthWidth / 4))
-        UIParallax = -parallax * 4 - healthWidth + 16;
+            UIParallax = -parallax * 4 - healthWidth + 16;
     }
 
     public void checkLadderCollisions() { // Collisions between player and ladders.
@@ -634,10 +647,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             launchSpeed = launchSpeedMax; // Launches the player left.
             playerLeft = 0;
             playerRight = 0;
+            particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, 10, Color.red));
         } else {
             launchSpeed = -launchSpeedMax;
             playerLeft = 0;
             playerRight = 0;
+            particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, 10, Color.red));
         }
     }
 
@@ -645,6 +660,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         for (int i = 0; i < projectile.size(); i++)
             if (projectile.get(i).x < -WIDTH || projectile.get(i).x > WIDTH * 2)
                 projectile.remove(i); // Remove projectiles that travel off the screen.
+    }
+
+    public void killOldParticles() { // Removes particles.
+        for (int i = 0; i < particles.size(); i++)
+            if (particles.get(i).age >= particles.get(i).ageMax)
+                particles.remove(i); // Remove projectiles that travel off the screen.
+        if (particles.size() > particlesMax)
+            particles.remove(0); // If too many particles on screen, remove the first particles in arrayList.
     }
 
     public void keyTyped(KeyEvent e) {

@@ -1,3 +1,4 @@
+
 /**
  * Code for particles created upon an objects death or destruction.
  *
@@ -5,34 +6,59 @@
  * @version 17/03/2023
  */
 
- import java.awt.*;
- import java.awt.event.*;
- import javax.swing.*;
- import java.lang.Math;
-import java.util.Random;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.lang.Math;
 import java.awt.geom.*;
- 
- public class Particles
- {
-    // Center coordinates
-    double centerX = 0;
-    double centerY = 0;
 
-    double radius = 1;
+public class Particles {
+   int x, y, width, height, xSpeed, ySpeed;
+   int xOffset, yOffset;
+   Color color;
 
-    // Random number generator
-    Random random = new Random();
+   int age = Panel.gameTime, ageMax = age + 60;
 
-     public Particles(int originX, int originY, int width, int height)
-     {
-        
-        // Generate a random angle in radians
-        double angle = random.nextDouble() * Math.PI * 2;
+   int particleCount, particleDensity = 32;
 
-        // Calculate x and y coordinates around the circle
-        double x = centerX + radius * Math.cos(angle);
-        double y = centerY + radius * Math.sin(angle);
+   public Particles(int x, int y, int width, int height, int xSpeed, int ySpeed, Color color) {
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
 
-        System.out.println("Direction of travel: (" + x + ", " + y + ")");
-    }
- }
+      xOffset = (int) (Math.random() * width);
+      yOffset = (int) (Math.random() * height);
+
+      this.xSpeed = xSpeed + (int) (Math.random() * width - xOffset) / 4;
+      this.ySpeed = ySpeed + (int) (Math.random() * height) / 4;
+
+      this.color = color;
+
+      // Particles dependent on density of particles, width, and height.
+      particleCount = particleDensity * width * height;
+   }
+
+   public void paint(Graphics g) {
+      g.setColor(color);
+      for (int i = 0; i < particleCount; i++) {
+         g.fillRect(x + xOffset, y + yOffset + Panel.parallax, 8, 8);
+         System.out.println(i);
+      }
+   }
+
+   public void move() {
+      x = x + xSpeed; // Move particles.
+      y = y + ySpeed;
+
+      // Increase or decrease x and y towards 0.
+      if (xSpeed != 0)
+         if (xSpeed > 0)
+            xSpeed--;
+         else if (x < 0)
+            xSpeed++;
+      ySpeed++; // Always make particles fall downwards.
+
+      age++;
+   }
+}
