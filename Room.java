@@ -53,7 +53,7 @@ public class Room {
         } else
             roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
 
-        g2D.drawImage(roomImg, x, y + Panel.parallax, width, height, null);
+        g2D.drawImage(roomImg, x + Panel.damageWobbleX, y + Panel.parallax + Panel.damageWobbleY, width, height, null);
     }
 
     public void populate() { // Adds enemies to the level.

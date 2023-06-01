@@ -55,6 +55,6 @@ public class Ladder {
             // Triggers when player is in only room0.
             ladderImg = new ImageIcon("ladder.png").getImage();
 
-        g2D.drawImage(ladderImg, x, y + Panel.parallax, null);
+        g2D.drawImage(ladderImg, x + Panel.damageWobbleX, y + Panel.parallax + Panel.damageWobbleY, null);
     }
 }

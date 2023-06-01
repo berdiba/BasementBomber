@@ -24,12 +24,28 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     char key; // Used for player movement left / right.
 
+    // Images.
+    static Image backgroundImg = new ImageIcon("background.png").getImage();
+    static Image groundImg = new ImageIcon("ground.png").getImage();
+    static Image fogImg = new ImageIcon("fog.png").getImage();
+
+    static Image playerImg = new ImageIcon("player.png").getImage();
+    static Image playerOnLadderImg = new ImageIcon("playerOnLadder.png").getImage();
+    static Image playerClimbImg = new ImageIcon("playerClimb.png").getImage();
+    static Image playerItemImg = new ImageIcon("bazooka.png").getImage();
+
+    static Image heartEmptyImg = new ImageIcon("heartEmpty.png").getImage();
+    static Image heartFullImg = new ImageIcon("heartFull.png").getImage();
+    static Image heartEmptyDamageImg = new ImageIcon("heartEmptyDamage.png").getImage();
+    static Image heartFullDamageImg = new ImageIcon("heartFullDamage.png").getImage();
+    static Image buttonsImg; // buttonsImg set up later on.
+
+    // Integers.
     static int parallax = 0;
     static int panYSpeed = 8;
     static int inRoom = -1, lastInRoom = inRoom, roomLevel = -1;
     static int roomX = CHUNK * 2, roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4;
 
-    // Integers.
     static int playerX, playerY, playerWidth, playerHeight;
     static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
@@ -38,9 +54,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     int playerWobble = 0; // Controls the bobbing up and down of player when walking.
     int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
 
-    int healthMax = 6, health = healthMax;
-    int heartWobbleX, heartyWobbleY;
-    int damageFlashMax = 8, damageFlash;
+    static int healthMax = 6, health = healthMax;
+    static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
+    static int damageWobbleX, damageWobbleY;
+    static int damageFlashMax = 8, damageFlash;
+    static int UIParallax = -healthWidth;
 
     int launchSpeed, launchSpeedMax = playerSpeed * 2;
 
@@ -60,22 +78,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static Rectangle groundCol; // Collision for ground.
     static Rectangle wallLeftCol = new Rectangle(0, -HEIGHT * 8, CHUNK * 2 + 8, HEIGHT * 16);
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
-
-    // Images.
-    Image backgroundImg = new ImageIcon("background.png").getImage();
-    Image groundImg = new ImageIcon("ground.png").getImage();
-    Image fogImg = new ImageIcon("fog.png").getImage();
-
-    Image playerImg = new ImageIcon("player.png").getImage();
-    Image playerOnLadderImg = new ImageIcon("playerOnLadder.png").getImage();
-    Image playerClimbImg = new ImageIcon("playerClimb.png").getImage();
-    Image playerItemImg = new ImageIcon("bazooka.png").getImage();
-
-    Image heartEmptyImg = new ImageIcon("heartEmpty.png").getImage();
-    Image heartFullImg = new ImageIcon("heartFull.png").getImage();
-    Image heartEmptyDamageImg = new ImageIcon("heartEmptyDamage.png").getImage();
-    Image heartFullDamageImg = new ImageIcon("heartFullDamage.png").getImage();
-    Image buttonsImg; // buttonsImg set up later on.
 
     // ArrayLists
     static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
@@ -164,8 +166,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void paintForeground(Graphics g, Graphics2D g2D) { // Paints ground, rooms, ladders, enemies.
         g.setColor(new Color(39, 46, 69)); // Set colour to ground colour.
-        g2D.fillRect(groundCol.x, groundCol.y, groundCol.width, HEIGHT * 16);
-        g2D.drawImage(groundImg, groundCol.x, groundCol.y, null);
+        g2D.fillRect(groundCol.x + damageWobbleX, groundCol.y + damageWobbleY, groundCol.width, HEIGHT * 16);
+        g2D.drawImage(groundImg, groundCol.x + damageWobbleX + CHUNK, groundCol.y + damageWobbleY, null);
 
         for (int i = 0; i < room.size(); i++) {
             // Creates temp variable i, runs code until i is no longer < than room.size().
@@ -290,16 +292,16 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         if (damageFlash > 0) {
             for (int i = 0; i < healthMax; i++)
-                g2D.drawImage(heartEmptyDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + heartWobbleX,
-                        CHUNK / 4 + heartWobbleX, null);
+                g2D.drawImage(heartEmptyDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
+                        CHUNK / 4 + damageWobbleY, null);
             for (int i = 0; i < health - 1; i++)
-                g2D.drawImage(heartFullDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + heartWobbleX,
-                        CHUNK / 4 + heartyWobbleY, null);
+                g2D.drawImage(heartFullDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
+                        CHUNK / 4 + damageWobbleY, null);
         } else {
             for (int i = 0; i < healthMax; i++)
-                g2D.drawImage(heartEmptyImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4, null);
+                g2D.drawImage(heartEmptyImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + UIParallax, CHUNK / 4, null);
             for (int i = 0; i < health - 1; i++)
-                g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4, null);
+                g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + UIParallax, CHUNK / 4, null);
         }
     }
 
@@ -315,8 +317,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         } // Alternates between 1 and -1 to create a bobbing up and down motion.
 
         if (damageFlash > 0) {
-            heartWobbleX = (int) (Math.sin(gameTime) * 2);
-            heartyWobbleY = (int) (Math.sin(gameTime + 1) * 2);
+            damageWobbleX = (int) (Math.sin(gameTime) * 3);
+            damageWobbleY = (int) (Math.sin(gameTime + 1) * 3);
+        } else {
+            damageWobbleX = 0;
+            damageWobbleY = 0;
         }
 
         if (onLadder) {
@@ -362,7 +367,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void moveCol() { // Adds parallax effect to colliders.
-        groundCol = new Rectangle(0, HEIGHT / 2 + parallax, WIDTH, CHUNK);
+        groundCol = new Rectangle(-CHUNK, HEIGHT / 2 + parallax, WIDTH + CHUNK * 2, CHUNK);
 
         for (int i = 0; i < room.size(); i++) {
             room.get(i).col.y = room.get(i).y + parallax;
@@ -498,6 +503,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 panYDone = true;
         }
 
+        if (-parallax < (healthWidth / 4))
+        UIParallax = -parallax * 4 - healthWidth + 16;
     }
 
     public void checkLadderCollisions() { // Collisions between player and ladders.
