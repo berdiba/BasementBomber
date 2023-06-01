@@ -11,15 +11,17 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.lang.Math;
 import java.awt.geom.*;
+import java.util.ArrayList;
 
 public class Particles {
    int x, y, width, height, xSpeed, ySpeed;
+   int particleWidth = 4, particleHeight = 4;
    int xOffset, yOffset;
    Color color;
 
    int age = Panel.gameTime, ageMax = age + 60;
 
-   int particleCount, particleDensity = 32;
+   Rectangle col;
 
    public Particles(int x, int y, int width, int height, int xSpeed, int ySpeed, Color color) {
       this.x = x;
@@ -35,21 +37,21 @@ public class Particles {
 
       this.color = color;
 
-      // Particles dependent on density of particles, width, and height.
-      particleCount = particleDensity * width * height;
+      col = new Rectangle(x, y, particleWidth, particleHeight);
    }
 
    public void paint(Graphics g) {
       g.setColor(color);
-      for (int i = 0; i < particleCount; i++) {
-         g.fillRect(x + xOffset, y + yOffset + Panel.parallax, 8, 8);
-         System.out.println(i);
-      }
+      g.fillRect(x + xOffset,
+            y + yOffset + Panel.parallax, particleWidth, particleHeight);
    }
 
    public void move() {
       x = x + xSpeed; // Move particles.
       y = y + ySpeed;
+
+      col = new Rectangle(x + xOffset,
+            y + yOffset + Panel.parallax, particleWidth, particleHeight);
 
       // Increase or decrease x and y towards 0.
       if (xSpeed != 0)

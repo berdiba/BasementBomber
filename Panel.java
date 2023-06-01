@@ -49,10 +49,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int playerX, playerY, playerWidth, playerHeight;
     static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
-    int playerSpeed = 10, playerJumpHeight = -24, playerClimbSpeed = 0;
-    int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
-    int playerWobble = 0; // Controls the bobbing up and down of player when walking.
-    int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
+    static int playerSpeed = 10, playerJumpHeight = -24, playerClimbSpeed = 0;
+    static int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
+    static int playerWobble = 0; // Controls the bobbing up and down of player when walking.
+    static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
 
     static int healthMax = 6, health = healthMax;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
@@ -60,9 +60,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int damageFlashMax = 8, damageFlash;
     static int UIParallax = -healthWidth;
 
-    int particlesMax = 4;
+    static int particlesDensity = 512, particlesMax = 4; // particlesDensity inversely proportional to particles.
 
-    int launchSpeed, launchSpeedMax = playerSpeed * 2;
+    static int launchSpeed, launchSpeedMax = playerSpeed * 2;
 
     int fogX = 0;
     int fog2X = -WIDTH; // Duplicate fog placed behind original to create seamless fog movement.
@@ -158,7 +158,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         paintProjectiles(g, g2D);
         paintPlayer(g, g2D);
         paintParticles(g, g2D);
-        // paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
     }
 
@@ -231,6 +231,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
          * MAIN-AOE BOXES drawn in YELLOW.
          * SUB-AOE BOXES drawn in ORANGE.
          * DAMAGE BOXES drawn in RED.
+         * PARTICLES drawn in PINK.
          */
 
         // Draw collision boxes
@@ -284,6 +285,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                         room.get(i).enemy.get(j).col.y, 1,
                         room.get(i).enemy.get(j).col.height);
             }
+
+        g.setColor(Color.pink);
+        for (int i = 0; i < particles.size(); i++)
+            g.drawRect(particles.get(i).col.x, particles.get(i).col.y, particles.get(i).col.width,
+                    particles.get(i).col.height);
     }
 
     public void paintUI(Graphics g, Graphics2D g2D) { // Paints user interface.
@@ -608,6 +614,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 playerJump = -Math.abs(playerJump);
                 playerY = playerY + playerWidth;
             }
+            for (int j = 0; j < particles.size(); j++)
+                if (particles.get(j).col.intersects(room.get(i).floor)) { // Stop particles from phasing through floor.
+                    particles.get(j).ySpeed = particles.get(j).ySpeed / 4;
+                }
         }
     }
 
@@ -647,12 +657,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             launchSpeed = launchSpeedMax; // Launches the player left.
             playerLeft = 0;
             playerRight = 0;
-            particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, 10, Color.red));
+            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++)
+                particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, -10, Color.red));
         } else {
             launchSpeed = -launchSpeedMax;
             playerLeft = 0;
             playerRight = 0;
-            particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, 10, Color.red));
+            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++)
+                particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10, Color.red));
         }
     }
 
