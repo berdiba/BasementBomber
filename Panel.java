@@ -17,7 +17,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     // World variables.
     Thread gameThread;
 
-    final static int WIDTH = 1400, HEIGHT = 600, CHUNK = 64;
+    final static int WIDTH = 1400, HEIGHT = 600, PIXEL = 4, CHUNK = PIXEL * 16;
 
     static int gravityMax = 10, gravity = gravityMax;
     static int gameTime = 0;
@@ -60,7 +60,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int damageFlashMax = 8, damageFlash;
     static int UIParallax = -healthWidth;
 
-    static int particlesDensity = 512, particlesMax = 4; // particlesDensity inversely proportional to particles.
+    static int particlesDensity = 512, particlesMax = 4, colorMod;
+    // particlesDensity inversely proportional to particles.
 
     static int launchSpeed, launchSpeedMax = playerSpeed * 2;
 
@@ -187,11 +188,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void paintProjectiles(Graphics g, Graphics2D g2D) { // Paints player projectiles.
         g.setColor(new Color(39, 46, 69));
         g2D.setStroke(new BasicStroke(2));
-        for (int i = 0; i < projectile.size(); i++) {
-            g.drawRect(projectile.get(i).x, projectile.get(i).y - 1, projectile.get(i).width,
-                    projectile.get(i).height + 1); // Draw outline for projectile to make it more visible.
+        for (int i = 0; i < projectile.size(); i++)
             projectile.get(i).paint(g);
-        }
     }
 
     public void paintPlayer(Graphics g, Graphics2D g2D) { // Paints player.
@@ -221,6 +219,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void paintParticles(Graphics g, Graphics2D g2D) { // Paints particles.
         for (int i = 0; i < particles.size(); i++)
             particles.get(i).paint(g);
+        colorMod = (int) (Math.random() * 40); // Adds random variation to particle colours.
     }
 
     public void paintCol(Graphics g, Graphics2D g2D) { // Paints collision boxes for everything.
@@ -668,14 +667,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerRight = 0;
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++)
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, -10,
-                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60));
+                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
         } else {
             launchSpeed = -launchSpeedMax;
             playerLeft = 0;
             playerRight = 0;
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++)
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10,
-                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60));
+                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
         }
     }
 
@@ -739,6 +738,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void shoot() {
         projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
         recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
+        for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 2; i++)
+            if (facingLeft)
+                particles.add(new Particles(playerX + playerWidth * 3 / 4, playerY + playerHeight / 2,
+                        16, 8, 20, 1, new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60),
+                        10, 6, 2, false, true));
+            else
+                particles.add(new Particles(playerX + playerWidth / 4, playerY + playerHeight / 2,
+                        -16, 8, -20, 1, new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60),
+                        10, 6, 2, false, true));
     }
 
     public void jump() {

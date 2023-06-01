@@ -9,7 +9,7 @@ import java.awt.*;
 import javax.swing.*;
 
 public class Projectile {
-    int width = 12;
+    int width = 64;
     int height = 4;
     int x, y;
     int projectileSpeed = 32;

@@ -17,27 +17,32 @@ public class Particles {
    int x, y, width, height, xSpeed, ySpeed;
    int particleWidth = 4, particleHeight = 4;
    int xOffset, yOffset;
+
    Color color;
 
    int age = Panel.gameTime, ageMax;
+   boolean gravity, drag;
 
    Rectangle col;
 
-   public Particles(int x, int y, int width, int height, int xSpeed, int ySpeed, Color color, int ageMax) {
+   public Particles(int x, int y, int width, int height, int xSpeed, int ySpeed, Color color, int ageMax, float spreadX,
+         float spreadY, boolean gravity, boolean drag) {
       this.x = x;
       this.y = y;
       this.width = width;
       this.height = height;
 
-      xOffset = (int) (Math.random() * width);
-      yOffset = (int) (Math.random() * height);
+      xOffset = (int) (Math.random() * width * spreadX);
+      yOffset = (int) (Math.random() * height * spreadY);
 
       this.xSpeed = xSpeed + (int) (Math.random() * width - xOffset) / 4;
-      this.ySpeed = ySpeed + (int) (Math.random() * height) / 4;
+      this.ySpeed = ySpeed + (int) (Math.random() * height - yOffset) / 4;
 
       this.color = color;
 
       this.ageMax = age + ageMax;
+      this.gravity = gravity;
+      this.drag = drag;
 
       col = new Rectangle(x, y, particleWidth, particleHeight);
    }
@@ -56,12 +61,15 @@ public class Particles {
             y + yOffset + Panel.parallax, particleWidth, particleHeight);
 
       // Increase or decrease x and y towards 0.
-      if (xSpeed != 0)
+      if (xSpeed != 0 && drag) {
          if (xSpeed > 0)
             xSpeed--;
-         else if (x < 0)
+         if (xSpeed < 0)
             xSpeed++;
-      ySpeed++; // Always make particles fall downwards.
+      }
+
+      if (gravity)
+         ySpeed++; // Make particles fall downwards.
 
       age++;
    }
