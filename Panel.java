@@ -57,7 +57,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int playerWobble = 0; // Controls the bobbing up and down of player when walking.
 
     static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
-    static int shootCooldown = gameTime, cooldownTime = 120;
+    static int shootCooldown = gameTime, cooldownTime = 120; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
 
     static int healthMax = 6, health = healthMax, healthCooldown = gameTime;
@@ -87,6 +87,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static Rectangle groundCol; // Collision for ground.
     static Rectangle wallLeftCol = new Rectangle(0, -HEIGHT * 8, CHUNK * 2 + 8, HEIGHT * 16);
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
+
+    // Colors.
+    Color playerBlood;
+    Color enemyBlood;
+    Color blast;
 
     // ArrayLists
     static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
@@ -225,7 +230,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     public void paintParticles(Graphics g, Graphics2D g2D) { // Paints particles.
         for (int i = 0; i < particles.size(); i++)
             particles.get(i).paint(g);
-        colorMod = (int) (Math.random() * 40); // Adds random variation to particle colours.
     }
 
     public void paintCol(Graphics g, Graphics2D g2D) { // Paints collision boxes for everything.
@@ -331,7 +335,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             g2D.drawImage(reloadBarFullImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
         } else {
             g.setColor(new Color(78, 110, 96));
-            g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL, ((gameTime - shootCooldown) * reloadBarWidth / cooldownTime) - PIXEL * 2, reloadBarHeight - PIXEL * 2);
+            g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL,
+                    ((gameTime - shootCooldown) * reloadBarWidth / cooldownTime) - PIXEL * 2,
+                    reloadBarHeight - PIXEL * 2);
             System.out.println(shootCooldown);
         }
     }
@@ -681,16 +687,22 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             launchSpeed = launchSpeedMax; // Launches the player left.
             playerLeft = 0;
             playerRight = 0;
-            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++)
+            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++) {
+
+                playerBlood = new Color((colorMod * 2 + 110), 20, 20);
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, -10,
-                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
+                        playerBlood, 60, 1, 0.2f, true, true));
+            }
         } else {
             launchSpeed = -launchSpeedMax;
             playerLeft = 0;
             playerRight = 0;
-            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++)
+            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++) {
+
+                playerBlood = new Color((colorMod * 2 + 110), 20, 20);
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10,
-                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
+                        playerBlood, 60, 1, 0.2f, true, true));
+            }
         }
         if (health > 1 && healthCooldown < gameTime - 30) {
             health--;
@@ -708,21 +720,39 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             for (int j = 0; j < room.size(); j++)
                 for (int k = 0; k < room.get(j).enemy.size(); k++) { // Run thru every projectile and enemy per level.
                     if (room.get(j).enemy.get(k).col.intersects(projectile.get(i).col)) {
+
                         if (projectile.get(i).col.intersects(room.get(j).enemy.get(k).col.x,
                                 room.get(j).enemy.get(k).col.y,
                                 1, room.get(j).enemy.get(k).col.height))
-                            for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++)
+                            for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++) {
+
+                                colorMod = (int) (Math.random() * 40); // Adds random variation to particle colours.
+                                if (room.get(j).level == 1)
+                                    enemyBlood = new Color(20, 20, (colorMod + 110));
+                                else
+                                    enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+
                                 particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
                                         room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, 10, -10,
-                                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
+                                        enemyBlood, 60, 1, 0.2f, true, true));
+                            }
                         else if (projectile.get(i).col.intersects(room.get(j).enemy.get(k).col.x +
                                 room.get(j).enemy.get(k).col.width, room.get(j).enemy.get(k).col.y, 1,
                                 room.get(j).enemy.get(k).col.height))
-                            for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++)
+                            for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++) {
+
+                                colorMod = (int) (Math.random() * 40);
+                                if (room.get(j).level == 1)
+                                    enemyBlood = new Color(20, 20, (colorMod + 110));
+                                else
+                                    enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+
                                 particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
                                         room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, -10, -10,
-                                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
+                                        enemyBlood, 60, 1, 0.2f, true, true));
+                            }
                         room.get(j).enemy.remove(k); // Remove enemy.
+                        projectile.get(i).detonate();
                         projectile.get(i).x = WIDTH * 4; // Send it off screen to get killed.
                     }
                 }
@@ -790,14 +820,20 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
             recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 2; i++)
-                if (facingLeft)
+                if (facingLeft) {
+
+                    colorMod = (int) (Math.random() * 40);
+                    blast = new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60);
                     particles.add(new Particles(playerX + playerWidth * 3 / 4, playerY + playerHeight / 2,
-                            16, 8, 20, 1, new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60),
+                            16, 8, 20, 1, blast,
                             10, 6, 2, false, true));
-                else
+                } else {
+                    colorMod = (int) (Math.random() * 40);
+                    blast = new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60);
                     particles.add(new Particles(playerX + playerWidth / 4, playerY + playerHeight / 2,
-                            -16, 8, -20, 1, new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60),
+                            -16, 8, -20, 1, blast,
                             10, 6, 2, false, true));
+                }
             shootCooldown = gameTime;
         }
     }

@@ -57,7 +57,7 @@ public class Projectile {
             x = x + projectileSpeed;
     }
 
-    public void hit() {
+    public void detonate() {
         switch (type) {
             case "bazooka":
                 damage = 1;
