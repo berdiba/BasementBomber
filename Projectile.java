@@ -10,7 +10,7 @@ import javax.swing.*;
 
 public class Projectile {
     int width = 64;
-    int height = 4;
+    int height = 8;
     int x, y;
     int projectileSpeed = 32;
     int damage, blastRadius;
@@ -29,9 +29,9 @@ public class Projectile {
         if(facingLeft)
         this.x = x;
         else
-        this.x = x + Panel.playerWidth;
+        this.x = x + Panel.playerWidth - width;
 
-        this.y = y + Panel.playerHeight * 19 / 32 + Panel.parallax;
+        this.y = y + Panel.playerHeight / 2 + Panel.PIXEL + Panel.parallax + Panel.playerWobble;
         this.type = type;
 
         projectileImg = new ImageIcon(type+"Projectile.png").getImage();

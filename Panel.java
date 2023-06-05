@@ -38,6 +38,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static Image heartFullImg = new ImageIcon("heartFull.png").getImage();
     static Image heartEmptyDamageImg = new ImageIcon("heartEmptyDamage.png").getImage();
     static Image heartFullDamageImg = new ImageIcon("heartFullDamage.png").getImage();
+    static Image reloadBarEmptyImg = new ImageIcon("reloadBarEmpty.png").getImage();
+    static Image reloadBarFullImg = new ImageIcon("reloadBarFull.png").getImage();
+    static Image reloadBarDamageImg = new ImageIcon("reloadBarDamage.png").getImage();
     static Image buttonsImg; // buttonsImg set up later on.
 
     // Integers.
@@ -52,9 +55,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int playerSpeed = 10, playerJumpHeight = -24, playerClimbSpeed = 0;
     static int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
     static int playerWobble = 0; // Controls the bobbing up and down of player when walking.
-    static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
 
-    static int healthMax = 6, health = healthMax;
+    static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
+    static int shootCooldown = gameTime, cooldownTime = 120;
+    static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
+
+    static int healthMax = 6, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
     static int damageFlashMax = 8, damageFlash;
@@ -129,10 +135,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void run() { // Game loop.
         long lastTime = System.nanoTime();
-        double ticks = 60.0; // Game will refresh 60 times per second.
+        double ticks = 60.0; // Game will refresh 60.0 times per second.
         double ns = 1000000000 / ticks;
         double delta = 0;
-        while (true) {
+        while (true) { // Constantly run.
             long now = System.nanoTime();
             delta += (now - lastTime) / ns;
             lastTime = now;
@@ -159,7 +165,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         paintProjectiles(g, g2D);
         paintPlayer(g, g2D);
         paintParticles(g, g2D);
-        //paintCol(g, g2D);
+        // paintCol(g, g2D);
         paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
     }
 
@@ -295,7 +301,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void paintUI(Graphics g, Graphics2D g2D) { // Paints user interface.
-        // Paint UI.
         if (showControlls) {
             // Using Math.sin() gives a value that switches between negative and positive at
             // a controlled rate.
@@ -311,14 +316,23 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             for (int i = 0; i < healthMax; i++)
                 g2D.drawImage(heartEmptyDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
                         CHUNK / 4 + damageWobbleY, null);
-            for (int i = 0; i < health - 1; i++)
+            for (int i = 0; i < health; i++)
                 g2D.drawImage(heartFullDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
                         CHUNK / 4 + damageWobbleY, null);
         } else {
             for (int i = 0; i < healthMax; i++)
                 g2D.drawImage(heartEmptyImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + UIParallax, CHUNK / 4, null);
-            for (int i = 0; i < health - 1; i++)
+            for (int i = 0; i < health; i++)
                 g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + UIParallax, CHUNK / 4, null);
+        }
+
+        g2D.drawImage(reloadBarEmptyImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
+        if (shootCooldown < gameTime - cooldownTime) {
+            g2D.drawImage(reloadBarFullImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
+        } else {
+            g.setColor(new Color(78, 110, 96));
+            g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL, ((gameTime - shootCooldown) * reloadBarWidth / cooldownTime) - PIXEL * 2, reloadBarHeight - PIXEL * 2);
+            System.out.println(shootCooldown);
         }
     }
 
@@ -678,6 +692,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10,
                         new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
         }
+        if (health > 1 && healthCooldown < gameTime - 30) {
+            health--;
+            healthCooldown = gameTime;
+        } else if (health == 1)
+            kill();
+    }
+
+    public void kill() {
+        System.exit(0);
     }
 
     public void checkProjectileCollisions() {
@@ -685,6 +708,20 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             for (int j = 0; j < room.size(); j++)
                 for (int k = 0; k < room.get(j).enemy.size(); k++) { // Run thru every projectile and enemy per level.
                     if (room.get(j).enemy.get(k).col.intersects(projectile.get(i).col)) {
+                        if (projectile.get(i).col.intersects(room.get(j).enemy.get(k).col.x,
+                                room.get(j).enemy.get(k).col.y,
+                                1, room.get(j).enemy.get(k).col.height))
+                            for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++)
+                                particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
+                                        room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, 10, -10,
+                                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
+                        else if (projectile.get(i).col.intersects(room.get(j).enemy.get(k).col.x +
+                                room.get(j).enemy.get(k).col.width, room.get(j).enemy.get(k).col.y, 1,
+                                room.get(j).enemy.get(k).col.height))
+                            for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++)
+                                particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
+                                        room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, -10, -10,
+                                        new Color((int) (Math.random() * 40 + 110), 20, 20), 60, 1, 0.2f, true, true));
                         room.get(j).enemy.remove(k); // Remove enemy.
                         projectile.get(i).x = WIDTH * 4; // Send it off screen to get killed.
                     }
@@ -749,17 +786,20 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void shoot() {
-        projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
-        recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
-        for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 2; i++)
-            if (facingLeft)
-                particles.add(new Particles(playerX + playerWidth * 3 / 4, playerY + playerHeight / 2,
-                        16, 8, 20, 1, new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60),
-                        10, 6, 2, false, true));
-            else
-                particles.add(new Particles(playerX + playerWidth / 4, playerY + playerHeight / 2,
-                        -16, 8, -20, 1, new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60),
-                        10, 6, 2, false, true));
+        if (shootCooldown < gameTime - cooldownTime) {
+            projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
+            recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
+            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 2; i++)
+                if (facingLeft)
+                    particles.add(new Particles(playerX + playerWidth * 3 / 4, playerY + playerHeight / 2,
+                            16, 8, 20, 1, new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60),
+                            10, 6, 2, false, true));
+                else
+                    particles.add(new Particles(playerX + playerWidth / 4, playerY + playerHeight / 2,
+                            -16, 8, -20, 1, new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60),
+                            10, 6, 2, false, true));
+            shootCooldown = gameTime;
+        }
     }
 
     public void jump() {
