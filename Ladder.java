@@ -57,10 +57,14 @@ public class Ladder {
             if (Panel.roomLevel == level && level == 0)
                 // Triggers when player is in only room0.
                 ladderImg = new ImageIcon("ladder.png").getImage();
-        } else if (Panel.roomLevel == level)
-            ladderImg = new ImageIcon("ladderBroken.png").getImage();
-        else
-            ladderImg = new ImageIcon("ladderBrokenDark.png").getImage();
+        } else { // Broken ladder variants.
+            if (Panel.roomLevel < level || Panel.roomLevel > level)
+                ladderImg = new ImageIcon("ladderBrokenDark.png").getImage();
+            if (Panel.roomLevel == level)
+                ladderImg = new ImageIcon("ladderBrokenDarkTop.png").getImage();
+            if (Panel.roomLevel == level && level == 0)
+                ladderImg = new ImageIcon("ladderBroken.png").getImage();
+        }
 
         g2D.drawImage(ladderImg, x + Panel.damageWobbleX, y + Panel.parallax + Panel.damageWobbleY, null);
     }

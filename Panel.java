@@ -657,14 +657,14 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     for (int j = 0; j < (ladder.get(i).col.width * ladder.get(i).col.height) / particlesDensity
                             * 8; j++) {
                         colorMod = (int) (Math.random() * 40);
-                        wood = new Color(150 + colorMod, 90 + colorMod, 80 + colorMod);
-                        particles.add(
-                                new Particles(ladder.get(i).x, ladder.get(i).y + ladder.get(i).col.height / 2,
-                                        ladder.get(i).col.width / 2, ladder.get(i).col.height / 2, 0, -4, wood,
-                                        120, 0, 0, true, true));
+                        wood = new Color(120 + colorMod * 2, 50 + colorMod * 2, 40 + colorMod * 2);
+                        particles.add(new Particles(ladder.get(i).x,
+                                ladder.get(i).y + ladder.get(i).col.height / 2, ladder.get(i).col.width / 2,
+                                ladder.get(i).col.height / 2, 0, -4 - (int) (Math.random() * 8), wood,
+                                120, 1, 0, true, true));
+                        ladder.get(i).col.x = WIDTH * 2; // Teleport ladder off screen, essensially removing it.
+                        ladder.get(i).ladderBroken = true;
                     }
-                ladder.get(i).col.x = WIDTH * 2; // Teleport ladder off screen, essensially removing it.
-                ladder.get(i).ladderBroken = true;
             }
     }
 
