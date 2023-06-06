@@ -18,7 +18,7 @@ public class Frame extends JFrame implements ActionListener
     
     Panel panel;
     
-    Image CD = new ImageIcon("").getImage();
+    static Image iconImg = new ImageIcon("icon.png").getImage();
 
     public Frame()
     {
@@ -29,7 +29,7 @@ public class Frame extends JFrame implements ActionListener
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.add(panel);
         
-        this.setIconImage(CD);
+        this.setIconImage(iconImg);
         this.setTitle("Basement Bomber");
         
         menuSetup();
