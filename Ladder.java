@@ -16,7 +16,9 @@ public class Ladder {
     int offset = 24;
 
     Image ladderImg;
-    
+
+    Boolean ladderBroken = false;
+
     Rectangle col;
     Rectangle topCol;
     Rectangle bottomCol;
@@ -42,18 +44,23 @@ public class Ladder {
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
 
-        if (Panel.roomLevel < level || Panel.roomLevel > level)
-            // Triggers when player is one room above or below ladder.
-            ladderImg = new ImageIcon("ladderDark.png").getImage();
-        if (Panel.roomLevel == level)
-            // Triggers when player is in the same room as ladder.
-            ladderImg = new ImageIcon("ladderDarkTop.png").getImage();
-        if (Panel.roomLevel == level - 1)
-            // Triggers when player is one room above player. Overrides ladderDark.
-            ladderImg = new ImageIcon("ladderDarkBottom.png").getImage();
-        if (Panel.roomLevel == level && level == 0)
-            // Triggers when player is in only room0.
-            ladderImg = new ImageIcon("ladder.png").getImage();
+        if (!ladderBroken) {
+            if (Panel.roomLevel < level || Panel.roomLevel > level)
+                // Triggers when player is one room above or below ladder.
+                ladderImg = new ImageIcon("ladderDark.png").getImage();
+            if (Panel.roomLevel == level)
+                // Triggers when player is in the same room as ladder.
+                ladderImg = new ImageIcon("ladderDarkTop.png").getImage();
+            if (Panel.roomLevel == level - 1)
+                // Triggers when player is one room above player. Overrides ladderDark.
+                ladderImg = new ImageIcon("ladderDarkBottom.png").getImage();
+            if (Panel.roomLevel == level && level == 0)
+                // Triggers when player is in only room0.
+                ladderImg = new ImageIcon("ladder.png").getImage();
+        } else if (Panel.roomLevel == level)
+            ladderImg = new ImageIcon("ladderBroken.png").getImage();
+        else
+            ladderImg = new ImageIcon("ladderBrokenDark.png").getImage();
 
         g2D.drawImage(ladderImg, x + Panel.damageWobbleX, y + Panel.parallax + Panel.damageWobbleY, null);
     }

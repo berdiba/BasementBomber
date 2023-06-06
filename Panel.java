@@ -92,6 +92,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     Color playerBlood;
     Color enemyBlood;
     Color blast;
+    Color wood;
 
     // ArrayLists
     static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
@@ -288,11 +289,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
                         room.get(i).enemy.get(j).col.width, room.get(i).enemy.get(j).col.height);
                 g.setColor(Color.red); // Enemy damage collider.
-                g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
-                        1, room.get(i).enemy.get(j).col.height);
-                g.drawRect(room.get(i).enemy.get(j).col.x + room.get(i).enemy.get(j).col.width,
-                        room.get(i).enemy.get(j).col.y, 1,
-                        room.get(i).enemy.get(j).col.height);
+                g.drawRect(room.get(i).enemy.get(j).damageColLeft.x, room.get(i).enemy.get(j).damageColLeft.y,
+                        room.get(i).enemy.get(j).damageColLeft.width, room.get(i).enemy.get(j).damageColLeft.height);
+                g.drawRect(room.get(i).enemy.get(j).damageColRight.x, room.get(i).enemy.get(j).damageColRight.y,
+                        room.get(i).enemy.get(j).damageColRight.width, room.get(i).enemy.get(j).damageColRight.height);
             }
 
         g.setColor(Color.pink);
@@ -649,6 +649,23 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     particles.get(j).xSpeed = particles.get(j).xSpeed / 2;
                 }
         }
+
+        for (int i = 0; i < ladder.size(); i++) // Run through every ladder.
+            if (inRoom == ladder.get(i).level && touchingGround) {
+                // Checks if player is touching ground in the same room as specified ladder.
+                if (!ladder.get(i).ladderBroken)
+                    for (int j = 0; j < (ladder.get(i).col.width * ladder.get(i).col.height) / particlesDensity
+                            * 8; j++) {
+                        colorMod = (int) (Math.random() * 40);
+                        wood = new Color(150 + colorMod, 90 + colorMod, 80 + colorMod);
+                        particles.add(
+                                new Particles(ladder.get(i).x, ladder.get(i).y + ladder.get(i).col.height / 2,
+                                        ladder.get(i).col.width / 2, ladder.get(i).col.height / 2, 0, -4, wood,
+                                        120, 0, 0, true, true));
+                    }
+                ladder.get(i).col.x = WIDTH * 2; // Teleport ladder off screen, essensially removing it.
+                ladder.get(i).ladderBroken = true;
+            }
     }
 
     public void checkEnemyCollisions() { // Manages enemy collisions with ground, and hitting player.
@@ -666,13 +683,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
                     room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
 
-                if (playerCol.intersects(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
-                        1, room.get(i).enemy.get(j).col.height)) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft)) {
                     damage(false);
                 }
-                if (playerCol.intersects(room.get(i).enemy.get(j).col.x + room.get(i).enemy.get(j).col.width,
-                        room.get(i).enemy.get(j).col.y, 1,
-                        room.get(i).enemy.get(j).col.height)) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight)) {
                     damage(true);
                 }
             }
@@ -728,7 +742,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
                                 colorMod = (int) (Math.random() * 40); // Adds random variation to particle colours.
                                 if (room.get(j).level == 1)
-                                    enemyBlood = new Color(20, 20, (colorMod + 110));
+                                    enemyBlood = new Color(20, (100 - colorMod), (colorMod + 110));
                                 else
                                     enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
 
@@ -743,7 +757,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
                                 colorMod = (int) (Math.random() * 40);
                                 if (room.get(j).level == 1)
-                                    enemyBlood = new Color(20, 20, (colorMod + 110));
+                                    enemyBlood = new Color(20, (100 - colorMod), (colorMod + 110));
                                 else
                                     enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
 
@@ -752,7 +766,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                                         enemyBlood, 60, 1, 0.2f, true, true));
                             }
                         room.get(j).enemy.remove(k); // Remove enemy.
-                        projectile.get(i).detonate();
                         projectile.get(i).x = WIDTH * 4; // Send it off screen to get killed.
                     }
                 }

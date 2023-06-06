@@ -19,13 +19,12 @@ public class Enemy {
 
     int colXOffset = 8, colYOffset = 2;
 
-    int speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = idleSpeed + 2, wobble, viewDistance = 256;
+    int speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = idleSpeed + 2, wobble, viewDistance = Panel.CHUNK * 8;
     // Speed determined by level + idleSpeed, or when chasing player + chaseSpeed.
 
     int gravity = 10, up = -gravity;
 
-    int decision, decisionTime = 0, decisionMax = 120, newDecision = (int) (Math.random() * decisionMax),
-            moveDuration = 120;
+    int decision, decisionTime = 0, decisionMax = 180, newDecision = (int) (Math.random() * decisionMax);
     // DecisionMax measured in frames. 120 frames at 60 fps is 2 seconds.
 
     int growHeight = 0;
@@ -36,6 +35,7 @@ public class Enemy {
 
     Rectangle col;
     Rectangle viewCol;
+    Rectangle damageColLeft, damageColRight;
 
     public Enemy(int level) {
         this.level = level;
@@ -89,6 +89,8 @@ public class Enemy {
         // Update enemty collider.
         viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
         // Update enemy range of vision.
+        damageColLeft = new Rectangle(col.x, col.y + Panel.PIXEL, 1, col.height);
+        damageColRight = new Rectangle(col.x + col.width, col.y + Panel.PIXEL, 1, col.height);
 
         if (decisionTime < newDecision && !takingAction) // Triggers only when player isnt taking an action.
             decisionTime++; // Increace decisionTime until it reaches newDecision
@@ -96,7 +98,12 @@ public class Enemy {
             takingAction = true; // When decisionTime = newDecision, take an action.
 
             if (decisionTime == newDecision)
-                decision = (int) (Math.random() * 3); // Make a random decision.
+                if (level % 2 == 0 && x > Panel.WIDTH / 2 && Math.random() < 0.8)
+                    decision = 1; // When enemy is on an even level and near ladder, bias them to moving left.
+                else if (level % 2 == 1 && x < Panel.WIDTH / 2 && Math.random() < 0.8)
+                    decision = 2; // When enemy is on an odd level and near ladder, bias them to moving right.
+                else
+                    decision = (int) (Math.random() * 3); // Make a random decision.
 
             switch (decision) {
                 case 0:

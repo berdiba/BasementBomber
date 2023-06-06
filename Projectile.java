@@ -13,15 +13,14 @@ public class Projectile {
     int height = 8;
     int x, y;
     int projectileSpeed = 32;
-    int damage, blastRadius;
 
     boolean facingLeft;
 
     String type;
 
     Image projectileImg;
-    Rectangle col;
 
+    Rectangle col;
 
     public Projectile(boolean facingLeft, int x, int y, String type) {
         this.facingLeft = facingLeft;
@@ -55,14 +54,5 @@ public class Projectile {
             x = x - projectileSpeed;
         else
             x = x + projectileSpeed;
-    }
-
-    public void detonate() {
-        switch (type) {
-            case "bazooka":
-                damage = 1;
-                blastRadius = 64;
-                break;
-        }
     }
 }
