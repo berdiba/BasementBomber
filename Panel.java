@@ -52,7 +52,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int playerX, playerY, playerWidth, playerHeight;
     static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
-    static int playerSpeed = 10, playerJumpHeight = -24, playerClimbSpeed = 0;
+    static int playerSpeedMax = 10, playerSpeedLadder = 2, playerSpeed = playerSpeedMax, playerJumpHeight = -24, playerClimbSpeed = 0;
     static int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
     static int playerWobble = 0; // Controls the bobbing up and down of player when walking.
 
@@ -69,7 +69,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int particlesDensity = 512, particlesMax = 4, colorMod;
     // particlesDensity inversely proportional to particles.
 
-    static int launchSpeed, launchSpeedMax = playerSpeed * 2;
+    static int launchSpeed, launchSpeedMax = playerSpeedMax * 2;
 
     int fogX = 0;
     int fog2X = -WIDTH; // Duplicate fog placed behind original to create seamless fog movement.
@@ -362,10 +362,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         if (onLadder) {
-            playerSpeed = 2;
+            playerSpeed = playerSpeedLadder;
             playerWobble = 0;
         } else {
-            playerSpeed = 10;
+            playerSpeed = playerSpeedMax;
         }
 
         fogX = fogX + fogSpeed;
