@@ -22,7 +22,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int gravityMax = 10, gravity = gravityMax;
     static int gameTime = 0;
 
-    char key; // Used for player movement left / right.
+    static char key; // Used for player movement left / right.
 
     // Images.
     static Image backgroundImg = new ImageIcon("background.png").getImage();
@@ -36,11 +36,16 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     static Image heartEmptyImg = new ImageIcon("heartEmpty.png").getImage();
     static Image heartFullImg = new ImageIcon("heartFull.png").getImage();
-    static Image heartEmptyDamageImg = new ImageIcon("heartEmptyDamage.png").getImage();
-    static Image heartFullDamageImg = new ImageIcon("heartFullDamage.png").getImage();
+    static Image heartEmptyRedImg = new ImageIcon("heartEmptyRed.png").getImage();
+    static Image heartFullRedImg = new ImageIcon("heartFullRed.png").getImage();
+
     static Image reloadBarEmptyImg = new ImageIcon("reloadBarEmpty.png").getImage();
     static Image reloadBarFullImg = new ImageIcon("reloadBarFull.png").getImage();
-    static Image reloadBarDamageImg = new ImageIcon("reloadBarDamage.png").getImage();
+    static Image reloadBarRedImg = new ImageIcon("reloadBarRed.png").getImage();
+
+    static Image dashBarEmptyImg = new ImageIcon("dashBarEmpty.png").getImage();
+    static Image dashBarFullImg = new ImageIcon("dashBarFull.png").getImage();
+    static Image dashBarRedImg = new ImageIcon("dashBarRed.png").getImage();
     static Image buttonsImg; // buttonsImg set up later on.
 
     // Integers.
@@ -52,15 +57,21 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int playerX, playerY, playerWidth, playerHeight;
     static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
-    static int playerSpeedMax = 10, playerSpeedLadder = 2, playerSpeed = playerSpeedMax, playerJumpHeight = -24, playerClimbSpeed = 0;
+    static int playerSpeedMax = 10, playerSpeed = playerSpeedMax, playerJumpHeight = -24;
+    static int playerSpeedLadder = 2, playerClimbSpeed = 0;
     static int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
     static int playerWobble = 0; // Controls the bobbing up and down of player when walking.
 
-    static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
-    static int shootCooldown = gameTime, cooldownTime = 120; // CooldownTime measured in ticks.
-    static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
+    static int dashResetCooldownTime = 60, dashResetCooldown = -dashResetCooldownTime;
+    static int dashCooldownTime = 10, dashCooldown = -dashCooldownTime;
+    static int dashSpeedMax = playerSpeed * 2, dashSpeed = 0;
 
-    static int healthMax = 6, health = healthMax, healthCooldown = gameTime;
+    static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
+    static int shootCooldown = gameTime, shootCooldownTime = 120; // CooldownTime measured in ticks.
+    static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
+    static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
+
+    static int healthMax = 600, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
     static int damageFlashMax = 8, damageFlash;
@@ -318,10 +329,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         if (damageFlash > 0) {
             for (int i = 0; i < healthMax; i++)
-                g2D.drawImage(heartEmptyDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
+                g2D.drawImage(heartEmptyRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
                         CHUNK / 4 + damageWobbleY, null);
             for (int i = 0; i < health; i++)
-                g2D.drawImage(heartFullDamageImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
+                g2D.drawImage(heartFullRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
                         CHUNK / 4 + damageWobbleY, null);
         } else {
             for (int i = 0; i < healthMax; i++)
@@ -331,21 +342,30 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         }
 
         g2D.drawImage(reloadBarEmptyImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
-        if (shootCooldown < gameTime - cooldownTime) {
+        if (shootCooldown < gameTime - shootCooldownTime) {
             g2D.drawImage(reloadBarFullImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
         } else {
             g.setColor(new Color(78, 110, 96));
-            g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL,
-                    ((gameTime - shootCooldown) * reloadBarWidth / cooldownTime) - PIXEL * 2,
-                    reloadBarHeight - PIXEL * 2);
-            System.out.println(shootCooldown);
+            g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL * 2,
+                    ((gameTime - shootCooldown) * reloadBarWidth / shootCooldownTime) - PIXEL * 2,
+                    reloadBarHeight - PIXEL * 3);
+        }
+
+        g2D.drawImage(dashBarEmptyImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
+        if (dashCooldown < gameTime - dashResetCooldownTime) {
+            g2D.drawImage(dashBarFullImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
+        } else {
+            g.setColor(new Color(78, 110, 96));
+            g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2,
+                    ((gameTime - dashResetCooldown) * (dashBarWidth + PIXEL * 16) / dashResetCooldownTime) - PIXEL * 2,
+                    dashBarHeight - PIXEL * 3);
         }
     }
 
     public void move() {
         // Update player position.
         playerY = playerY + playerUp + gravity + playerClimbSpeed + -Math.abs(launchSpeed * 2 / 3);
-        playerX = playerX + playerLeft + playerRight + launchSpeed;
+        playerX = playerX + playerLeft + playerRight + dashSpeed + launchSpeed;
         playerCol.x = playerX + playerColXOffset;
         playerCol.y = playerY + playerColYOffset + parallax;
 
@@ -404,6 +424,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
         moveCol();
         accelarate();
+        dash();
     }
 
     public void moveCol() { // Adds parallax effect to colliders.
@@ -447,6 +468,17 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 }
         } else if (playerRight > 0)
             playerRight--;
+    }
+
+    public void dash() {
+        if (dashCooldown > gameTime - dashCooldownTime) {
+            if (facingLeft) // Dash in the direction player is facing.
+                dashSpeed = -dashSpeedMax;
+            else
+                dashSpeed = dashSpeedMax;
+            dashResetCooldown = gameTime; // Reset dashResetCoolDown.
+        } else
+            dashSpeed = dashSpeed * 3 / 4;
     }
 
     public void checkCollisions() {
@@ -814,6 +846,12 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 if (!onLadder)
                     shoot();
                 break;
+            case 16:
+                if (dashResetCooldown < gameTime - dashResetCooldownTime && !onLadder) {
+                    // Only triggers when dashResetCooldown has surpassed dashResetCooldownTime
+                    dashCooldown = gameTime; // Reset dashCooldown, making player dash.
+                }
+                break;
         }
         if (e.getKeyCode() == 87) {
             if (touchingGround && !onLadder) // Player cannot jump while on ladder.
@@ -829,7 +867,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void shoot() {
-        if (shootCooldown < gameTime - cooldownTime) {
+        if (shootCooldown < gameTime - shootCooldownTime) {
             projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
             recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 2; i++)
