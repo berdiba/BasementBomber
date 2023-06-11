@@ -357,7 +357,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         } else {
             g.setColor(new Color(78, 110, 96));
             g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2,
-                    ((gameTime - dashResetCooldown) * (dashBarWidth + PIXEL * 16) / dashResetCooldownTime) - PIXEL * 2,
+                    ((gameTime - dashCooldown) * (dashBarWidth) / dashResetCooldownTime) - PIXEL * 2,
                     dashBarHeight - PIXEL * 3);
         }
     }
