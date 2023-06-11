@@ -92,6 +92,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
     boolean showControlls = true, panYAccelerating = false, panYDone = false;
     boolean inWallLeft = false, inWallRight = false;
+    boolean canDash = true;
 
     // Rectangles
     static Rectangle playerCol; // Collision box for player.
@@ -471,13 +472,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void dash() {
-        if (dashCooldown > gameTime - dashCooldownTime) {
+        if (dashCooldown > gameTime - dashCooldownTime && canDash) {
             if (facingLeft) // Dash in the direction player is facing.
                 dashSpeed = -dashSpeedMax;
             else
                 dashSpeed = dashSpeedMax;
             dashResetCooldown = gameTime; // Reset dashResetCoolDown.
-        } else
+        } else if (!canDash)
+            dashSpeed = 0;
+        else
             dashSpeed = dashSpeed * 3 / 4;
     }
 
@@ -487,23 +490,32 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             inWallLeft = true; // Stops player from being able to move left.
             playerLeft = 0;
             launchSpeed = Math.abs(launchSpeed);
-        } else
+        } else {
             inWallLeft = false;
+        }
 
         if (playerCol.intersects(wallRightCol)) {
             inWallRight = true;
             playerRight = 0;
             launchSpeed = -Math.abs(launchSpeed);
-        } else
+        } else {
             inWallRight = false;
+        }
 
         if (playerCol.intersects(wallLeftCol.x - playerSpeed, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height)) {
-            playerX = playerX + playerWidth; // When player is launched into the wall, force it back out.
+            playerX = playerX + (playerWidth / 4); // When player is launched into the wall, force it back out.
         }
         if (playerCol.intersects(wallRightCol.x + playerSpeed, wallRightCol.y, wallRightCol.width,
                 wallRightCol.height)) {
-            playerX = playerX - playerWidth;
+            playerX = playerX - (playerWidth / 4);
         }
+
+        if (playerCol.intersects(wallLeftCol.x + playerSpeed, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height) ||
+                playerCol.intersects(wallRightCol.x - playerSpeed, wallRightCol.y,
+                        wallRightCol.width, wallRightCol.height))
+            canDash = false;
+        else
+            canDash = true;
 
         for (int j = 0; j < particles.size(); j++) {
             if (particles.get(j).col.intersects(wallLeftCol)) {
