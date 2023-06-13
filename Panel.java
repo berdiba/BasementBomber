@@ -510,8 +510,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerX = playerX - (playerWidth / 4);
         }
 
-        if (playerCol.intersects(wallLeftCol.x + playerSpeed, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height) ||
-                playerCol.intersects(wallRightCol.x - playerSpeed, wallRightCol.y,
+        if (playerCol.intersects(wallLeftCol.x + playerSpeed / 2, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height)
+                || playerCol.intersects(wallRightCol.x - playerSpeed / 2, wallRightCol.y,
                         wallRightCol.width, wallRightCol.height))
             canDash = false;
         else
@@ -742,7 +742,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         damageFlash = damageFlashMax; // Set damageFlash to its maximum value.
         playerJump = 0; // Stops player from being able to be launched and jump at the same time.
         if (isLeft) {
-            launchSpeed = launchSpeedMax; // Launches the player left.
+            if (health > 1 && healthCooldown < gameTime - 30)
+                launchSpeed = launchSpeedMax; // Launches the player left.
+            else
+                launchSpeed = launchSpeedMax * 2 / 3; // Launches the player less strongly.
             playerLeft = 0;
             playerRight = 0;
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++) {
@@ -752,7 +755,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                         playerBlood, 60, 1, 0.2f, true, true));
             }
         } else {
-            launchSpeed = -launchSpeedMax;
+            if (health > 1 && healthCooldown < gameTime - 30)
+                launchSpeed = -launchSpeedMax; // Launches the player right.
+            else
+                launchSpeed = -launchSpeedMax * 2 / 3;
             playerLeft = 0;
             playerRight = 0;
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++) {
@@ -833,22 +839,21 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void keyPressed(KeyEvent e) {
-        // System.out.println(e.getKeyCode());
         switch (e.getKeyCode()) {
-            case 65:
+            case 37: // Move left.
                 if (!inWallLeft) {
                     key = 'a';
                     movingLeft = true;
                 }
                 break;
-            case 68:
+            case 39: // Move right.
                 if (!inWallRight) {
                     key = 'd';
                     movingRight = true;
                 }
                 break;
-            case 83: // If player on ladder and ladder bottom, player wont fall but can't climb any
-                     // lower.
+            case 40: // Move down.
+                // If player on ladder & ladder bottom, player wont fall but can't climb lower.
                 if (onLadder && !onLadderBottom) {
                     playerClimbSpeed = 6;
                     climbingLadder = true;
@@ -865,7 +870,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 }
                 break;
         }
-        if (e.getKeyCode() == 87) {
+        if (e.getKeyCode() == 38) {
             if (touchingGround && !onLadder) // Player cannot jump while on ladder.
                 jump();
             else if (onLadder && !onLadderTop) {
@@ -910,21 +915,21 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
-            case 65:
+            case 37:
                 movingLeft = false;
                 if (movingRight)
                     facingLeft = false;
                 break;
-            case 68:
+            case 39:
                 movingRight = false;
                 if (movingLeft)
                     facingLeft = true;
                 break;
-            case 83:
+            case 40:
                 playerClimbSpeed = 0;
                 climbingLadder = false;
                 break;
-            case 87:
+            case 38:
                 playerJumped = false;
                 playerClimbSpeed = 0;
                 climbingLadder = false;
