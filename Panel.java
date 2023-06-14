@@ -70,6 +70,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int shootCooldown = gameTime, shootCooldownTime = 120; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
+    static int dashBarRed = gameTime, dashBarRedCooldown = 20; // dashBarRedCooldown messured in ticks.
 
     static int healthMax = 600, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
@@ -82,9 +83,8 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     static int launchSpeed, launchSpeedMax = playerSpeedMax * 2;
 
-    int fogX = 0;
-    int fog2X = -WIDTH; // Duplicate fog placed behind original to create seamless fog movement.
-    int fogSpeed = 1;
+    static int fogX = 0, fog2X = -WIDTH, fogSpeed = 1;
+    // Duplicate fog placed behind original to create seamless fog movement.
 
     // Booleans.
     boolean movingLeft = false, movingRight = false, facingLeft = false;
@@ -191,6 +191,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g2D.drawImage(backgroundImg, 0, parallax / 4, null);
         g2D.drawImage(fogImg, fogX, -HEIGHT / 2 + parallax, null);
         g2D.drawImage(fogImg, fog2X, -HEIGHT / 2 + parallax, null);
+
     }
 
     public void paintForeground(Graphics g, Graphics2D g2D) { // Paints ground, rooms, ladders, enemies.
@@ -203,10 +204,13 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             room.get(i).paint(g); // For every room i, call its paint method using Graphics g.
             ladder.get(i).paint(g);
         }
+
         for (int i = 0; i < room.size(); i++) {
+            // Purposefully seperate for loop here. Makes sure enemies render over ladder.
             for (int j = 0; j < room.get(i).enemy.size(); j++)
                 room.get(i).enemy.get(j).paint(g); // Paint enemies.
         }
+
     }
 
     public void paintProjectiles(Graphics g, Graphics2D g2D) { // Paints player projectiles.
@@ -584,15 +588,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 inWallRight = false;
 
             if (ladder.get(i).col.contains(playerCol) && room.get(Math.max(roomLevel, 0)).isClear() ||
-            ladder.get(i).col.contains(playerCol) && roomLevel == -1 ||
-            ladder.get(i).col.contains(playerCol) && ladder.get(i).level == roomLevel) {
+                    ladder.get(i).col.contains(playerCol) && roomLevel == -1 ||
+                    ladder.get(i).col.contains(playerCol) && ladder.get(i).level == roomLevel) {
                 // Check to see if player is colliding with any of the ladders.
                 onLadder = true; // Set onLadder to true. Important this is done before gravity is calculated.
                 break; // Important to break. This stops onLadder from being set to false unessesarily.
             } else
                 onLadder = false;
 
-            if (ladder.get(i).topCol.contains(playerCol)) { 
+            if (ladder.get(i).topCol.contains(playerCol)) {
                 // Check to see if player is colliding with tops of the ladders.
                 onLadderTop = true;
                 break;
@@ -601,7 +605,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             } else
                 onLadderTop = false;
 
-            if (ladder.get(i).bottomCol.contains(playerCol)) { 
+            if (ladder.get(i).bottomCol.contains(playerCol)) {
                 // Check to see if player is colliding with bottoms of the ladders.
                 onLadderBottom = true;
                 break;
@@ -754,7 +758,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerLeft = 0;
             playerRight = 0;
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++) {
-
+                colorMod = (int) (Math.random() * 40);
                 playerBlood = new Color((colorMod * 2 + 110), 20, 20);
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, -10,
                         playerBlood, 60, 1, 0.2f, true, true));
@@ -767,7 +771,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             playerLeft = 0;
             playerRight = 0;
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++) {
-
+                colorMod = (int) (Math.random() * 40);
                 playerBlood = new Color((colorMod * 2 + 110), 20, 20);
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10,
                         playerBlood, 60, 1, 0.2f, true, true));
