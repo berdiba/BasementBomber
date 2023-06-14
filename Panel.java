@@ -64,7 +64,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     static int dashResetCooldownTime = 60, dashResetCooldown = -dashResetCooldownTime;
     static int dashCooldownTime = 10, dashCooldown = -dashCooldownTime;
-    static int dashSpeedMax = playerSpeed * 2, dashSpeed = 0;
+    static int dashSpeedMax = playerSpeed * 5 / 2, dashSpeed = 0;
 
     static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
     static int shootCooldown = gameTime, shootCooldownTime = 120; // CooldownTime measured in ticks.
@@ -92,7 +92,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
     boolean showControlls = true, panYAccelerating = false, panYDone = false;
     boolean inWallLeft = false, inWallRight = false;
-    boolean canDash = true;
+    boolean canDash = true, dashing = false;
 
     // Rectangles
     static Rectangle playerCol; // Collision box for player.
@@ -473,74 +473,40 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public void dash() {
         if (dashCooldown > gameTime - dashCooldownTime && canDash) {
+            dashing = true;
             if (facingLeft) // Dash in the direction player is facing.
                 dashSpeed = -dashSpeedMax;
             else
                 dashSpeed = dashSpeedMax;
             dashResetCooldown = gameTime; // Reset dashResetCoolDown.
-        } else if (!canDash)
+        } else if (!canDash) {
             dashSpeed = 0;
-        else
+            dashing = false;
+        } else {
             dashSpeed = dashSpeed * 3 / 4;
+            dashing = false;
+        }
     }
 
     public void checkCollisions() {
-        // Code for intersecting with left and right colliders.
-        if (playerCol.intersects(wallLeftCol)) {
-            inWallLeft = true; // Stops player from being able to move left.
-            playerLeft = 0;
-            launchSpeed = Math.abs(launchSpeed);
-        } else {
-            inWallLeft = false;
-        }
-
-        if (playerCol.intersects(wallRightCol)) {
-            inWallRight = true;
-            playerRight = 0;
-            launchSpeed = -Math.abs(launchSpeed);
-        } else {
-            inWallRight = false;
-        }
-
-        if (playerCol.intersects(wallLeftCol.x - playerSpeed, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height)) {
-            playerX = playerX + (playerWidth / 4); // When player is launched into the wall, force it back out.
-        }
-        if (playerCol.intersects(wallRightCol.x + playerSpeed, wallRightCol.y, wallRightCol.width,
-                wallRightCol.height)) {
-            playerX = playerX - (playerWidth / 4);
-        }
-
-        if (playerCol.intersects(wallLeftCol.x + playerSpeed / 2, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height)
-                || playerCol.intersects(wallRightCol.x - playerSpeed / 2, wallRightCol.y,
-                        wallRightCol.width, wallRightCol.height))
-            canDash = false;
-        else
-            canDash = true;
-
-        for (int j = 0; j < particles.size(); j++) {
-            if (particles.get(j).col.intersects(wallLeftCol)) {
-                particles.get(j).xSpeed = Math.abs(particles.get(j).xSpeed);
-            }
-            if (particles.get(j).col.intersects(wallRightCol))
-                particles.get(j).xSpeed = -Math.abs(particles.get(j).xSpeed);
-        }
-
-        checkPan();
-        checkLadderCollisions();
-        checkGroundCollisions();
-        checkEnemyCollisions();
-        checkProjectileCollisions();
-
         if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
             playerJump++;
-        for (int i = 0; i < room.size(); i++)
+        for (int i = 0; i < room.size(); i++) {
+            room.get(i).isClear(); // Check to see if room is clear of enemies.
             if (room.get(i).col.contains(playerCol)) {
                 inRoom = room.get(i).level;
                 roomLevel = room.get(i).level; // Used for illumination.
                 break;
             } else
                 inRoom = -1;
+        }
 
+        checkPan();
+        checkLadderCollisions();
+        checkWallCollisions();
+        checkGroundCollisions();
+        checkEnemyCollisions();
+        checkProjectileCollisions();
         killStrayProjectiles();
         killOldParticles();
     }
@@ -616,20 +582,18 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 playerX--;
             } else
                 inWallRight = false;
-        }
 
-        for (int i = 0; i < ladder.size(); i++) {
-            if (ladder.get(i).col.contains(playerCol)) { // Check to see if player is colliding with any of the
-                                                         // ladders.
+            if (ladder.get(i).col.contains(playerCol) && room.get(Math.max(roomLevel, 0)).isClear() ||
+            ladder.get(i).col.contains(playerCol) && roomLevel == -1 ||
+            ladder.get(i).col.contains(playerCol) && ladder.get(i).level == roomLevel) {
+                // Check to see if player is colliding with any of the ladders.
                 onLadder = true; // Set onLadder to true. Important this is done before gravity is calculated.
                 break; // Important to break. This stops onLadder from being set to false unessesarily.
             } else
                 onLadder = false;
-        }
 
-        for (int i = 0; i < ladder.size(); i++)
-            if (ladder.get(i).topCol.contains(playerCol)) { // Check to see if player is colliding with tops of
-                                                            // the ladders.
+            if (ladder.get(i).topCol.contains(playerCol)) { 
+                // Check to see if player is colliding with tops of the ladders.
                 onLadderTop = true;
                 break;
                 // Set onLadderTop to true. This variable controlls jittering that happens if
@@ -637,20 +601,61 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             } else
                 onLadderTop = false;
 
-        for (int i = 0; i < ladder.size(); i++)
-            if (ladder.get(i).bottomCol.contains(playerCol)) { // Check to see if player is colliding with bottoms
-                                                               // of the ladders.
+            if (ladder.get(i).bottomCol.contains(playerCol)) { 
+                // Check to see if player is colliding with bottoms of the ladders.
                 onLadderBottom = true;
                 break;
                 // Set onLadderTop to true. This variable controlls jittering that happens if
                 // player is holiding down buttons when on ladder.
             } else
                 onLadderBottom = false;
+        }
 
         if (onLadder)
             gravity = 0; // So that player can stay still while on ladder.
         else
             gravity = gravityMax;
+    }
+
+    public void checkWallCollisions() { // Code for intersecting with left and right wall colliders.
+        if (playerCol.intersects(wallLeftCol)) {
+            inWallLeft = true; // Stops player from being able to move left.
+            playerLeft = 0;
+            launchSpeed = Math.abs(launchSpeed);
+        } else {
+            inWallLeft = false;
+        }
+
+        if (playerCol.intersects(wallRightCol)) {
+            inWallRight = true;
+            playerRight = 0;
+            launchSpeed = -Math.abs(launchSpeed);
+        } else {
+            inWallRight = false;
+        }
+
+        if (playerCol.intersects(wallLeftCol.x - playerSpeed, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height)) {
+            playerX = playerX + (playerWidth / 4); // When player is launched into the wall, force it back out.
+        }
+        if (playerCol.intersects(wallRightCol.x + playerSpeed, wallRightCol.y, wallRightCol.width,
+                wallRightCol.height)) {
+            playerX = playerX - (playerWidth / 4);
+        }
+
+        if (playerCol.intersects(wallLeftCol.x + playerSpeed / 2, wallLeftCol.y, wallLeftCol.width, wallLeftCol.height)
+                || playerCol.intersects(wallRightCol.x - playerSpeed / 2, wallRightCol.y,
+                        wallRightCol.width, wallRightCol.height))
+            canDash = false;
+        else
+            canDash = true;
+
+        for (int j = 0; j < particles.size(); j++) {
+            if (particles.get(j).col.intersects(wallLeftCol)) {
+                particles.get(j).xSpeed = Math.abs(particles.get(j).xSpeed);
+            }
+            if (particles.get(j).col.intersects(wallRightCol))
+                particles.get(j).xSpeed = -Math.abs(particles.get(j).xSpeed);
+        }
     }
 
     public void checkGroundCollisions() { // Collisions between player and ground and ceilings.
@@ -727,10 +732,10 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
                     room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
 
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft)) {
-                    damage(false);
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && !dashing) {
+                    damage(false); // Player cant get hurt while dashing.
                 }
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight)) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight) && !dashing) {
                     damage(true);
                 }
             }

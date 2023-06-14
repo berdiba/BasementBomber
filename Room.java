@@ -24,7 +24,6 @@ public class Room {
 
     ArrayList<Enemy> enemy = new ArrayList<Enemy>();
 
-
     public Room(int x, int y, int level) {
         this.x = x;
         this.y = y; // Setting x, y, level to be ints passed from Panel.
@@ -60,5 +59,12 @@ public class Room {
         for (int i = 0; i < level * 3 + 4; i++) {
             enemy.add(new Enemy(level));
         }
+    }
+
+    public boolean isClear() {
+        if (enemy.size() == 0)
+            return true;
+        else
+            return false;
     }
 }
