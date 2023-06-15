@@ -54,8 +54,9 @@ public class Particles {
    }
 
    public void move() {
-      x = x + xSpeed; // Move particles.
-      y = y + ySpeed;
+      x = x + xSpeed + Panel.damageWobbleX; // Move particles.
+      y = y + ySpeed - Math.abs(Panel.damageWobbleY * 2); 
+      // Makes it look like particles bounce when camera shakes.
 
       col = new Rectangle(x + xOffset,
             y + yOffset + Panel.parallax, particleWidth, particleHeight);

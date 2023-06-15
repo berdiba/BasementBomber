@@ -77,7 +77,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int damageFlashMax = 8, damageFlash;
     static int UIParallax = -healthWidth;
 
-    static int particlesDensity = 512, particlesMax = 4, colorMod;
+    static int particlesDensity = 1024, particlesMax = 4, colorMod;
     // particlesDensity inversely proportional to particles.
 
     static int launchSpeed, launchSpeedMax = playerSpeedMax * 2;
