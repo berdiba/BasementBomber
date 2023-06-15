@@ -45,24 +45,24 @@ public class Ladder {
         Graphics2D g2D = (Graphics2D) g;
 
         if (!ladderBroken) {
-            if (Panel.roomLevel < level || Panel.roomLevel > level)
+            if (Panel.lastRoom < level || Panel.lastRoom > level)
                 // Triggers when player is one room above or below ladder.
                 ladderImg = new ImageIcon("ladderDark.png").getImage();
-            if (Panel.roomLevel == level)
+            if (Panel.lastRoom == level)
                 // Triggers when player is in the same room as ladder.
                 ladderImg = new ImageIcon("ladderDarkTop.png").getImage();
-            if (Panel.roomLevel == level - 1)
+            if (Panel.lastRoom == level - 1)
                 // Triggers when player is one room above player. Overrides ladderDark.
                 ladderImg = new ImageIcon("ladderDarkBottom.png").getImage();
-            if (Panel.roomLevel == level && level == 0)
+            if (Panel.lastRoom == level && level == 0)
                 // Triggers when player is in only room0.
                 ladderImg = new ImageIcon("ladder.png").getImage();
         } else { // Broken ladder variants.
-            if (Panel.roomLevel < level || Panel.roomLevel > level)
+            if (Panel.lastRoom < level || Panel.lastRoom > level)
                 ladderImg = new ImageIcon("ladderBrokenDark.png").getImage();
-            if (Panel.roomLevel == level)
+            if (Panel.lastRoom == level)
                 ladderImg = new ImageIcon("ladderBrokenDarkTop.png").getImage();
-            if (Panel.roomLevel == level && level == 0)
+            if (Panel.lastRoom == level && level == 0)
                 ladderImg = new ImageIcon("ladderBroken.png").getImage();
         }
 

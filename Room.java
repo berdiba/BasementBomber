@@ -44,7 +44,7 @@ public class Room {
     public void paint(Graphics g) { // Will be called in Panel paint method.
         Graphics2D g2D = (Graphics2D) g;
 
-        if (Panel.roomLevel == level) {
+        if (Panel.lastRoom == level) {
             if (level <= 1 & Panel.gameTime % 2 == 0) {
                 // This will constantly flick between true and false for level 0, and always be
                 // false for other levels.

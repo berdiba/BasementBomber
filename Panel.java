@@ -13,7 +13,7 @@ import java.lang.Math;
 // import java.awt.geom.*; // Remove later on if never used.
 import java.util.ArrayList;
 
-public class Panel extends JPanel implements Runnable, KeyListener, MouseListener, MouseMotionListener {
+public class Panel extends JPanel implements Runnable, KeyListener {
     // World variables.
     Thread gameThread;
 
@@ -51,7 +51,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     // Integers.
     static int parallax = 0;
     static int panYSpeed = 8;
-    static int inRoom = -1, lastInRoom = inRoom, roomLevel = -1;
+    static int inRoom = -1, lastInRoom = inRoom, lastRoom = -1;
     static int roomX = CHUNK * 2, roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4;
 
     static int playerX, playerY, playerWidth, playerHeight;
@@ -70,7 +70,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     static int shootCooldown = gameTime, shootCooldownTime = 120; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
-    static int dashBarRed = gameTime, dashBarRedCooldown = 20; // dashBarRedCooldown messured in ticks.
 
     static int healthMax = 600, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
@@ -92,7 +91,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
     boolean showControlls = true, panYAccelerating = false, panYDone = false;
     boolean inWallLeft = false, inWallRight = false;
-    boolean canDash = true, dashing = false;
+    boolean canDash = true, dashing = false, dashBarRed = false;
 
     // Rectangles
     static Rectangle playerCol; // Collision box for player.
@@ -114,14 +113,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
 
     public Panel() {
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        this.setBackground(new Color(175, 207, 194)); // Sets background colour to be teal.
+        this.setBackground(new Color(175, 207, 194)); // Sets background colour to be a teal-ish.
 
-        addKeyListener(this); // Setting up listeners here as they are used throughought the whole game.
-        addMouseListener(this);
-        addMouseMotionListener(this);
+        addKeyListener(this);
 
         setVariables();
-
         menu();
     }
 
@@ -191,7 +187,6 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
         g2D.drawImage(backgroundImg, 0, parallax / 4, null);
         g2D.drawImage(fogImg, fogX, -HEIGHT / 2 + parallax, null);
         g2D.drawImage(fogImg, fog2X, -HEIGHT / 2 + parallax, null);
-
     }
 
     public void paintForeground(Graphics g, Graphics2D g2D) { // Paints ground, rooms, ladders, enemies.
@@ -356,14 +351,22 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     reloadBarHeight - PIXEL * 3);
         }
 
-        g2D.drawImage(dashBarEmptyImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
         if (dashCooldown < gameTime - dashResetCooldownTime) {
             g2D.drawImage(dashBarFullImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
         } else {
-            g.setColor(new Color(78, 110, 96));
-            g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2,
-                    ((gameTime - dashCooldown) * (dashBarWidth) / dashResetCooldownTime) - PIXEL * 2,
-                    dashBarHeight - PIXEL * 3);
+            if (dashBarRed) {
+                g2D.drawImage(dashBarRedImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
+                g.setColor(new Color(148, 90, 80));
+                g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2,
+                        ((gameTime - dashCooldown) * (dashBarWidth) / dashResetCooldownTime) - PIXEL * 2,
+                        dashBarHeight - PIXEL * 3);
+            } else {
+                g2D.drawImage(dashBarEmptyImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
+                g.setColor(new Color(78, 110, 96));
+                g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2,
+                        ((gameTime - dashCooldown) * (dashBarWidth) / dashResetCooldownTime) - PIXEL * 2,
+                        dashBarHeight - PIXEL * 3);
+            }
         }
     }
 
@@ -499,7 +502,7 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             room.get(i).isClear(); // Check to see if room is clear of enemies.
             if (room.get(i).col.contains(playerCol)) {
                 inRoom = room.get(i).level;
-                roomLevel = room.get(i).level; // Used for illumination.
+                lastRoom = room.get(i).level; // Used for illumination.
                 break;
             } else
                 inRoom = -1;
@@ -516,15 +519,15 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
     }
 
     public void checkPan() { // Detects when panY should be triggered.
-        if (inRoom >= 0) // Makes sure pan only triggers when player is in a room.
-            if (lastInRoom != inRoom) { // Check to see if player is in a new room.
+        if (lastRoom >= 0) // Makes sure pan only triggers when player is in a room.
+            if (lastInRoom != lastRoom) { // Check to see if player is in a new room.
                 panYDone = false;
-                if (lastInRoom > inRoom)
-                    panY(inRoom, false); // Pan down to specified room.
+                if (lastInRoom > lastRoom)
+                    panY(lastRoom, false); // Pan down to specified room.
                 else
-                    panY(inRoom, true);
+                    panY(lastRoom, true);
                 if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
-                    lastInRoom = inRoom;
+                    lastInRoom = lastRoom;
             }
     }
 
@@ -587,9 +590,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
             } else
                 inWallRight = false;
 
-            if (ladder.get(i).col.contains(playerCol) && room.get(Math.max(roomLevel, 0)).isClear() ||
-                    ladder.get(i).col.contains(playerCol) && roomLevel == -1 ||
-                    ladder.get(i).col.contains(playerCol) && ladder.get(i).level == roomLevel) {
+            if (ladder.get(i).col.contains(playerCol) && room.get(Math.max(lastRoom, 0)).isClear() ||
+                    ladder.get(i).col.contains(playerCol) && lastRoom == -1 ||
+                    ladder.get(i).col.contains(playerCol) && ladder.get(i).level == lastRoom) {
                 // Check to see if player is colliding with any of the ladders.
                 onLadder = true; // Set onLadder to true. Important this is done before gravity is calculated.
                 break; // Important to break. This stops onLadder from being set to false unessesarily.
@@ -877,6 +880,9 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                     // Only triggers when dashResetCooldown has surpassed dashResetCooldownTime
                     dashCooldown = gameTime; // Reset dashCooldown, making player dash.
                 }
+                if (dashSpeed > 0)
+                    dashBarRed = true;
+                System.out.println("no");
                 break;
         }
         if (e.getKeyCode() == 38) {
@@ -942,29 +948,11 @@ public class Panel extends JPanel implements Runnable, KeyListener, MouseListene
                 playerJumped = false;
                 playerClimbSpeed = 0;
                 climbingLadder = false;
+                break;
+            case 16:
+                dashBarRed = false;
+                break;
         }
-    }
-
-    // Theese will be used later on when making menu.
-    public void mouseClicked(MouseEvent e) {
-    }
-
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    public void mouseExited(MouseEvent e) {
-    }
-
-    public void mousePressed(MouseEvent e) {
-    }
-
-    public void mouseReleased(MouseEvent e) {
-    }
-
-    public void mouseDragged(MouseEvent e) {
-    }
-
-    public void mouseMoved(MouseEvent e) {
     }
 
     public boolean isFocusTraversable() { // Lets JPanel accept users input.
