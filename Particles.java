@@ -49,14 +49,14 @@ public class Particles {
 
    public void paint(Graphics g) {
       g.setColor(color);
-      g.fillRect(x + xOffset,
-            y + yOffset + Panel.parallax, particleWidth, particleHeight);
+      g.fillRect(x + xOffset + Panel.damageWobbleX,
+            y + yOffset + Panel.parallax + Panel.damageWobbleY, particleWidth, particleHeight);
+      // DamageWobbleY akes it look like particles bounce when camera shakes.
    }
 
    public void move() {
-      x = x + xSpeed + Panel.damageWobbleX; // Move particles.
-      y = y + ySpeed - Math.abs(Panel.damageWobbleY * 2); 
-      // Makes it look like particles bounce when camera shakes.
+      x = x + xSpeed; // Move particles.
+      y = y + ySpeed;
 
       col = new Rectangle(x + xOffset,
             y + yOffset + Panel.parallax, particleWidth, particleHeight);

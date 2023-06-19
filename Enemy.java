@@ -19,7 +19,8 @@ public class Enemy {
 
     int colXOffset = 8, colYOffset = 2;
 
-    int speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = idleSpeed + 2, wobble, viewDistance = Panel.CHUNK * 8;
+    int speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = idleSpeed + 2, wobble,
+            viewDistance = Panel.CHUNK * 8;
     // Speed determined by level + idleSpeed, or when chasing player + chaseSpeed.
 
     int gravity = 10, up = -gravity;
@@ -28,6 +29,7 @@ public class Enemy {
     // DecisionMax measured in frames. 120 frames at 60 fps is 2 seconds.
 
     int growHeight = 0;
+    int healthMax, health;
 
     Boolean takingAction = false, facingLeft = true;
 
@@ -50,12 +52,21 @@ public class Enemy {
 
         speed = level + idleSpeed;
 
+        healthMax = Math.max(1, level);
+        health = healthMax;
+
         col = new Rectangle(x, y, width, height);
         viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
+
+        System.out.println(health);
     }
 
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
+
+        if (healthMax > 1 && health == 1) {
+            enemyImg = new ImageIcon("enemy" + level + "hurt.png").getImage();
+        }
 
         if (Panel.lastInRoom == level) { // Activate when player enters enemies level.
             if (growHeight < height) {

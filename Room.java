@@ -67,7 +67,7 @@ public class Room {
     }
 
     public void populate() { // Adds enemies to the level.
-        for (int i = 0; i < level * 3 + 4; i++) {
+        for (int i = 0; i < level + 4; i++) {
             enemy.add(new Enemy(level));
         }
     }

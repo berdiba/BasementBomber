@@ -67,7 +67,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int dashSpeedMax = playerSpeed * 5 / 2, dashSpeed = 0;
 
     static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
-    static int shootCooldown = gameTime, shootCooldownTime = 120; // CooldownTime measured in ticks.
+    static int shootCooldown = gameTime, shootCooldownTime = 20; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
 
@@ -77,7 +77,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int damageFlashMax = 8, damageFlash;
     static int UIParallax = -healthWidth;
 
-    static int particlesDensity = 1024, particlesMax = 4, colorMod;
+    static int particlesDensity = 1040, particlesMax = 4, colorMod;
     // particlesDensity inversely proportional to particles.
 
     static int launchSpeed, launchSpeedMax = playerSpeedMax * 2;
@@ -140,8 +140,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         // Upon starting the game, add ladders to arraylist of ladders.
         ladder.add(new Ladder(CHUNK * 18, CHUNK * 4, 0));
         ladder.add(new Ladder(CHUNK * 3, CHUNK * 8, 1));
+        ladder.add(new Ladder(CHUNK * 18, CHUNK * 12, 2));
         room.add(new Room(roomX, roomYBase + roomYLevel * 0, 0)); // Start at level 0 as index starts at 0.
         room.add(new Room(roomX, roomYBase + roomYLevel * 1, 1));
+        room.add(new Room(roomX, roomYBase + roomYLevel * 2, 2));
 
         gameThread = new Thread(this);
         gameThread.start();
@@ -827,7 +829,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                                         room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, -10, -10,
                                         enemyBlood, 60, 1, 0.2f, true, true));
                             }
-                        room.get(j).enemy.remove(k); // Remove enemy.
+                        if (room.get(j).enemy.get(k).health > 1) {
+                            room.get(j).enemy.get(k).health--;
+                            System.out.println("boom!");
+                        } else
+                            room.get(j).enemy.remove(k); // Remove enemy.
+
                         projectile.get(i).x = WIDTH * 4; // Send it off screen to get killed.
                     }
                 }
@@ -902,7 +909,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         if (shootCooldown < gameTime - shootCooldownTime) {
             projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
             recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
-            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 2; i++)
+            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 8; i++)
                 if (facingLeft) {
 
                     colorMod = (int) (Math.random() * 40);
