@@ -344,14 +344,22 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + UIParallax, CHUNK / 4, null);
         }
 
-        g2D.drawImage(reloadBarEmptyImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
         if (shootCooldown < gameTime - shootCooldownTime) {
             g2D.drawImage(reloadBarFullImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
         } else {
-            g.setColor(new Color(78, 110, 96));
-            g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL * 2,
-                    ((gameTime - shootCooldown) * reloadBarWidth / shootCooldownTime) - PIXEL * 2,
-                    reloadBarHeight - PIXEL * 3);
+            if (reloadBarRed) {
+                g2D.drawImage(reloadBarRedImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
+                g.setColor(new Color(148, 90, 80));
+                g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL * 2,
+                        ((gameTime - shootCooldown) * reloadBarWidth / shootCooldownTime) - PIXEL * 2,
+                        reloadBarHeight - PIXEL * 3);
+            } else {
+                g2D.drawImage(reloadBarEmptyImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
+                g.setColor(new Color(78, 110, 96));
+                g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL * 2,
+                        ((gameTime - shootCooldown) * reloadBarWidth / shootCooldownTime) - PIXEL * 2,
+                        reloadBarHeight - PIXEL * 3);
+            }
         }
 
         if (dashCooldown < gameTime - dashResetCooldownTime) {
@@ -666,6 +674,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             if (particles.get(j).col.intersects(wallRightCol))
                 particles.get(j).xSpeed = -Math.abs(particles.get(j).xSpeed);
         }
+
+        System.out.println(shootButtonPushed);
     }
 
     public void checkGroundCollisions() { // Collisions between player and ground and ceilings.
@@ -920,17 +930,17 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void shoot() {
         if (shootCooldown < gameTime - shootCooldownTime) {
             shootButtonPushed = true;
+            reloadBarRed = false; // Stops reloadBar staying red when space is held down.
 
             projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
             recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
 
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 8; i++)
                 if (facingLeft) {
-
-                    colorMod = (int) (Math.random() * 40);
+                    colorMod = (int) (Math.random() * 40); // Randomise particle colour.
                     blast = new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60);
                     particles.add(new Particles(playerX + playerWidth * 3 / 4, playerY + playerHeight / 2,
-                            16, 8, 20, 1, blast,
+                            16, 8, 20, 1, blast, // Add shoot particles.
                             10, 6, 2, false, true));
                 } else {
                     colorMod = (int) (Math.random() * 40);
@@ -941,7 +951,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 }
             shootCooldown = gameTime;
         }
-    }
+        if (!(shootCooldown < gameTime - shootCooldownTime) && !shootButtonPushed)
+            reloadBarRed = true;
+        }
 
     public void jump() {
         if (!playerJumped) { // Player cannot jump in mid-air.
@@ -972,8 +984,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 climbingLadder = false;
                 break;
             case 32:
-            shootButtonPushed = false;
-            break;
+                shootButtonPushed = false;
+                reloadBarRed = false;
+                break;
             case 16:
                 dashBarRed = false;
                 dashButtonPushed = false;
