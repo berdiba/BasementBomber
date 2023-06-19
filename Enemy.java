@@ -19,7 +19,7 @@ public class Enemy {
 
     int colXOffset = 8, colYOffset = 2;
 
-    int speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = idleSpeed + 2, wobble,
+    int speedMax, speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = 2, wobble,
             viewDistance = Panel.CHUNK * 8;
     // Speed determined by level + idleSpeed, or when chasing player + chaseSpeed.
 
@@ -50,7 +50,11 @@ public class Enemy {
         x = (int) (Math.random() * (Room.width - width) + Panel.roomX); // Set x to be random number within room bounds.
         y = Panel.roomYBase + Panel.roomYLevel * level + Room.height - height;
 
-        speed = level + idleSpeed;
+        if (level != 3)
+            speedMax = Math.min(level + idleSpeed, 2 + idleSpeed); // Speed caps out at level 2.
+        else {
+            speedMax = Math.max(idleSpeed - 1, 1); // Mummies on level 3 are much slower.
+        }
 
         healthMax = Math.max(1, level);
         health = healthMax;
@@ -64,8 +68,17 @@ public class Enemy {
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
 
-        if (healthMax > 1 && health == 1) {
-            enemyImg = new ImageIcon("enemy" + level + "hurt.png").getImage();
+        switch (level) { // Determines enemies appearance based on health and level.
+            case 2:
+                if (health == 1)
+                    enemyImg = new ImageIcon("enemy2hurt.png").getImage();
+                break;
+            case 3:
+                if (health == 2)
+                    enemyImg = new ImageIcon("enemy3hurt1.png").getImage();
+                if (health == 1)
+                    enemyImg = new ImageIcon("enemy3hurt2.png").getImage();
+                break;
         }
 
         if (Panel.lastInRoom == level) { // Activate when player enters enemies level.
@@ -155,13 +168,13 @@ public class Enemy {
     public void checkCollisions() {
         if (viewCol.intersects(Panel.playerCol)) { // Trigger when player is within enemies line of sight.
             decisionTime = decisionMax; // Reset decision.
-            speed = level + chaseSpeed; // Increase speed.
+            speed = speedMax + chaseSpeed; // Increase speed.
             if (viewCol.x + viewCol.width / 2 > Panel.playerCol.x + Panel.playerCol.width / 2) {
                 decision = 1; // Move left / right depending on where player is relative to enemy.
             } else {
                 decision = 2;
             }
         } else
-            speed = level + idleSpeed; // Set speed back to normal.
+            speed = speedMax; // Set speed back to normal.
     }
 }

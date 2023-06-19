@@ -856,6 +856,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             case 2: // Robot "blood".
                 enemyBlood = new Color(colorMod + 40, colorMod + 60, colorMod + 80);
                 break;
+            case 3: // Mummy brown.
+                enemyBlood = new Color(colorMod + 100, colorMod + 70, colorMod + 60);
+                break;
             default: // Red blood;
                 enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
                 break;
@@ -953,7 +956,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
         if (!(shootCooldown < gameTime - shootCooldownTime) && !shootButtonPushed)
             reloadBarRed = true;
-        }
+    }
 
     public void jump() {
         if (!playerJumped) { // Player cannot jump in mid-air.
