@@ -62,12 +62,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
     static int playerWobble = 0; // Controls the bobbing up and down of player when walking.
 
-    static int dashResetCooldownTime = 60, dashResetCooldown = -dashResetCooldownTime;
+    static int dashResetCooldownTime = 30, dashResetCooldown = -dashResetCooldownTime;
     static int dashCooldownTime = 10, dashCooldown = -dashCooldownTime;
     static int dashSpeedMax = playerSpeed * 5 / 2, dashSpeed = 0;
 
     static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
-    static int shootCooldown = gameTime, shootCooldownTime = 20; // CooldownTime measured in ticks.
+    static int shootCooldown = gameTime, shootCooldownTime = 60; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
 
@@ -91,7 +91,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
     boolean showControlls = true, panYAccelerating = false, panYDone = false;
     boolean inWallLeft = false, inWallRight = false;
-    boolean canDash = true, dashing = false, dashBarRed = false;
+    boolean reloadBarRed = false, shootButtonPushed = false;
+    boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
 
     // Rectangles
     static Rectangle playerCol; // Collision box for player.
@@ -100,10 +101,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
 
     // Colors.
-    Color playerBlood;
-    Color enemyBlood;
-    Color blast;
-    Color wood;
+    Color playerBlood, enemyBlood, blast, wood;
 
     // ArrayLists
     static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
@@ -141,9 +139,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         ladder.add(new Ladder(CHUNK * 18, CHUNK * 4, 0));
         ladder.add(new Ladder(CHUNK * 3, CHUNK * 8, 1));
         ladder.add(new Ladder(CHUNK * 18, CHUNK * 12, 2));
+        ladder.add(new Ladder(CHUNK * 3, CHUNK * 16, 3));
+
         room.add(new Room(roomX, roomYBase + roomYLevel * 0, 0)); // Start at level 0 as index starts at 0.
         room.add(new Room(roomX, roomYBase + roomYLevel * 1, 1));
         room.add(new Room(roomX, roomYBase + roomYLevel * 2, 2));
+        room.add(new Room(roomX, roomYBase + roomYLevel * 3, 3));
 
         gameThread = new Thread(this);
         gameThread.start();
@@ -897,10 +898,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (dashResetCooldown < gameTime - dashResetCooldownTime && !onLadder) {
                     // Only triggers when dashResetCooldown has surpassed dashResetCooldownTime
                     dashCooldown = gameTime; // Reset dashCooldown, making player dash.
+                    dashButtonPushed = true;
                 }
-                if (dashSpeed > 0)
+                if (!(dashCooldown < gameTime - dashResetCooldownTime) && !dashButtonPushed)
                     dashBarRed = true;
-                System.out.println("no");
                 break;
         }
         if (e.getKeyCode() == 38) {
@@ -918,8 +919,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void shoot() {
         if (shootCooldown < gameTime - shootCooldownTime) {
+            shootButtonPushed = true;
+
             projectile.add(new Projectile(facingLeft, playerX, playerY, "bazooka"));
             recoil = recoilMax; // This pushes gun backwards by recoilMax pixels.
+
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 8; i++)
                 if (facingLeft) {
 
@@ -967,8 +971,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 playerClimbSpeed = 0;
                 climbingLadder = false;
                 break;
+            case 32:
+            shootButtonPushed = false;
+            break;
             case 16:
                 dashBarRed = false;
+                dashButtonPushed = false;
                 break;
         }
     }
