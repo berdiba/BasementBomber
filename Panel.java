@@ -804,11 +804,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                                 1, room.get(j).enemy.get(k).col.height))
                             for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++) {
 
-                                colorMod = (int) (Math.random() * 40); // Adds random variation to particle colours.
-                                if (room.get(j).level == 1)
-                                    enemyBlood = new Color(20, (100 - colorMod), (colorMod + 110));
-                                else
-                                    enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+                                changeEnemyBloodColour(room.get(j).level);
 
                                 particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
                                         room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, 10, -10,
@@ -819,25 +815,40 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                                 room.get(j).enemy.get(k).col.height))
                             for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++) {
 
-                                colorMod = (int) (Math.random() * 40);
-                                if (room.get(j).level == 1)
-                                    enemyBlood = new Color(20, (100 - colorMod), (colorMod + 110));
-                                else
-                                    enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+                                changeEnemyBloodColour(room.get(j).level);
 
                                 particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
                                         room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, -10, -10,
                                         enemyBlood, 60, 1, 0.2f, true, true));
                             }
                         if (room.get(j).enemy.get(k).health > 1) {
+                            // If enemy has over 1 health, subtract 1 instead of killing them.
                             room.get(j).enemy.get(k).health--;
-                            System.out.println("boom!");
                         } else
                             room.get(j).enemy.remove(k); // Remove enemy.
 
-                        projectile.get(i).x = WIDTH * 4; // Send it off screen to get killed.
+                        projectile.get(i).x = WIDTH * 4; // Send projectile off screen to get killed.
                     }
                 }
+    }
+
+    public void changeEnemyBloodColour(int level) {
+        colorMod = (int) (Math.random() * 40); // Adds random variation to particle colours.
+
+        switch (level) {
+            case 0: // Red blood.
+                enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+                break;
+            case 1: // Blue-green goblin blood.
+                enemyBlood = new Color(20, (100 - colorMod), (colorMod + 110));
+                break;
+            case 2: // Robot "blood".
+                enemyBlood = new Color(colorMod + 40, colorMod + 60, colorMod + 80);
+                break;
+            default: // Red blood;
+                enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+                break;
+        }
     }
 
     public void killStrayProjectiles() {
