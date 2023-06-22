@@ -67,15 +67,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int dashSpeedMax = playerSpeed * 5 / 2, dashSpeed = 0;
 
     static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
-    static int shootCooldown = gameTime, shootCooldownTime = 60; // CooldownTime measured in ticks.
+    static int shootCooldown = gameTime, shootCooldownTime = 1; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
 
-    static int healthMax = 600, health = healthMax, healthCooldown = gameTime;
+    static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
     static int damageFlashMax = 8, damageFlash;
-    static int UIParallax = -healthWidth;
 
     static int particlesDensity = 1024, particlesMax = 4, colorMod;
     // particlesDensity inversely proportional to particles.
@@ -326,22 +325,23 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 buttonsImg = new ImageIcon("buttons1.png").getImage();
             else
                 buttonsImg = new ImageIcon("buttons2.png").getImage();
-            g2D.drawImage(buttonsImg, CHUNK / 2 + parallax * 2, CHUNK / 2, null);
+            g2D.drawImage(buttonsImg, playerX + playerWidth / 2 - buttonsImg.getWidth(null) / 2, 
+            HEIGHT / 2 + PIXEL * 10 + parallax * 3, null);
             // When parallax increases, buttons are moved to the side.
         }
 
         if (damageFlash > 0) {
             for (int i = 0; i < healthMax; i++)
-                g2D.drawImage(heartEmptyRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
+                g2D.drawImage(heartEmptyRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX,
                         CHUNK / 4 + damageWobbleY, null);
             for (int i = 0; i < health; i++)
-                g2D.drawImage(heartFullRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX + UIParallax,
+                g2D.drawImage(heartFullRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX,
                         CHUNK / 4 + damageWobbleY, null);
         } else {
             for (int i = 0; i < healthMax; i++)
-                g2D.drawImage(heartEmptyImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + UIParallax, CHUNK / 4, null);
+                g2D.drawImage(heartEmptyImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4, null);
             for (int i = 0; i < health; i++)
-                g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + UIParallax, CHUNK / 4, null);
+                g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4, null);
         }
 
         if (shootCooldown < gameTime - shootCooldownTime) {
@@ -577,9 +577,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             } else
                 panYDone = true;
         }
-
-        if (-parallax < (healthWidth / 4))
-            UIParallax = -parallax * 4 - healthWidth + 16;
     }
 
     public void checkLadderCollisions() { // Collisions between player and ladders.
@@ -750,10 +747,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
                     room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
 
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && !dashing) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && !dashing && healthCooldown < gameTime - 30) {
                     damage(false); // Player cant get hurt while dashing.
                 }
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight) && !dashing) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight) && !dashing && healthCooldown < gameTime - 30) {
                     damage(true);
                 }
             }
