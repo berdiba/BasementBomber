@@ -77,7 +77,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int damageFlashMax = 8, damageFlash;
     static int UIParallax = -healthWidth;
 
-    static int particlesDensity = 1040, particlesMax = 4, colorMod;
+    static int particlesDensity = 1024, particlesMax = 4, colorMod;
     // particlesDensity inversely proportional to particles.
 
     static int launchSpeed, launchSpeedMax = playerSpeedMax * 2;
@@ -182,7 +182,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         paintProjectiles(g, g2D);
         paintPlayer(g, g2D);
         paintParticles(g, g2D);
-        // paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
     }
 
@@ -674,8 +674,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             if (particles.get(j).col.intersects(wallRightCol))
                 particles.get(j).xSpeed = -Math.abs(particles.get(j).xSpeed);
         }
-
-        System.out.println(shootButtonPushed);
     }
 
     public void checkGroundCollisions() { // Collisions between player and ground and ceilings.

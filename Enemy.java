@@ -53,7 +53,8 @@ public class Enemy {
         if (level != 3)
             speedMax = Math.min(level + idleSpeed, 2 + idleSpeed); // Speed caps out at level 2.
         else {
-            speedMax = Math.max(idleSpeed - 1, 1); // Mummies on level 3 are much slower.
+            speedMax = Math.max(idleSpeed - 2, 1); // Mummies on level 3 are much slower.
+            chaseSpeed = (int) Math.round(Math.random() * 2);
         }
 
         healthMax = Math.max(1, level);
@@ -61,8 +62,6 @@ public class Enemy {
 
         col = new Rectangle(x, y, width, height);
         viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
-
-        System.out.println(health);
     }
 
     public void paint(Graphics g) {

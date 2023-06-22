@@ -15,12 +15,12 @@ import java.util.ArrayList;
 
 public class Particles {
    int x, y, width, height, xSpeed, ySpeed;
-   int particleWidth = 4, particleHeight = 4;
+   int particleWidth = (int) (Math.floor(Math.random() * 3)) * 4, particleHeight = 4;
    int xOffset, yOffset;
 
    Color color;
 
-   int age = Panel.gameTime, ageMax;
+   int age, ageMax;
    boolean gravity, drag;
 
    Rectangle col;
@@ -39,6 +39,8 @@ public class Particles {
       this.ySpeed = ySpeed + (int) (Math.random() * height - yOffset) / 4;
 
       this.color = color;
+
+      age = Panel.gameTime;
 
       this.ageMax = age + ageMax;
       this.gravity = gravity;
