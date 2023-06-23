@@ -81,7 +81,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
     static int deathUIY = HEIGHT;
 
-    static int healthMax = 1, health = healthMax, healthCooldown = gameTime;
+    static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
     static int deathUIWobbleX, deathUIWobbleY;
@@ -99,7 +99,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     boolean movingLeft = false, movingRight = false, facingLeft = false;
     boolean touchingGround = true, playerJumped = false;
     boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
-    boolean showControlls = true, panYAccelerating = false, panYDone = false;
+    boolean showControlls = true, panYAccelerating = false, panYDone = false, panUp = false;
     boolean inWallLeft = false, inWallRight = false;
     boolean reloadBarRed = false, shootButtonPushed = false;
     boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
@@ -185,7 +185,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintParticles(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
-        // paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintDeathUI(g, g2D);
     }
 
@@ -274,11 +274,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     ladder.get(i).topCol.height);
             g.drawRect(ladder.get(i).bottomCol.x, ladder.get(i).bottomCol.y,
                     ladder.get(i).bottomCol.width, ladder.get(i).bottomCol.height);
+
             g.setColor(Color.cyan);
             g.drawRect(ladder.get(i).leftCol.x, ladder.get(i).leftCol.y,
                     ladder.get(i).leftCol.width, ladder.get(i).leftCol.height);
             g.drawRect(ladder.get(i).rightCol.x, ladder.get(i).rightCol.y,
                     ladder.get(i).rightCol.width, ladder.get(i).rightCol.height);
+
             g.setColor(Color.yellow);
             g.drawRect(ladder.get(i).col.x, ladder.get(i).col.y, ladder.get(i).col.width,
                     ladder.get(i).col.height);
@@ -290,6 +292,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     room.get(i).ceiling.height);
             g.drawRect(room.get(i).floor.x, room.get(i).floor.y, room.get(i).floor.width,
                     room.get(i).floor.height);
+
             g.setColor(Color.yellow); // Room collider.
             g.drawRect(room.get(i).col.x, room.get(i).col.y, room.get(i).col.width,
                     room.get(i).col.height);
@@ -297,14 +300,17 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         g.setColor(Color.green); // Player hitbox.
         g.drawRect(playerCol.x, playerCol.y, playerCol.width, playerCol.height);
+
         for (int i = 0; i < room.size(); i++)
             for (int j = 0; j < room.get(i).enemy.size(); j++) {
                 g.setColor(Color.orange); // Enemy view distance.
                 g.drawRect(room.get(i).enemy.get(j).viewCol.x, room.get(i).enemy.get(j).viewCol.y,
                         room.get(i).enemy.get(j).viewCol.width, room.get(i).enemy.get(j).viewCol.height);
+
                 g.setColor(Color.green); // Enemy hitbox.
                 g.drawRect(room.get(i).enemy.get(j).col.x, room.get(i).enemy.get(j).col.y,
                         room.get(i).enemy.get(j).col.width, room.get(i).enemy.get(j).col.height);
+
                 g.setColor(Color.red); // Enemy damage collider.
                 g.drawRect(room.get(i).enemy.get(j).damageColLeft.x, room.get(i).enemy.get(j).damageColLeft.y,
                         room.get(i).enemy.get(j).damageColLeft.width, room.get(i).enemy.get(j).damageColLeft.height);
@@ -496,7 +502,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             ladder.get(i).topCol.y = ladder.get(i).col.y - ladder.get(i).offset;
             ladder.get(i).bottomCol.y = ladder.get(i).col.y + ladder.get(i).col.height - playerHeight;
             ladder.get(i).leftCol.y = ladder.get(i).col.y;
+            ladder.get(i).leftCol.height = ladder.get(i).col.height; 
             ladder.get(i).rightCol.y = ladder.get(i).col.y;
+            ladder.get(i).rightCol.height = ladder.get(i).col.height;
+            // Update ladder left/rightCol height, as ladders shorten when destroyed.
             // Parallax added to col, no need to add to ladderLeft or right a second time.
             // Only need to add parallax to col, as ladderTop and BottomCol are tied to col.
         }
@@ -575,8 +584,16 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
                     lastInRoom = lastRoom;
             }
-        if (gameOver)
+        if (gameOver && parallax > -HEIGHT * 4)
             parallax = parallax - PIXEL; // Pan downwards if player dies.
+
+        if (panUp) // Pans camera back up after game resets.
+            if (parallax < 0) // Parallax is a negative number btw.
+                parallax = parallax + CHUNK; // Quickly pan up.
+            else if (parallax > 0) // Ensures parallax doesen't overshoot.
+                parallax = 0;
+            else
+                panUp = false;
     }
 
     public void panY(int level, Boolean up) { // Moves camera up / down to room players in.
@@ -771,8 +788,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                                 ladder.get(i).col.height / 2, 0, -4 - (int) (Math.random() * 8), wood,
                                 120, 1, 0, true, true));
 
-                        ladder.get(i).col.x = WIDTH * 2; // Teleport ladder off screen, essensially removing it.
-                        ladder.get(i).ladderBroken = true;
+                        ladder.get(i).col.height = (ladder.get(i).ladderImg.getHeight(null) +
+                                ladder.get(i).offset * 2) / 2; // Remove bottom half of ladder col.
+                        ladder.get(i).ladderBroken = true; // Changes ladder image to broken state.
                     }
             }
     }
@@ -843,9 +861,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void kill() {
+        inRoom = -1;
         lastRoom = -1;
         lastInRoom = -1;
-        roomYLevel = -1;
 
         playerX = playerXStart;
         playerY = playerYStart;
@@ -932,51 +950,55 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-            case 37: // Move left.
-                if (!inWallLeft) {
-                    key = 'a';
-                    movingLeft = true;
-                }
-                break;
-            case 39: // Move right.
-                if (!inWallRight) {
-                    key = 'd';
-                    movingRight = true;
-                }
-                break;
-            case 40: // Move down.
-                // If player on ladder & ladder bottom, player wont fall but can't climb lower.
-                if (onLadder && !onLadderBottom) {
-                    playerClimbSpeed = 6;
-                    climbingLadder = true;
-                }
-                break;
-            case 32:
-                if (!onLadder)
-                    shoot();
-                break;
-            case 16:
-                if (dashResetCooldown < gameTime - dashResetCooldownTime && !onLadder) {
-                    // Only triggers when dashResetCooldown has surpassed dashResetCooldownTime
-                    dashCooldown = gameTime; // Reset dashCooldown, making player dash.
-                    dashButtonPushed = true;
-                }
-                if (!(dashCooldown < gameTime - dashResetCooldownTime) && !dashButtonPushed)
-                    dashBarRed = true;
-                break;
-        }
-        if (e.getKeyCode() == 38) {
-            if (touchingGround && !onLadder) // Player cannot jump while on ladder.
-                jump();
-            else if (onLadder && !onLadderTop) {
-                playerClimbSpeed = -6;
-                climbingLadder = true;
-
+        if (!gameOver) {
+            switch (e.getKeyCode()) {
+                case 37: // Move left.
+                    if (!inWallLeft) {
+                        key = 'a';
+                        movingLeft = true;
+                    }
+                    break;
+                case 39: // Move right.
+                    if (!inWallRight) {
+                        key = 'd';
+                        movingRight = true;
+                    }
+                    break;
+                case 40: // Move down.
+                    // If player on ladder & ladder bottom, player wont fall but can't climb lower.
+                    if (onLadder && !onLadderBottom) {
+                        playerClimbSpeed = 6;
+                        climbingLadder = true;
+                    }
+                    break;
+                case 32:
+                    if (!onLadder)
+                        shoot();
+                    break;
+                case 16:
+                    if (dashResetCooldown < gameTime - dashResetCooldownTime && !onLadder) {
+                        // Only triggers when dashResetCooldown has surpassed dashResetCooldownTime
+                        dashCooldown = gameTime; // Reset dashCooldown, making player dash.
+                        dashButtonPushed = true;
+                    }
+                    if (!(dashCooldown < gameTime - dashResetCooldownTime) && !dashButtonPushed)
+                        dashBarRed = true;
+                    break;
             }
-            // If player on ladder and ladder top, player wont fall but can not climb any
-            // higher.
-        }
+            if (e.getKeyCode() == 38) {
+                if (touchingGround && !onLadder) // Player cannot jump while on ladder.
+                    jump();
+                else if (onLadder && !onLadderTop) {
+                    playerClimbSpeed = -6;
+                    climbingLadder = true;
+
+                }
+                // If player on ladder and ladder top, player wont fall but can not climb any
+                // higher.
+            }
+        } else // Only trigger on game over screen.
+        if (e.getKeyCode() == 32) // Spacebar.
+            reset();
     }
 
     public void shoot() {
@@ -1012,6 +1034,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             playerJump = playerJumpHeight;
             playerJumped = true;
         }
+    }
+
+    public void reset() {
+        gameOver = false;
+        healthMax = healthMax - 1; // Reduces maximum health by 1.
+        health = healthMax;
+        panUp = true;
+        
+        deathUIY = HEIGHT; // Resets deathUIY back to bottom of screen.
     }
 
     public void keyReleased(KeyEvent e) {

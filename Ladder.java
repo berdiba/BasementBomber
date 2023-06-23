@@ -62,6 +62,8 @@ public class Ladder {
                 ladderImg = new ImageIcon("ladderBrokenDark.png").getImage();
             if (Panel.lastRoom == level)
                 ladderImg = new ImageIcon("ladderBrokenDarkTop.png").getImage();
+            if (Panel.lastRoom == level - 1)
+                ladderImg = new ImageIcon("ladderBrokenDarkBottom.png").getImage();
             if (Panel.lastRoom == level && level == 0)
                 ladderImg = new ImageIcon("ladderBroken.png").getImage();
         }
