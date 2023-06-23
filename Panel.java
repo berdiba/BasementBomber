@@ -48,13 +48,20 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Image dashBarRedImg = new ImageIcon("dashBarRed.png").getImage();
     static Image buttonsImg; // buttonsImg set up later on.
 
+    static Image missionFailedImg = new ImageIcon("missionFailed.png").getImage();
+    static Image missionFailedBGImg = new ImageIcon("missionFailedBG.png").getImage();
+
     // Integers.
     static int parallax = 0;
     static int panYSpeed = 8;
     static int inRoom = -1, lastInRoom = inRoom, lastRoom = -1;
     static int roomX = CHUNK * 2, roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4;
 
-    static int playerX, playerY, playerWidth, playerHeight;
+    static int playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
+    static int playerHeight = playerImg.getHeight(null);
+
+    static int playerXStart = WIDTH / 2 - playerWidth / 2, playerYStart = HEIGHT / 2 - playerHeight;
+    static int playerX = playerXStart, playerY = playerYStart;
     static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
     static int playerSpeedMax = 10, playerSpeed = playerSpeedMax, playerJumpHeight = -24;
@@ -67,9 +74,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int dashSpeedMax = playerSpeed * 5 / 2, dashSpeed = 0;
 
     static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
-    static int shootCooldown = gameTime, shootCooldownTime = 1; // CooldownTime measured in ticks.
+    static int shootCooldown = gameTime, shootCooldownTime = 60; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
+    static int deathUIY = HEIGHT;
 
     static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
@@ -92,9 +100,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     boolean inWallLeft = false, inWallRight = false;
     boolean reloadBarRed = false, shootButtonPushed = false;
     boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
+    boolean gameOver = false;
 
     // Rectangles
-    static Rectangle playerCol; // Collision box for player.
+    static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
+            playerHeight - playerColYOffset * 2);; // Collision box for player.
     static Rectangle groundCol; // Collision for ground.
     static Rectangle wallLeftCol = new Rectangle(0, -HEIGHT * 8, CHUNK * 2 + 8, HEIGHT * 16);
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
@@ -114,19 +124,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         addKeyListener(this);
 
-        setVariables();
         menu();
-    }
-
-    public void setVariables() { // Setup some variables related to images here.
-        playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
-        playerHeight = playerImg.getHeight(null);
-
-        playerX = WIDTH / 2 - playerWidth / 2;
-        playerY = -WIDTH / 2;
-
-        playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2, playerHeight - playerColYOffset * 2);
-        // x and y pos determined my moving player.
     }
 
     public void menu() {
@@ -178,11 +176,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         paintBackground(g, g2D);
         paintForeground(g, g2D);
-        paintProjectiles(g, g2D);
-        paintPlayer(g, g2D);
-        paintParticles(g, g2D);
-        //paintCol(g, g2D);
-        paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
+        if (!gameOver) { // Player not drawn when game over.
+            paintProjectiles(g, g2D);
+            paintPlayer(g, g2D);
+            paintParticles(g, g2D);
+            paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
+        }
+        // paintCol(g, g2D);
+        paintDeathUI(g, g2D);
     }
 
     public void paintBackground(Graphics g, Graphics2D g2D) { // Paints background and fog.
@@ -325,8 +326,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 buttonsImg = new ImageIcon("buttons1.png").getImage();
             else
                 buttonsImg = new ImageIcon("buttons2.png").getImage();
-            g2D.drawImage(buttonsImg, playerX + playerWidth / 2 - buttonsImg.getWidth(null) / 2, 
-            HEIGHT / 2 + PIXEL * 10 + parallax * 3, null);
+            g2D.drawImage(buttonsImg, playerX + playerWidth / 2 - buttonsImg.getWidth(null) / 2,
+                    HEIGHT / 2 + PIXEL * 10 + parallax * 3, null);
             // When parallax increases, buttons are moved to the side.
         }
 
@@ -381,6 +382,19 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
     }
 
+    public void paintDeathUI(Graphics g, Graphics2D g2D) { // Paints death screen interface.
+        if (gameOver) {
+            g2D.drawImage(missionFailedBGImg, WIDTH / 2 - missionFailedBGImg.getWidth(null) / 2 - damageWobbleX / 2,
+                        deathUIY - missionFailedBGImg.getHeight(null) / 2 - damageWobbleY / 2, null);
+                g2D.drawImage(missionFailedImg, WIDTH / 2 - missionFailedBGImg.getWidth(null) / 2,
+                        deathUIY - missionFailedBGImg.getHeight(null) / 2, null);
+                        
+            if (deathUIY > HEIGHT / 2) {
+                deathUIY = deathUIY - CHUNK;
+            }
+        }
+    }
+
     public void move() {
         // Update player position.
         playerY = playerY + playerUp + gravity + playerClimbSpeed + -Math.abs(launchSpeed * 2 / 3);
@@ -392,7 +406,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             playerWobble = (int) (Math.sin(gameTime) * 2);
         } // Alternates between 1 and -1 to create a bobbing up and down motion.
 
-        if (damageFlash > 0) {
+        if (damageFlash > 0 || gameOver) {
             damageWobbleX = (int) (Math.sin(gameTime) * 3);
             damageWobbleY = (int) (Math.sin(gameTime + 1) * 3);
         } else {
@@ -540,6 +554,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
                     lastInRoom = lastRoom;
             }
+        if (gameOver)
+            parallax++;
     }
 
     public void panY(int level, Boolean up) { // Moves camera up / down to room players in.
@@ -667,9 +683,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         for (int j = 0; j < particles.size(); j++) {
             if (particles.get(j).col.intersects(wallLeftCol)) {
                 particles.get(j).xSpeed = Math.abs(particles.get(j).xSpeed);
+                particles.get(j).x += CHUNK;
             }
-            if (particles.get(j).col.intersects(wallRightCol))
+            if (particles.get(j).col.intersects(wallRightCol)) {
                 particles.get(j).xSpeed = -Math.abs(particles.get(j).xSpeed);
+                particles.get(j).x -= CHUNK;
+            }
         }
     }
 
@@ -700,11 +719,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         for (int i = 0; i < room.size(); i++) {
             if (playerCol.intersects(room.get(i).floor) && !onLadder)
-                playerY--;
+                playerY--; // Push player out of floor.
             if (playerCol.intersects(room.get(i).ceiling) && !onLadder) {
-                launchSpeed = -Math.abs(launchSpeed);
+                launchSpeed = -Math.abs(launchSpeed); // Bounce player off ceiling.
                 playerJump = -Math.abs(playerJump);
-                playerY = playerY + playerWidth;
+                playerY = playerY + playerWidth; // Makes sure player doesent clip through ceiling at high velocities.
             }
 
             for (int j = 0; j < particles.size(); j++)
@@ -714,18 +733,23 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 }
         }
 
+        // Code to destroy ladder.
         for (int i = 0; i < ladder.size(); i++) // Run through every ladder.
-            if (inRoom == ladder.get(i).level && touchingGround) {
+            if (inRoom == ladder.get(i).level && touchingGround ||
+                    inRoom == ladder.get(i).level && damageFlash > 0) {
                 // Checks if player is touching ground in the same room as specified ladder.
                 if (!ladder.get(i).ladderBroken)
                     for (int j = 0; j < (ladder.get(i).col.width * ladder.get(i).col.height) / particlesDensity
                             * 8; j++) {
+
                         colorMod = (int) (Math.random() * 40);
                         wood = new Color(120 + colorMod * 2, 50 + colorMod * 2, 40 + colorMod * 2);
+
                         particles.add(new Particles(ladder.get(i).x,
                                 ladder.get(i).y + ladder.get(i).col.height / 2, ladder.get(i).col.width / 2,
                                 ladder.get(i).col.height / 2, 0, -4 - (int) (Math.random() * 8), wood,
                                 120, 1, 0, true, true));
+
                         ladder.get(i).col.x = WIDTH * 2; // Teleport ladder off screen, essensially removing it.
                         ladder.get(i).ladderBroken = true;
                     }
@@ -747,10 +771,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
                     room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
 
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && !dashing && healthCooldown < gameTime - 30) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft)
+                        && !dashing && healthCooldown < gameTime - 30) {
                     damage(false); // Player cant get hurt while dashing.
                 }
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight) && !dashing && healthCooldown < gameTime - 30) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight)
+                        && !dashing && healthCooldown < gameTime - 30) {
                     damage(true);
                 }
             }
@@ -796,7 +822,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void kill() {
-        System.exit(0);
+        lastRoom = -1;
+        lastInRoom = -1;
+        roomYLevel = -1;
+
+        playerX = playerXStart;
+        playerY = playerYStart;
+
+        gameOver = true;
     }
 
     public void checkProjectileCollisions() {

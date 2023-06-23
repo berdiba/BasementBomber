@@ -20,7 +20,7 @@ public class Enemy {
     int colXOffset = 8, colYOffset = 2;
 
     int speedMax, speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = 2, wobble,
-            viewDistance = Panel.CHUNK * 8;
+            viewDistance = Panel.CHUNK * 10;
     // Speed determined by level + idleSpeed, or when chasing player + chaseSpeed.
 
     int gravity = 10, up = -gravity;
@@ -156,12 +156,12 @@ public class Enemy {
         wobble = (int) (Math.sin(Panel.gameTime) * 2); // Alternates between -1 and 1.
     }
 
-    public void moveRight() {
+    public void moveRight() { // Same thing as moveLeft but in opposite direction.
         facingLeft = false;
         x = x + speed;
         if (col.intersects(Panel.wallRightCol))
             decision = 1;
-        wobble = (int) (Math.sin(Panel.gameTime) * 2); // Alternates between -1 and 1.
+        wobble = (int) (Math.sin(Panel.gameTime) * 2); 
     }
 
     public void checkCollisions() {
