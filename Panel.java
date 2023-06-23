@@ -50,6 +50,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     static Image missionFailedImg = new ImageIcon("missionFailed.png").getImage();
     static Image missionFailedBGImg = new ImageIcon("missionFailedBG.png").getImage();
+    static Image continueButtonImg;
+    static Image continueTextImg = new ImageIcon("continue.png").getImage();
 
     // Integers.
     static int parallax = 0;
@@ -79,9 +81,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
     static int deathUIY = HEIGHT;
 
-    static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
+    static int healthMax = 1, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
+    static int deathUIWobbleX, deathUIWobbleY;
     static int damageFlashMax = 8, damageFlash;
 
     static int particlesDensity = 1024, particlesMax = 4, colorMod;
@@ -326,6 +329,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 buttonsImg = new ImageIcon("buttons1.png").getImage();
             else
                 buttonsImg = new ImageIcon("buttons2.png").getImage();
+
             g2D.drawImage(buttonsImg, playerX + playerWidth / 2 - buttonsImg.getWidth(null) / 2,
                     HEIGHT / 2 + PIXEL * 10 + parallax * 3, null);
             // When parallax increases, buttons are moved to the side.
@@ -384,13 +388,25 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void paintDeathUI(Graphics g, Graphics2D g2D) { // Paints death screen interface.
         if (gameOver) {
-            g2D.drawImage(missionFailedBGImg, WIDTH / 2 - missionFailedBGImg.getWidth(null) / 2 - damageWobbleX / 2,
-                        deathUIY - missionFailedBGImg.getHeight(null) / 2 - damageWobbleY / 2, null);
-                g2D.drawImage(missionFailedImg, WIDTH / 2 - missionFailedBGImg.getWidth(null) / 2,
-                        deathUIY - missionFailedBGImg.getHeight(null) / 2, null);
-                        
-            if (deathUIY > HEIGHT / 2) {
-                deathUIY = deathUIY - CHUNK;
+            if (Math.sin(gameTime / 4) > 0) // Alternates between light and dark continue button.
+                continueButtonImg = new ImageIcon("space1.png").getImage();
+            else
+                continueButtonImg = new ImageIcon("space2.png").getImage();
+
+            if (deathUIY < HEIGHT / 2) {
+                g2D.drawImage(continueTextImg, WIDTH / 2 - PIXEL * 2 - continueButtonImg.getWidth(null),
+                        HEIGHT - deathUIY + continueTextImg.getHeight(null), null);
+                g2D.drawImage(continueButtonImg, WIDTH / 2 + PIXEL * 2,
+                        HEIGHT - deathUIY + continueTextImg.getHeight(null), null);
+            }
+
+            g2D.drawImage(missionFailedBGImg, WIDTH / 2 - missionFailedBGImg.getWidth(null) / 2 + deathUIWobbleX,
+                    deathUIY - missionFailedBGImg.getHeight(null) / 3 + deathUIWobbleY, null);
+            g2D.drawImage(missionFailedImg, WIDTH / 2 - missionFailedBGImg.getWidth(null) / 2 - deathUIWobbleX,
+                    deathUIY - missionFailedBGImg.getHeight(null) / 3 - deathUIWobbleY, null);
+
+            if (deathUIY > HEIGHT / 2 - CHUNK) {
+                deathUIY = deathUIY - CHUNK / 2;
             }
         }
     }
@@ -406,13 +422,18 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             playerWobble = (int) (Math.sin(gameTime) * 2);
         } // Alternates between 1 and -1 to create a bobbing up and down motion.
 
-        if (damageFlash > 0 || gameOver) {
-            damageWobbleX = (int) (Math.sin(gameTime) * 3);
+        if (damageFlash > 0) {
+            damageWobbleX = (int) (Math.sin(gameTime) * 3); // Similar to playerWobble, alternating between +/- 1.
             damageWobbleY = (int) (Math.sin(gameTime + 1) * 3);
+        } else if (gameOver) {
+            damageWobbleX = (int) (Math.sin((double) gameTime / 2) * 2);
         } else {
             damageWobbleX = 0;
             damageWobbleY = 0;
         }
+
+        deathUIWobbleX = (int) (Math.sin((double) gameTime / 16) * 4); // Controlls wobble seen in game over screen.
+        deathUIWobbleY = (int) (Math.sin((double) gameTime / 16 + 1) * 4);
 
         if (onLadder) {
             playerSpeed = playerSpeedLadder;
@@ -555,7 +576,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     lastInRoom = lastRoom;
             }
         if (gameOver)
-            parallax++;
+            parallax = parallax - PIXEL; // Pan downwards if player dies.
     }
 
     public void panY(int level, Boolean up) { // Moves camera up / down to room players in.
