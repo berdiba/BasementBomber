@@ -775,10 +775,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         for (int i = 0; i < ladder.size(); i++) // Run through every ladder.
             if (inRoom == ladder.get(i).level && touchingGround ||
                     inRoom == ladder.get(i).level && damageFlash > 0) {
-                // Checks if player is touching ground in the same room as specified ladder.
-                if (!ladder.get(i).ladderBroken)
-                    for (int j = 0; j < (ladder.get(i).col.width * ladder.get(i).col.height) / particlesDensity
-                            * 8; j++) {
+                // Triggers if player touches ground or gets hit by enemy and
+                // ladder is in same room as player.
+                if (!ladder.get(i).ladderBroken) {
+                    for (int j = 0; j < (ladder.get(i).col.width * ladder.get(i).col.height) /
+                            particlesDensity * 8; j++) {
 
                         colorMod = (int) (Math.random() * 40);
                         wood = new Color(120 + colorMod * 2, 50 + colorMod * 2, 40 + colorMod * 2);
@@ -788,10 +789,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                                 ladder.get(i).col.height / 2, 0, -4 - (int) (Math.random() * 8), wood,
                                 120, 1, 0, true, true));
 
-                        ladder.get(i).col.height = (ladder.get(i).ladderImg.getHeight(null) +
-                                ladder.get(i).offset * 2) / 2; // Remove bottom half of ladder col.
                         ladder.get(i).ladderBroken = true; // Changes ladder image to broken state.
                     }
+                    ladder.get(i).col.height = (ladder.get(i).ladderImg.getHeight(null) +
+                            ladder.get(i).offset * 2) / 2; // Remove bottom half of ladder col.
+                }
             }
     }
 
@@ -952,7 +954,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void keyPressed(KeyEvent e) {
-        if (!gameOver) {
+        if (!gameOver) { // Player can only move if not dead.
             switch (e.getKeyCode()) {
                 case 37: // Move left.
                     if (!inWallLeft) {
@@ -987,6 +989,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         dashBarRed = true;
                     break;
             }
+
             if (e.getKeyCode() == 38) {
                 if (touchingGround && !onLadder) // Player cannot jump while on ladder.
                     jump();
@@ -999,8 +1002,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 // higher.
             }
         } else // Only trigger on game over screen.
-        if (e.getKeyCode() == 32 && deathCooldown < gameTime - deathCooldownTime)
-            reset();
+        if (deathCooldown < gameTime - deathCooldownTime) // 1 second delay between game over and acceptung user input.
+            switch (e.getKeyCode()) {
+                case 32: // Move left.
+                    reset();
+                    break;
+                case 81:
+                    System.exit(0);
+                    break;
+            }
     }
 
     public void shoot() {
