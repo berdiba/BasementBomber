@@ -46,12 +46,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Image dashBarEmptyImg = new ImageIcon("dashBarEmpty.png").getImage();
     static Image dashBarFullImg = new ImageIcon("dashBarFull.png").getImage();
     static Image dashBarRedImg = new ImageIcon("dashBarRed.png").getImage();
-    static Image buttonsImg; // buttonsImg set up later on.
 
     static Image missionFailedImg = new ImageIcon("missionFailed.png").getImage();
-    static Image missionFailedBGImg = new ImageIcon("missionFailedBG.png").getImage();
-    static Image continueButtonImg;
-    static Image continueTextImg = new ImageIcon("continue.png").getImage();
+    static Image titleImg = new ImageIcon("title.png").getImage();
+    static Image titleBGImg = new ImageIcon("titleBG.png").getImage();
+
+    static Image buttonsImg; // buttonsImg set up later on.
+    static Image deathButtonsImg;
 
     // Integers.
     static int parallax = 0;
@@ -79,7 +80,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int shootCooldown = gameTime, shootCooldownTime = 60; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
-    static int deathUIY = HEIGHT;
+    static int deathCooldown = gameTime, deathCooldownTime = 60, deathUIY = HEIGHT;
+    // deathCoolDown used for wait time after death before player can press buttons.
 
     static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
@@ -177,6 +179,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         Toolkit.getDefaultToolkit().sync(); // Supposedly makes game run smoother.
 
+        buttonFlash();
         paintBackground(g, g2D);
         paintForeground(g, g2D);
         if (!gameOver) { // Player not drawn when game over.
@@ -185,8 +188,19 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintParticles(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
-        //paintCol(g, g2D);
+        // paintCol(g, g2D);
         paintDeathUI(g, g2D);
+    }
+
+    public void buttonFlash() {
+        // Math.sin() gives switching value between -/+ at repeated rate.
+        if (Math.sin(gameTime / 4) > 0) { // Alternates between dark and light button.
+            buttonsImg = new ImageIcon("buttons1.png").getImage();
+            deathButtonsImg = new ImageIcon("deathButtons1.png").getImage();
+        } else {
+            buttonsImg = new ImageIcon("buttons2.png").getImage();
+            deathButtonsImg = new ImageIcon("deathButtons2.png").getImage();
+        }
     }
 
     public void paintBackground(Graphics g, Graphics2D g2D) { // Paints background and fog.
@@ -329,13 +343,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void paintUI(Graphics g, Graphics2D g2D) { // Paints user interface.
         if (showControlls) {
-            // Using Math.sin() gives a value that switches between negative and positive at
-            // a controlled rate.
-            if (Math.sin(gameTime / 4) > 0)
-                buttonsImg = new ImageIcon("buttons1.png").getImage();
-            else
-                buttonsImg = new ImageIcon("buttons2.png").getImage();
-
             g2D.drawImage(buttonsImg, playerX + playerWidth / 2 - buttonsImg.getWidth(null) / 2,
                     HEIGHT / 2 + PIXEL * 10 + parallax * 3, null);
             // When parallax increases, buttons are moved to the side.
@@ -394,22 +401,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void paintDeathUI(Graphics g, Graphics2D g2D) { // Paints death screen interface.
         if (gameOver) {
-            if (Math.sin(gameTime / 4) > 0) // Alternates between light and dark continue button.
-                continueButtonImg = new ImageIcon("space1.png").getImage();
-            else
-                continueButtonImg = new ImageIcon("space2.png").getImage();
 
-            if (deathUIY < HEIGHT / 2) {
-                g2D.drawImage(continueTextImg, WIDTH / 2 - PIXEL * 2 - continueButtonImg.getWidth(null),
-                        HEIGHT - deathUIY + continueTextImg.getHeight(null), null);
-                g2D.drawImage(continueButtonImg, WIDTH / 2 + PIXEL * 2,
-                        HEIGHT - deathUIY + continueTextImg.getHeight(null), null);
-            }
+            if (deathUIY < HEIGHT / 2)
+                g2D.drawImage(deathButtonsImg, WIDTH / 2 - PIXEL * 2 - deathButtonsImg.getWidth(null) / 2,
+                        HEIGHT - deathUIY + deathButtonsImg.getHeight(null) / 2, null);
 
-            g2D.drawImage(missionFailedBGImg, WIDTH / 2 - missionFailedBGImg.getWidth(null) / 2 + deathUIWobbleX,
-                    deathUIY - missionFailedBGImg.getHeight(null) / 3 + deathUIWobbleY, null);
-            g2D.drawImage(missionFailedImg, WIDTH / 2 - missionFailedBGImg.getWidth(null) / 2 - deathUIWobbleX,
-                    deathUIY - missionFailedBGImg.getHeight(null) / 3 - deathUIWobbleY, null);
+            g2D.drawImage(titleBGImg, WIDTH / 2 - titleBGImg.getWidth(null) / 2 + deathUIWobbleX,
+                    deathUIY - titleBGImg.getHeight(null) / 3 + deathUIWobbleY, null);
+            g2D.drawImage(missionFailedImg, WIDTH / 2 - titleBGImg.getWidth(null) / 2 - deathUIWobbleX,
+                    deathUIY - titleBGImg.getHeight(null) / 3 - deathUIWobbleY, null);
 
             if (deathUIY > HEIGHT / 2 - CHUNK) {
                 deathUIY = deathUIY - CHUNK / 2;
@@ -502,7 +502,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             ladder.get(i).topCol.y = ladder.get(i).col.y - ladder.get(i).offset;
             ladder.get(i).bottomCol.y = ladder.get(i).col.y + ladder.get(i).col.height - playerHeight;
             ladder.get(i).leftCol.y = ladder.get(i).col.y;
-            ladder.get(i).leftCol.height = ladder.get(i).col.height; 
+            ladder.get(i).leftCol.height = ladder.get(i).col.height;
             ladder.get(i).rightCol.y = ladder.get(i).col.y;
             ladder.get(i).rightCol.height = ladder.get(i).col.height;
             // Update ladder left/rightCol height, as ladders shorten when destroyed.
@@ -584,8 +584,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
                     lastInRoom = lastRoom;
             }
-        if (gameOver && parallax > -HEIGHT * 4)
-            parallax = parallax - PIXEL; // Pan downwards if player dies.
+        if (gameOver && parallax > -HEIGHT * 3)
+            parallax = parallax - 2; // Pan downwards if player dies.
 
         if (panUp) // Pans camera back up after game resets.
             if (parallax < 0) // Parallax is a negative number btw.
@@ -860,13 +860,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             kill();
     }
 
-    public void kill() {
-        inRoom = -1;
+    public void kill() { // When player reaches 0 health, kill player.
+        inRoom = -1; // Reset rooms to above-ground state.
         lastRoom = -1;
         lastInRoom = -1;
 
-        playerX = playerXStart;
+        playerX = playerXStart; // Reset playerX/Y pos.
         playerY = playerYStart;
+
+        deathCooldown = gameTime; // Add a delay between death screen appearing and accepting keyboard input.
 
         gameOver = true;
     }
@@ -997,7 +999,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 // higher.
             }
         } else // Only trigger on game over screen.
-        if (e.getKeyCode() == 32) // Spacebar.
+        if (e.getKeyCode() == 32 && deathCooldown < gameTime - deathCooldownTime)
             reset();
     }
 
@@ -1038,10 +1040,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void reset() {
         gameOver = false;
+
         healthMax = healthMax - 1; // Reduces maximum health by 1.
         health = healthMax;
+
         panUp = true;
-        
         deathUIY = HEIGHT; // Resets deathUIY back to bottom of screen.
     }
 
