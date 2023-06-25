@@ -385,7 +385,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
 
         if (dashCooldown < gameTime - dashResetCooldownTime) { // Paint dashBarFull.
-            g2D.drawImage(dashBarFullImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2  + UIOffset,
+            g2D.drawImage(dashBarFullImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2 + UIOffset,
                     null);
         } else {
             if (dashBarRed) { // Paint dashBarRed if player can't dash but tries to anyway.
@@ -515,6 +515,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             else
                 launchSpeed++;
 
+        System.out.println(parallax);
+
         moveCol();
         accelarate();
         dash();
@@ -628,8 +630,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             else
                 panUp = false;
 
-        if (!titleScreen && parallax > 0) // This triggers as soon as titleScreen is false.
-            parallax -= CHUNK; // Pans camera down to ground level.
+        if (!titleScreen && !gameOver && lastInRoom == -1 && parallax != 0) { // This triggers as soon as titleScreen is
+                                                                          // false.
+            if (parallax > 0)
+                parallax -= CHUNK; // Pans camera down to ground level.
+            if (parallax < 0)
+                parallax++;
+        }
     }
 
     public void panY(int level, Boolean up) { // Moves camera up / down to room players in.
