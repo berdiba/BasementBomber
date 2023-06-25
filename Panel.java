@@ -90,6 +90,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int damageWobbleX, damageWobbleY;
     static int titleUIWobbleX, titleUIWobbleY;
     static int damageFlashMax = 8, damageFlash;
+    static int UIOffset = 0;
 
     static int particlesDensity = 1024, particlesMax = 4, colorMod;
     // particlesDensity inversely proportional to particles.
@@ -343,57 +344,62 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void paintUI(Graphics g, Graphics2D g2D) { // Paints user interface.
+        UIOffset = -Math.max(parallax / 8, 0); // Used for making UI slide onto screen at start of game.
+
         if (showControlls) {
-            g2D.drawImage(buttonsImg, playerX + playerWidth / 2 - buttonsImg.getWidth(null) / 2,
+            g2D.drawImage(buttonsImg, WIDTH / 4 + playerX / 2 + playerWidth / 2 - buttonsImg.getWidth(null) / 2,
                     HEIGHT / 2 + PIXEL * 10 + parallax * 3, null);
-            // When parallax increases, buttons are moved to the side.
+            // When parallax increases, buttons are moved off screen.
         }
 
-        if (damageFlash > 0) {
-            for (int i = 0; i < healthMax; i++)
+        if (damageFlash > 0) { // Paint red hearts if player is damaged.
+            for (int i = 0; i < healthMax; i++) // Paint empty red hearts equal to healthMax.
                 g2D.drawImage(heartEmptyRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX,
-                        CHUNK / 4 + damageWobbleY, null);
-            for (int i = 0; i < health; i++)
+                        CHUNK / 4 + damageWobbleY + UIOffset, null);
+            for (int i = 0; i < health; i++) // Paint full red hearts ontop of empty hearts equal to current health.
                 g2D.drawImage(heartFullRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX,
-                        CHUNK / 4 + damageWobbleY, null);
-        } else {
-            for (int i = 0; i < healthMax; i++)
-                g2D.drawImage(heartEmptyImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4, null);
-            for (int i = 0; i < health; i++)
-                g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4, null);
+                        CHUNK / 4 + damageWobbleY + UIOffset, null);
+        } else { // Paint hearts.
+            for (int i = 0; i < healthMax; i++) // Paint empty hearts equal to healthMax.
+                g2D.drawImage(heartEmptyImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4 + UIOffset, null);
+            for (int i = 0; i < health; i++) // Paint full hearts ontop of empty hearts equal to current health.
+                g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4 + UIOffset, null);
         }
 
-        if (shootCooldown < gameTime - shootCooldownTime) {
-            g2D.drawImage(reloadBarFullImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
+        if (shootCooldown < gameTime - shootCooldownTime) { // Paint full reloadBar if player can shoot.
+            g2D.drawImage(reloadBarFullImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4 + UIOffset, null);
         } else {
-            if (reloadBarRed) {
-                g2D.drawImage(reloadBarRedImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
+            if (reloadBarRed) { // Paint red reloadBar if cannot shoot but tries to anyway.
+                g2D.drawImage(reloadBarRedImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4 + UIOffset, null);
                 g.setColor(new Color(148, 90, 80));
-                g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL * 2,
+                g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL * 2 + UIOffset,
                         ((gameTime - shootCooldown) * reloadBarWidth / shootCooldownTime) - PIXEL * 2,
                         reloadBarHeight - PIXEL * 3);
-            } else {
-                g2D.drawImage(reloadBarEmptyImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4, null);
+            } else { // Paint reloadBarEmpty when player cannot shoot.
+                g2D.drawImage(reloadBarEmptyImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4 + UIOffset, null);
                 g.setColor(new Color(78, 110, 96));
-                g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL * 2,
+                g.fillRect(WIDTH - reloadBarWidth - CHUNK / 4 + PIXEL, CHUNK / 4 + PIXEL * 2 + UIOffset,
                         ((gameTime - shootCooldown) * reloadBarWidth / shootCooldownTime) - PIXEL * 2,
                         reloadBarHeight - PIXEL * 3);
             }
         }
 
-        if (dashCooldown < gameTime - dashResetCooldownTime) {
-            g2D.drawImage(dashBarFullImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
+        if (dashCooldown < gameTime - dashResetCooldownTime) { // Paint dashBarFull.
+            g2D.drawImage(dashBarFullImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2  + UIOffset,
+                    null);
         } else {
-            if (dashBarRed) {
-                g2D.drawImage(dashBarRedImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
+            if (dashBarRed) { // Paint dashBarRed if player can't dash but tries to anyway.
+                g2D.drawImage(dashBarRedImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2 + UIOffset,
+                        null);
                 g.setColor(new Color(148, 90, 80));
-                g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2,
+                g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2 + UIOffset,
                         ((gameTime - dashCooldown) * (dashBarWidth) / dashResetCooldownTime) - PIXEL * 2,
                         dashBarHeight - PIXEL * 3);
-            } else {
-                g2D.drawImage(dashBarEmptyImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2, null);
+            } else { // Paint dashBarRed if player can't dash.
+                g2D.drawImage(dashBarEmptyImg, WIDTH - dashBarWidth - CHUNK / 4 + UIOffset, reloadBarHeight + CHUNK / 2,
+                        null);
                 g.setColor(new Color(78, 110, 96));
-                g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2,
+                g.fillRect(WIDTH - dashBarWidth - CHUNK / 4 + PIXEL, reloadBarHeight + CHUNK / 2 + PIXEL * 2 + UIOffset,
                         ((gameTime - dashCooldown) * (dashBarWidth) / dashResetCooldownTime) - PIXEL * 2,
                         dashBarHeight - PIXEL * 3);
             }
@@ -623,7 +629,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 panUp = false;
 
         if (!titleScreen && parallax > 0) // This triggers as soon as titleScreen is false.
-            parallax -= CHUNK / 2; // Pans camera down to ground level.
+            parallax -= CHUNK; // Pans camera down to ground level.
     }
 
     public void panY(int level, Boolean up) { // Moves camera up / down to room players in.
@@ -1095,6 +1101,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         healthMax = healthMax - 1; // Reduces maximum health by 1.
         health = healthMax;
+
+        playerX = playerXStart; // Reset playerX/Y pos.
+        playerY = playerYStart;
 
         panUp = true;
         deathUIY = HEIGHT; // Resets deathUIY back to bottom of screen.
