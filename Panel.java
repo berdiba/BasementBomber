@@ -49,13 +49,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     static Image missionFailedImg = new ImageIcon("missionFailed.png").getImage();
     static Image titleImg = new ImageIcon("title.png").getImage();
-    static Image titleBGImg = new ImageIcon("titleBG.png").getImage();
+    static Image titleBG1Img = new ImageIcon("titleBG1.png").getImage();
+    static Image titleBG2Img = new ImageIcon("titleBG2.png").getImage();
 
     static Image buttonsImg; // buttonsImg set up later on.
     static Image deathButtonsImg;
+    static Image menuButtonsImg;
 
     // Integers.
-    static int parallax = 0;
+    static int parallaxMax = HEIGHT * 2, parallax = parallaxMax;
     static int panYSpeed = 8;
     static int inRoom = -1, lastInRoom = inRoom, lastRoom = -1;
     static int roomX = CHUNK * 2, roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4;
@@ -86,7 +88,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
-    static int deathUIWobbleX, deathUIWobbleY;
+    static int titleUIWobbleX, titleUIWobbleY;
     static int damageFlashMax = 8, damageFlash;
 
     static int particlesDensity = 1024, particlesMax = 4, colorMod;
@@ -105,12 +107,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     boolean inWallLeft = false, inWallRight = false;
     boolean reloadBarRed = false, shootButtonPushed = false;
     boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
-    boolean gameOver = false;
+    boolean titleScreen = true, gameOver = false;
 
     // Rectangles
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
             playerHeight - playerColYOffset * 2);; // Collision box for player.
-    static Rectangle groundCol; // Collision for ground.
+    static Rectangle groundCol = new Rectangle(-CHUNK, HEIGHT / 2 + parallax, WIDTH + CHUNK * 2, CHUNK);
     static Rectangle wallLeftCol = new Rectangle(0, -HEIGHT * 8, CHUNK * 2 + 8, HEIGHT * 16);
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
 
@@ -129,10 +131,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         addKeyListener(this);
 
-        menu();
-    }
-
-    public void menu() {
         startGame();
     }
 
@@ -182,7 +180,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         buttonFlash();
         paintBackground(g, g2D);
         paintForeground(g, g2D);
-        if (!gameOver) { // Player not drawn when game over.
+        if (!gameOver && !titleScreen) { // Player not drawn when game over.
             paintProjectiles(g, g2D);
             paintPlayer(g, g2D);
             paintParticles(g, g2D);
@@ -190,16 +188,19 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
         // paintCol(g, g2D);
         paintDeathUI(g, g2D);
+        paintMenuUI(g, g2D);
     }
 
-    public void buttonFlash() {
+    public void buttonFlash() { // Controlls repeated flashing of any button tooltips.
         // Math.sin() gives switching value between -/+ at repeated rate.
         if (Math.sin(gameTime / 4) > 0) { // Alternates between dark and light button.
             buttonsImg = new ImageIcon("buttons1.png").getImage();
             deathButtonsImg = new ImageIcon("deathButtons1.png").getImage();
+            menuButtonsImg = new ImageIcon("menuButtons1.png").getImage();
         } else {
             buttonsImg = new ImageIcon("buttons2.png").getImage();
             deathButtonsImg = new ImageIcon("deathButtons2.png").getImage();
+            menuButtonsImg = new ImageIcon("menuButtons2.png").getImage();
         }
     }
 
@@ -400,20 +401,46 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void paintDeathUI(Graphics g, Graphics2D g2D) { // Paints death screen interface.
-        if (gameOver) {
+        if (gameOver) { // Only paints on gameOver screen.
 
-            if (deathUIY < HEIGHT / 2)
-                g2D.drawImage(deathButtonsImg, WIDTH / 2 - PIXEL * 2 - deathButtonsImg.getWidth(null) / 2,
+            if (deathUIY < HEIGHT / 2) // This makes deathButtons appear to slide in from behind missionFailedImg.
+                g2D.drawImage(deathButtonsImg, WIDTH / 2 - deathButtonsImg.getWidth(null) / 2,
                         HEIGHT - deathUIY + deathButtonsImg.getHeight(null) / 2, null);
 
-            g2D.drawImage(titleBGImg, WIDTH / 2 - titleBGImg.getWidth(null) / 2 + deathUIWobbleX,
-                    deathUIY - titleBGImg.getHeight(null) / 3 + deathUIWobbleY, null);
-            g2D.drawImage(missionFailedImg, WIDTH / 2 - titleBGImg.getWidth(null) / 2 - deathUIWobbleX,
-                    deathUIY - titleBGImg.getHeight(null) / 3 - deathUIWobbleY, null);
+            // Draw missionFailed title image.
+            g2D.drawImage(titleBG1Img, WIDTH / 2 - titleBG1Img.getWidth(null) / 2 + titleUIWobbleX,
+                    deathUIY - titleBG1Img.getHeight(null) / 3 + titleUIWobbleY, null);
+            g2D.drawImage(missionFailedImg, WIDTH / 2 - titleBG1Img.getWidth(null) / 2 - titleUIWobbleX,
+                    deathUIY - titleBG1Img.getHeight(null) / 3 - titleUIWobbleY, null);
 
-            if (deathUIY > HEIGHT / 2 - CHUNK) {
-                deathUIY = deathUIY - CHUNK / 2;
+            if (deathUIY > HEIGHT / 2 - CHUNK) { // Check if missionFailedImg is in center of screen.
+                deathUIY = deathUIY - CHUNK / 2; // Animate missionFailedImg quickly moving upwards.
             }
+        }
+    }
+
+    public void paintMenuUI(Graphics g, Graphics2D g2D) { // Paints title screen interface.
+        if (titleScreen) {
+
+            g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
+                    HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
+                            - Math.min(gameTime * 8 - 480, 0),
+                    null);
+
+            g2D.drawImage(titleBG2Img, WIDTH / 2 - titleBG2Img.getWidth(null) / 2 - titleUIWobbleX / 2,
+                    HEIGHT / 2 - titleBG2Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
+                            - titleUIWobbleY / 2 - Math.min(gameTime * 8 - 240, 0),
+                    null);
+
+            g2D.drawImage(titleBG1Img, WIDTH / 2 - titleBG1Img.getWidth(null) / 2 + titleUIWobbleX,
+                    HEIGHT / 2 - titleBG1Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax + titleUIWobbleY
+                            - Math.min(gameTime * 8 - 240, 0),
+                    null);
+
+            g2D.drawImage(titleImg, WIDTH / 2 - titleImg.getWidth(null) / 2 - titleUIWobbleX,
+                    HEIGHT / 2 - titleBG1Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax - titleUIWobbleY
+                            - Math.min(gameTime * 8 - 240, 0),
+                    null);
         }
     }
 
@@ -438,8 +465,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             damageWobbleY = 0;
         }
 
-        deathUIWobbleX = (int) (Math.sin((double) gameTime / 16) * 4); // Controlls wobble seen in game over screen.
-        deathUIWobbleY = (int) (Math.sin((double) gameTime / 16 + 1) * 4);
+        titleUIWobbleX = (int) (Math.sin((double) gameTime / 16) * 4); // Controlls wobble seen in game over screen.
+        titleUIWobbleY = (int) (Math.sin((double) gameTime / 16 + 1) * 4);
 
         if (onLadder) {
             playerSpeed = playerSpeedLadder;
@@ -589,11 +616,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         if (panUp) // Pans camera back up after game resets.
             if (parallax < 0) // Parallax is a negative number btw.
-                parallax = parallax + CHUNK; // Quickly pan up.
+                parallax += CHUNK; // Quickly pan up.
             else if (parallax > 0) // Ensures parallax doesen't overshoot.
                 parallax = 0;
             else
                 panUp = false;
+
+        if (!titleScreen && parallax > 0) // This triggers as soon as titleScreen is false.
+            parallax -= CHUNK / 2; // Pans camera down to ground level.
     }
 
     public void panY(int level, Boolean up) { // Moves camera up / down to room players in.
@@ -954,7 +984,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void keyPressed(KeyEvent e) {
-        if (!gameOver) { // Player can only move if not dead.
+        if (!gameOver && !titleScreen) { // Player can only move if not dead / on title screen.
             switch (e.getKeyCode()) {
                 case 37: // Move left.
                     if (!inWallLeft) {
@@ -998,14 +1028,26 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     climbingLadder = true;
 
                 }
-                // If player on ladder and ladder top, player wont fall but can not climb any
-                // higher.
+                // If player on ladder and ladder top, player won't fall
+                // but can't climb any higher.
             }
-        } else // Only trigger on game over screen.
-        if (deathCooldown < gameTime - deathCooldownTime) // 1 second delay between game over and acceptung user input.
+        } else if (gameOver && deathCooldown < gameTime - deathCooldownTime)
+            // Only trigger on game over screen.
+            // 1 second delay between game over and acceptung user input.
             switch (e.getKeyCode()) {
-                case 32: // Move left.
+                case 32: // Spacebar.
                     reset();
+                    break;
+                case 81:
+                    System.exit(0);
+                    break;
+            }
+        else if (titleScreen && gameTime > 60)
+            // Only trigger on title screen.
+            // 1 second delay between game start and acceptung user input.
+            switch (e.getKeyCode()) {
+                case 32:
+                    titleScreen = false;
                     break;
                 case 81:
                     System.exit(0);
