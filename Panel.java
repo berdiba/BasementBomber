@@ -136,16 +136,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void startGame() {
-        // Upon starting the game, add ladders to arraylist of ladders.
-        ladder.add(new Ladder(CHUNK * 18, CHUNK * 4, 0));
-        ladder.add(new Ladder(CHUNK * 3, CHUNK * 8, 1));
-        ladder.add(new Ladder(CHUNK * 18, CHUNK * 12, 2));
-        ladder.add(new Ladder(CHUNK * 3, CHUNK * 16, 3));
+        // Upon starting the game, add ladders and rooms to arraylists.
 
-        room.add(new Room(roomX, roomYBase + roomYLevel * 0, 0)); // Start at level 0 as index starts at 0.
-        room.add(new Room(roomX, roomYBase + roomYLevel * 1, 1));
-        room.add(new Room(roomX, roomYBase + roomYLevel * 2, 2));
-        room.add(new Room(roomX, roomYBase + roomYLevel * 3, 3));
+        for (int i = 0; i < 4; i++) {
+            room.add(new Room(roomX, roomYBase + roomYLevel * i, i));
+            if (i % 2 == 0)
+            ladder.add(new Ladder(CHUNK * 18, CHUNK * (i + 1) * 4, i));
+            else
+            ladder.add(new Ladder(CHUNK * 3, CHUNK * (i + 1) * 4, i));
+        }
 
         gameThread = new Thread(this);
         gameThread.start();
@@ -631,7 +630,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 panUp = false;
 
         if (!titleScreen && !gameOver && lastInRoom == -1 && parallax != 0) { // This triggers as soon as titleScreen is
-                                                                          // false.
+            // false.
             if (parallax > 0)
                 parallax -= CHUNK; // Pans camera down to ground level.
             if (parallax < 0)
