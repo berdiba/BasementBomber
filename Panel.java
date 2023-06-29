@@ -141,9 +141,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         for (int i = 0; i < 4; i++) {
             room.add(new Room(roomX, roomYBase + roomYLevel * i, i));
             if (i % 2 == 0)
-            ladder.add(new Ladder(CHUNK * 18, CHUNK * (i + 1) * 4, i));
+                ladder.add(new Ladder(CHUNK * 18, CHUNK * (i + 1) * 4, i));
             else
-            ladder.add(new Ladder(CHUNK * 3, CHUNK * (i + 1) * 4, i));
+                ladder.add(new Ladder(CHUNK * 3, CHUNK * (i + 1) * 4, i));
         }
 
         gameThread = new Thread(this);
@@ -181,9 +181,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         paintBackground(g, g2D);
         paintForeground(g, g2D);
         if (!gameOver && !titleScreen) { // Player not drawn when game over.
+            paintParticles(g, g2D);
             paintProjectiles(g, g2D);
             paintPlayer(g, g2D);
-            paintParticles(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
         // paintCol(g, g2D);
@@ -206,8 +206,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void paintBackground(Graphics g, Graphics2D g2D) { // Paints background and fog.
         g2D.drawImage(backgroundImg, 0, parallax / 4, null);
-        g2D.drawImage(fogImg, fogX, -HEIGHT / 2 + parallax, null);
-        g2D.drawImage(fogImg, fog2X, -HEIGHT / 2 + parallax, null);
+        g2D.drawImage(fogImg, fogX, -HEIGHT / 2 + fogImg.getHeight(null) / 2 + parallax, null);
+        g2D.drawImage(fogImg, fog2X, -HEIGHT / 2 + fogImg.getHeight(null) / 2 + parallax, null);
     }
 
     public void paintForeground(Graphics g, Graphics2D g2D) { // Paints ground, rooms, ladders, enemies.
@@ -513,8 +513,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 launchSpeed--; // Constantly decrease launchSpeed if it above 0.
             else
                 launchSpeed++;
-
-        System.out.println(parallax);
 
         moveCol();
         accelarate();

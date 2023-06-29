@@ -15,7 +15,7 @@ public class Ladder {
     int x, y, level;
     int offset = 24;
 
-    Image ladderImg;
+    Image ladderImg = new ImageIcon("ladder.png").getImage();
 
     Boolean ladderBroken = false;
 
@@ -30,12 +30,12 @@ public class Ladder {
         this.y = y;
         this.level = level;
 
-        ladderImg = new ImageIcon("ladder.png").getImage();
         col = new Rectangle(x - offset, y - offset * 2, ladderImg.getWidth(null) + offset * 2,
                 ladderImg.getHeight(null) + offset * 2);
+
         topCol = new Rectangle(col.x, col.y - offset, col.width, offset * 4);
-        bottomCol = new Rectangle(col.x, col.y + col.height - Panel.playerHeight,
-                col.width, offset * 4);
+        bottomCol = new Rectangle(col.x, col.y + col.height - Panel.playerHeight, col.width, offset * 4);
+
         // ladderTop and ladderBottom offset above and below ladder.
         leftCol = new Rectangle(col.x - CHUNK + CHUNK / 4, col.y, CHUNK, col.height);
         rightCol = new Rectangle(col.x + col.width - CHUNK / 4, col.y, CHUNK, col.height);

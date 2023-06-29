@@ -45,7 +45,7 @@ public class Room {
         Graphics2D g2D = (Graphics2D) g;
 
         if (Panel.lastRoom == level) {
-            if (level <= 2 & Panel.gameTime % 2 == 0) {
+            if (level <= 3 & Panel.gameTime % 2 == 0) {
                 // This will constantly flick between true and false for level 0, and always be
                 // false for other levels.
                 roomImg = new ImageIcon("room" + level + "Flicker.png").getImage();
