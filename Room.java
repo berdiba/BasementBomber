@@ -14,8 +14,11 @@ import java.awt.geom.*;
 import java.util.ArrayList;
 
 public class Room {
-    int x, y, level;
-    static int width = Panel.CHUNK * 18, height = Panel.CHUNK * 3;
+    static int CHUNK = Panel.CHUNK;
+
+    static int x = CHUNK * 2;
+    int y, level;
+    static int width = CHUNK * 18, height = CHUNK * 3;
     static int outlineOffset = Panel.PIXEL * 8; // Offset of the roomOutline.
 
     Image roomImg; // Images defined later on.
@@ -26,16 +29,15 @@ public class Room {
 
     ArrayList<Enemy> enemy = new ArrayList<Enemy>();
 
-    public Room(int x, int y, int level) {
-        this.x = x;
+    public Room(int y, int level) {
         this.y = y; // Setting x, y, level to be ints passed from Panel.
         this.level = level;
 
         roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
         // Images named "room1, room2..." each level will have different image.
         col = new Rectangle(x, y, width, height); // Paralax added later in Panel.
-        ceiling = new Rectangle(x, y + height, width, Panel.CHUNK / 2);
-        floor = new Rectangle(x, y - Panel.CHUNK / 2, width, Panel.CHUNK / 2);
+        ceiling = new Rectangle(x, y + height, width, CHUNK / 2);
+        floor = new Rectangle(x, y - CHUNK / 2, width, CHUNK / 2);
         // Creates rectangle 1 chunk tall at the bottom of a room.
 
         populate();

@@ -13,6 +13,9 @@ import java.lang.Math;
 import java.awt.geom.*;
 
 public class Enemy {
+    static int CHUNK = Panel.CHUNK;
+    static int PIXEL = Panel.PIXEL;
+
     int level;
     int width, height;
     int x, y;
@@ -20,7 +23,7 @@ public class Enemy {
     int colXOffset = 8, colYOffset = 2;
 
     int speedMax, speed, idleSpeed = (int) (Math.random() * 3) + 1, chaseSpeed = 2, wobble,
-            viewDistance = Panel.CHUNK * 10;
+            viewDistance = CHUNK * 10;
     // Speed determined by level + idleSpeed, or when chasing player + chaseSpeed.
 
     int gravity = 10, up = -gravity;
@@ -31,7 +34,9 @@ public class Enemy {
     int growHeight = 0;
     int healthMax, health;
 
-    Boolean takingAction = false, facingLeft = true;
+    int launchSpeed, launchSpeedMax;
+
+    Boolean takingAction = false, facingLeft = true, isBoss;
 
     Image enemyImg;
 
@@ -41,6 +46,7 @@ public class Enemy {
 
     public Enemy(int level, boolean isBoss) {
         this.level = level;
+        this.isBoss = isBoss;
 
         if (!isBoss) {
 
@@ -49,8 +55,8 @@ public class Enemy {
             width = enemyImg.getWidth(null);
             height = enemyImg.getHeight(null);
 
-            x = (int) (Math.random() * (Room.width - width) + Panel.roomX); // Set x to be random number within room
-                                                                            // bounds.
+            x = (int) (Math.random() * (Room.width - width) + Room.x);
+            // Set x to be random number within room bounds.
             y = Panel.roomYBase + Panel.roomYLevel * level + Room.height - height;
 
             if (level != 3)
@@ -61,10 +67,14 @@ public class Enemy {
             }
 
             healthMax = Math.max(1, level);
+            if (level == 4)
+                healthMax = 1; // Enemies aside from boss on level 4 have low health.
             health = healthMax;
 
             col = new Rectangle(x, y, width, height);
-            viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
+
+            launchSpeedMax = 20;
+
         } else
             bossEnemy();
     }
@@ -75,17 +85,18 @@ public class Enemy {
         width = enemyImg.getWidth(null);
         height = enemyImg.getHeight(null);
 
-        x = Panel.CHUNK * 2;
+        x = CHUNK * 2;
         y = Panel.roomYBase + Panel.roomYLevel * level + Room.height - height;
 
         speedMax = 1; // Boss is very slow.
         chaseSpeed = 1;
 
-        healthMax = 6;
+        healthMax = 24;
         health = healthMax;
 
         col = new Rectangle(x, y, width, height);
-        viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
+
+        launchSpeedMax = 8;
     }
 
     public void paint(Graphics g) {
@@ -115,14 +126,16 @@ public class Enemy {
                     g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight,
                             null);
             } else if (facingLeft)
-                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height + wobble, -width, growHeight,
+                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height + wobble, -width,
+                        growHeight,
                         null);
             else
                 g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight, null);
         } else if (growHeight > 0) {
             growHeight = growHeight - height / 4; // Decrease growheight.
             if (facingLeft)
-                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height, -width + wobble, growHeight,
+                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height, -width + wobble,
+                        growHeight,
                         null);
             else
                 g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight, null);
@@ -130,11 +143,18 @@ public class Enemy {
     }
 
     public void move() {
-        y = y + up + gravity;
+        y = y + up + gravity + -Math.abs(launchSpeed * 2 / 3);
+        x = x + launchSpeed;
         col = new Rectangle(x + colXOffset, y + Panel.parallax + colYOffset, width - colXOffset * 2,
                 height - colYOffset * 2);
-        // Update enemty collider.
-        viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
+        // Update enemy collider.
+        if (isBoss || level == 3) // Boss and mummies has double view distance.
+            viewCol = new Rectangle(col.x - viewDistance * 2, col.y, col.width + viewDistance * 4, col.height);
+        else if (level == 4) // Level 4 enemies sans boss have small view distance.
+            viewCol = new Rectangle(col.x - viewDistance / 2, col.y, col.width + viewDistance, col.height);
+        else // Other enemies have normal view distance.
+            viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
+
         // Update enemy range of vision.
         damageColLeft = new Rectangle(col.x, col.y + Panel.PIXEL, 1, col.height);
         damageColRight = new Rectangle(col.x + col.width, col.y + Panel.PIXEL, 1, col.height);
@@ -170,6 +190,12 @@ public class Enemy {
                 newDecision = (int) (Math.random() * decisionMax); // Regenerate the decision.
             }
         }
+
+        if (launchSpeed != 0)
+            if (launchSpeed > 0)
+                launchSpeed--; // Constantly decrease launchSpeed if it above 0.
+            else
+                launchSpeed++;
     }
 
     public void moveLeft() {
@@ -199,5 +225,17 @@ public class Enemy {
             }
         } else
             speed = speedMax; // Set speed back to normal.
+
+        if (x < Room.x - PIXEL)
+            launch(true);
+        if (x + width > Room.x + Room.width + PIXEL)
+            launch(false);
+    }
+
+    public void launch(boolean isLeft) {
+        if (isLeft)
+            launchSpeed = launchSpeedMax;
+        else
+            launchSpeed = -launchSpeedMax;
     }
 }
