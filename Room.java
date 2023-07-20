@@ -67,9 +67,12 @@ public class Room {
     }
 
     public void populate() { // Adds enemies to the level.
-        for (int i = 0; i < level + 4; i++) {
-            enemy.add(new Enemy(level));
+        for (int i = 0; i < Math.min(level, 3) + 4; i++) {
+            enemy.add(new Enemy(level, false));
         }
+        if (level == 4)
+            enemy.add(new Enemy(level, true));
+
     }
 
     public boolean isClear() {

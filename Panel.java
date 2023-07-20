@@ -70,7 +70,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
     static int playerSpeedMax = 10, playerSpeed = playerSpeedMax, playerJumpHeight = -24;
-    static int playerSpeedLadder = 2, playerClimbSpeed = 0;
+    static int playerSpeedLadder = 2, playerClimbSpeedUp = 0, playerClimbSpeedDown = 0, playerClimbSpeedMax = 6;
     static int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
     static int playerWobble = 0; // Controls the bobbing up and down of player when walking.
 
@@ -79,7 +79,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int dashSpeedMax = playerSpeed * 5 / 2, dashSpeed = 0;
 
     static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
-    static int shootCooldown = gameTime, shootCooldownTime = 60; // CooldownTime measured in ticks.
+    static int shootCooldown = gameTime, shootCooldownTime = 1; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
     static int deathCooldown = gameTime, deathCooldownTime = 60, deathUIY = HEIGHT;
@@ -138,7 +138,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void startGame() {
         // Upon starting the game, add ladders and rooms to arraylists.
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             room.add(new Room(roomX, roomYBase + roomYLevel * i, i));
             if (i % 2 == 0)
                 ladder.add(new Ladder(CHUNK * 18, CHUNK * (i + 1) * 4, i));
@@ -186,7 +186,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintPlayer(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
-        // paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintDeathUI(g, g2D);
         paintMenuUI(g, g2D);
     }
@@ -451,7 +451,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void move() {
         // Update player position.
-        playerY = playerY + playerUp + gravity + playerClimbSpeed + -Math.abs(launchSpeed * 2 / 3);
+        playerY = playerY + playerUp + gravity + playerClimbSpeedUp + playerClimbSpeedDown
+                + -Math.abs(launchSpeed * 2 / 3);
         playerX = playerX + playerLeft + playerRight + dashSpeed + launchSpeed;
         playerCol.x = playerX + playerColXOffset;
         playerCol.y = playerY + playerColYOffset + parallax;
@@ -487,8 +488,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         if (fog2X >= WIDTH)
             fog2X = -WIDTH;
 
-        if (!onLadder)
-            playerClimbSpeed = 0;
+        if (!onLadder) {
+            playerClimbSpeedUp = 0;
+            playerClimbSpeedDown = 0;
+        }
         // Define this here so when someone holds down climb player will stop climbing
         // when they leave ladder. Needs to be defined here so it's constantly updating.
 
@@ -1011,7 +1014,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 case 40: // Move down.
                     // If player on ladder & ladder bottom, player wont fall but can't climb lower.
                     if (onLadder && !onLadderBottom) {
-                        playerClimbSpeed = 6;
+                        playerClimbSpeedDown = playerClimbSpeedMax;
                         climbingLadder = true;
                     }
                     break;
@@ -1034,7 +1037,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (touchingGround && !onLadder) // Player cannot jump while on ladder.
                     jump();
                 else if (onLadder && !onLadderTop) {
-                    playerClimbSpeed = -6;
+                    playerClimbSpeedUp = -playerClimbSpeedMax;
                     climbingLadder = true;
 
                 }
@@ -1126,12 +1129,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     facingLeft = true;
                 break;
             case 40:
-                playerClimbSpeed = 0;
+                playerClimbSpeedDown = 0;
                 climbingLadder = false;
                 break;
             case 38:
                 playerJumped = false;
-                playerClimbSpeed = 0;
+                playerClimbSpeedUp = 0;
                 climbingLadder = false;
                 break;
             case 32:

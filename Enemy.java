@@ -39,25 +39,49 @@ public class Enemy {
     Rectangle viewCol;
     Rectangle damageColLeft, damageColRight;
 
-    public Enemy(int level) {
+    public Enemy(int level, boolean isBoss) {
         this.level = level;
 
-        enemyImg = new ImageIcon("enemy" + level + ".png").getImage();
+        if (!isBoss) {
+
+            enemyImg = new ImageIcon("enemy" + level + ".png").getImage();
+
+            width = enemyImg.getWidth(null);
+            height = enemyImg.getHeight(null);
+
+            x = (int) (Math.random() * (Room.width - width) + Panel.roomX); // Set x to be random number within room
+                                                                            // bounds.
+            y = Panel.roomYBase + Panel.roomYLevel * level + Room.height - height;
+
+            if (level != 3)
+                speedMax = Math.min(level + idleSpeed, 2 + idleSpeed); // Speed caps out at level 2.
+            else {
+                speedMax = Math.max(idleSpeed - 2, 1); // Mummies on level 3 are much slower.
+                chaseSpeed = (int) Math.round(Math.random() * 2);
+            }
+
+            healthMax = Math.max(1, level);
+            health = healthMax;
+
+            col = new Rectangle(x, y, width, height);
+            viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
+        } else
+            bossEnemy();
+    }
+
+    public void bossEnemy() {
+        enemyImg = new ImageIcon("enemy" + level + "Boss.png").getImage();
 
         width = enemyImg.getWidth(null);
         height = enemyImg.getHeight(null);
 
-        x = (int) (Math.random() * (Room.width - width) + Panel.roomX); // Set x to be random number within room bounds.
+        x = Panel.CHUNK * 2;
         y = Panel.roomYBase + Panel.roomYLevel * level + Room.height - height;
 
-        if (level != 3)
-            speedMax = Math.min(level + idleSpeed, 2 + idleSpeed); // Speed caps out at level 2.
-        else {
-            speedMax = Math.max(idleSpeed - 2, 1); // Mummies on level 3 are much slower.
-            chaseSpeed = (int) Math.round(Math.random() * 2);
-        }
+        speedMax = 1; // Boss is very slow.
+        chaseSpeed = 1;
 
-        healthMax = Math.max(1, level);
+        healthMax = 6;
         health = healthMax;
 
         col = new Rectangle(x, y, width, height);
@@ -84,24 +108,24 @@ public class Enemy {
             if (growHeight < height) {
                 growHeight = growHeight + height / 4; // Increase growheight.
                 if (facingLeft)
-                    g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + width, -width + wobble,
+                    g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height, -width + wobble,
                             growHeight,
                             null);
                 else
-                    g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + width + wobble, width, growHeight,
+                    g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight,
                             null);
             } else if (facingLeft)
-                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + width + wobble, -width, growHeight,
+                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height + wobble, -width, growHeight,
                         null);
             else
-                g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + width + wobble, width, growHeight, null);
+                g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight, null);
         } else if (growHeight > 0) {
             growHeight = growHeight - height / 4; // Decrease growheight.
             if (facingLeft)
-                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + width, -width + wobble, growHeight,
+                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height, -width + wobble, growHeight,
                         null);
             else
-                g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + width + wobble, width, growHeight, null);
+                g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight, null);
         }
     }
 
@@ -161,7 +185,7 @@ public class Enemy {
         x = x + speed;
         if (col.intersects(Panel.wallRightCol))
             decision = 1;
-        wobble = (int) (Math.sin(Panel.gameTime) * 2); 
+        wobble = (int) (Math.sin(Panel.gameTime) * 2);
     }
 
     public void checkCollisions() {
