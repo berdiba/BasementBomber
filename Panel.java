@@ -59,7 +59,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     // Integers.
     static int parallaxMax = HEIGHT * 2, parallax = parallaxMax;
     static int panYSpeed = 8;
-    static int inRoom = -1, lastInRoom = inRoom, lastRoom = -1, respawnRoom;
+    static int inRoom = -1, lastInRoom = inRoom, lastRoom = -1;
     static int roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4;
 
     static int playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
@@ -108,7 +108,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     boolean inWallLeft = false, inWallRight = false;
     boolean reloadBarRed = false, shootButtonPushed = false;
     boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
-    boolean titleScreen = true, gameOver = false;
+    static boolean titleScreen = true, gameOver = false;
 
     // Rectangles
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
@@ -164,6 +164,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 repaint();
                 move();
                 checkCollisions();
+                if (gameTime % 20 == 0)
+                    System.out.println(lastInRoom);
                 delta--;
                 gameTime++;
             }
@@ -224,7 +226,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         for (int i = 0; i < room.size(); i++) {
             // Purposefully seperate for loop here. Makes sure enemies render over ladder.
             for (int j = 0; j < room.get(i).enemy.size(); j++)
-                room.get(i).enemy.get(j).paint(g); // Paint enemies.
+                if (!gameOver)
+                    room.get(i).enemy.get(j).paint(g); // Paint enemies.
         }
 
     }
@@ -508,7 +511,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         for (int i = 0; i < room.size(); i++) {
             for (int j = 0; j < room.get(i).enemy.size(); j++)
-                room.get(i).enemy.get(j).move(); // Move enemies.
+                if (!gameOver)
+                    room.get(i).enemy.get(j).move(); // Move enemies.
         }
 
         if (launchSpeed != 0)
@@ -609,13 +613,16 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void checkPan() { // Detects when panY should be triggered.
-        if (lastRoom >= 0) // Makes sure pan only triggers when player is in a room.
+        if (lastRoom >= 0 && !gameOver) // Makes sure pan only triggers when player is in a room.
             if (lastInRoom != lastRoom) { // Check to see if player is in a new room.
                 panYDone = false;
-                if (lastInRoom > lastRoom)
-                    panY(lastRoom, false); // Pan down to specified room.
-                else
-                    panY(lastRoom, true);
+                if (lastInRoom > lastRoom) {
+                    panY(lastRoom, true); // Pan up to specified room.
+                    System.out.println("PANNING UP");
+                } else {
+                    panY(lastRoom, false);
+                    System.out.println("PANNING DOWN");
+                }
                 if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
                     lastInRoom = lastRoom;
             }
@@ -632,7 +639,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void panY(int level, Boolean up) { // Moves camera up / down to room players in.
-        if (up) { // If up is true.
+        if (!up) {
             if (room.get(level).col.y + room.get(level).col.height / 2 > HEIGHT / 2) {
                 panYAccelerating = true;
                 // Check center of room against center of screen.
@@ -644,7 +651,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     // Set panYAccelerating to be false, stopping above statement re-triggering.
                     if (panYSpeed >= 8) {
                         parallax -= panYSpeed; // Reduce parallax.
-                        panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                        panYSpeed--;
                     }
                 }
             } else
@@ -660,7 +667,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     // Set panYAccelerating to be false, stopping above statement re-triggering.
                     if (panYSpeed >= 8) {
                         parallax += panYSpeed; // Increase parallax.
-                        panYSpeed--; // Increase panYSpeed towards maximum of 32.
+                        panYSpeed--;
                     }
                 }
             } else
@@ -835,6 +842,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void checkEnemyCollisions() { // Manages enemy collisions with ground, and hitting player.
         for (int i = 0; i < room.size(); i++)
             for (int j = 0; j < room.get(i).enemy.size(); j++) {
+                if (!gameOver)
                 room.get(i).enemy.get(j).checkCollisions(); // Check enemy collisions.
 
                 if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor.x, room.get(i).floor.y - 1,
@@ -857,11 +865,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 }
 
                 if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft)
-                        && !dashing && healthCooldown < gameTime - 30) {
+                        && !dashing && healthCooldown < gameTime - 30 && !gameOver) {
                     damage(false); // Player cant get hurt while dashing.
                 }
                 if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight)
-                        && !dashing && healthCooldown < gameTime - 30) {
+                        && !dashing && healthCooldown < gameTime - 30 && !gameOver) {
                     damage(true);
                 }
             }
@@ -909,14 +917,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void kill() { // When player reaches 0 health, kill player.
-        lastInRoom = lastRoom - 1;
+        if (lastRoom == 0)
+            lastRoom = 1;
 
-        System.out.println("\n"+inRoom);
-        System.out.println(lastRoom);
-        System.out.println(lastInRoom);
+        lastInRoom = Math.max(0, lastRoom - 1);
 
         playerX = playerXStart; // Reset playerX/Y pos.
-        playerY = playerYStart;
+        playerY = room.get(lastInRoom).y + CHUNK * 3 - playerHeight * 2;
 
         deathCooldown = gameTime; // Add a delay between death screen appearing and accepting keyboard input.
 
@@ -1119,11 +1126,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         healthMax = healthMax - 1; // Reduces maximum health by 1.
         health = healthMax;
 
-        playerX = playerXStart; // Reset playerX/Y pos.
-        playerY = room.get(lastInRoom).y + CHUNK * 3 - playerHeight;
-
-        lastInRoom = respawnRoom + 1;
-        lastRoom = respawnRoom;
+        checkPan(); // Makes sure camera pans up to room above players death.
 
         deathUIY = HEIGHT; // Resets deathUIY back to bottom of screen.
     }

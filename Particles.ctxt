@@ -1,0 +1,9 @@
+#BlueJ class context
+comment0.target=Particles
+comment1.params=x\ y\ width\ height\ xSpeed\ ySpeed\ color\ ageMax\ spreadX\ spreadY\ gravity\ drag
+comment1.target=Particles(int,\ int,\ int,\ int,\ int,\ int,\ java.awt.Color,\ int,\ float,\ float,\ boolean,\ boolean)
+comment2.params=g
+comment2.target=void\ paint(java.awt.Graphics)
+comment3.params=
+comment3.target=void\ move()
+numComments=4

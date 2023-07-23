@@ -45,27 +45,31 @@ public class Ladder {
         Graphics2D g2D = (Graphics2D) g;
 
         if (!ladderBroken) {
-            if (Panel.lastRoom < level || Panel.lastRoom > level)
+            if (Panel.lastRoom < level || Panel.lastRoom > level || Panel.gameOver)
                 // Triggers when player is one room above or below ladder.
                 ladderImg = new ImageIcon("ladderDark.png").getImage();
-            if (Panel.lastRoom == level)
-                // Triggers when player is in the same room as ladder.
-                ladderImg = new ImageIcon("ladderDarkTop.png").getImage();
-            if (Panel.lastRoom == level - 1)
-                // Triggers when player is one room above player. Overrides ladderDark.
-                ladderImg = new ImageIcon("ladderDarkBottom.png").getImage();
-            if (Panel.lastRoom == level && level == 0)
-                // Triggers when player is in only room0.
-                ladderImg = new ImageIcon("ladder.png").getImage();
+            if (!Panel.gameOver) {
+                if (Panel.lastRoom == level)
+                    // Triggers when player is in the same room as ladder.
+                    ladderImg = new ImageIcon("ladderDarkTop.png").getImage();
+                if (Panel.lastRoom == level - 1)
+                    // Triggers when player is one room above player. Overrides ladderDark.
+                    ladderImg = new ImageIcon("ladderDarkBottom.png").getImage();
+                if (Panel.lastRoom == level && level == 0)
+                    // Triggers when player is in only room0.
+                    ladderImg = new ImageIcon("ladder.png").getImage();
+            }
         } else { // Broken ladder variants.
-            if (Panel.lastRoom < level || Panel.lastRoom > level)
+            if (Panel.lastRoom < level || Panel.lastRoom > level || Panel.gameOver)
                 ladderImg = new ImageIcon("ladderBrokenDark.png").getImage();
-            if (Panel.lastRoom == level)
-                ladderImg = new ImageIcon("ladderBrokenDarkTop.png").getImage();
-            if (Panel.lastRoom == level - 1)
-                ladderImg = new ImageIcon("ladderBrokenDarkBottom.png").getImage();
-            if (Panel.lastRoom == level && level == 0)
-                ladderImg = new ImageIcon("ladderBroken.png").getImage();
+            if (!Panel.gameOver) {
+                if (Panel.lastRoom == level)
+                    ladderImg = new ImageIcon("ladderBrokenDarkTop.png").getImage();
+                if (Panel.lastRoom == level - 1)
+                    ladderImg = new ImageIcon("ladderBrokenDarkBottom.png").getImage();
+                if (Panel.lastRoom == level && level == 0)
+                    ladderImg = new ImageIcon("ladderBroken.png").getImage();
+            }
         }
 
         g2D.drawImage(ladderImg, x + Panel.damageWobbleX, y + Panel.parallax + Panel.damageWobbleY, null);

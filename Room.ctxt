@@ -1,5 +1,11 @@
 #BlueJ class context
 comment0.target=Room
-comment1.params=
-comment1.target=Room()
-numComments=2
+comment1.params=y\ level
+comment1.target=Room(int,\ int)
+comment2.params=g
+comment2.target=void\ paint(java.awt.Graphics)
+comment3.params=
+comment3.target=void\ populate()
+comment4.params=
+comment4.target=boolean\ isClear()
+numComments=5
