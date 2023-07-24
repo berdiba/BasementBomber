@@ -590,16 +590,18 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void checkCollisions() {
-        if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
-            playerJump++;
-        for (int i = 0; i < room.size(); i++) {
-            room.get(i).isClear(); // Check to see if room is clear of enemies.
-            if (room.get(i).col.contains(playerCol)) {
-                inRoom = room.get(i).level;
-                lastRoom = room.get(i).level; // Used for illumination.
-                break;
-            } else
-                inRoom = -1;
+        if (!gameOver) {
+            if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
+                playerJump++;
+            for (int i = 0; i < room.size(); i++) {
+                room.get(i).isClear(); // Check to see if room is clear of enemies.
+                if (room.get(i).col.contains(playerCol)) {
+                    inRoom = room.get(i).level;
+                    lastRoom = room.get(i).level; // Used for illumination.
+                    break;
+                } else
+                    inRoom = -1;
+            }
         }
 
         checkPan();
@@ -843,7 +845,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         for (int i = 0; i < room.size(); i++)
             for (int j = 0; j < room.get(i).enemy.size(); j++) {
                 if (!gameOver)
-                room.get(i).enemy.get(j).checkCollisions(); // Check enemy collisions.
+                    room.get(i).enemy.get(j).checkCollisions(); // Check enemy collisions.
 
                 if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor.x, room.get(i).floor.y - 1,
                         room.get(i).floor.width, room.get(i).floor.height)) {
