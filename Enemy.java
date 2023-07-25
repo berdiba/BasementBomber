@@ -115,7 +115,7 @@ public class Enemy {
                 break;
         }
 
-        if (Panel.lastInRoom == level) { // Activate when player enters enemies level.
+        if (Panel.lastRoom == level) { // Activate when player enters enemies level.
             if (growHeight < height) {
                 growHeight = growHeight + height / 4; // Increase growheight.
                 if (facingLeft)

@@ -108,7 +108,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     boolean inWallLeft = false, inWallRight = false;
     boolean reloadBarRed = false, shootButtonPushed = false;
     boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
-    static boolean titleScreen = true, gameOver = false;
+    static boolean titleScreen = true, gameOver = false, win = false;
 
     // Rectangles
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
@@ -164,8 +164,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 repaint();
                 move();
                 checkCollisions();
-                if (gameTime % 20 == 0)
-                    System.out.println(lastInRoom);
+                checkWin();
                 delta--;
                 gameTime++;
             }
@@ -409,8 +408,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void paintDeathUI(Graphics g, Graphics2D g2D) { // Paints death screen interface.
-        if (gameOver) { // Only paints on gameOver screen.
+        if (win)
+            missionFailedImg = new ImageIcon("missionSuccess.png").getImage();
 
+        if (gameOver) { // Only paints on gameOver screen.
             if (deathUIY < HEIGHT / 2) // This makes deathButtons appear to slide in from behind missionFailedImg.
                 g2D.drawImage(deathButtonsImg, WIDTH / 2 - deathButtonsImg.getWidth(null) / 2,
                         HEIGHT - deathUIY + deathButtonsImg.getHeight(null) / 2, null);
@@ -628,7 +629,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
                     lastInRoom = lastRoom;
             }
-        if (gameOver && parallax > -HEIGHT * 3)
+        if (gameOver && win && parallax < parallaxMax) // Pan upwards quickly if player wins.
+            parallax = parallax + 2;
+        else if (gameOver && parallax > -HEIGHT * 3 && !win)
             parallax = parallax - 2; // Pan downwards if player dies.
 
         if (!titleScreen && !gameOver && lastInRoom == -1 && parallax != 0) { // This triggers as soon as titleScreen is
@@ -1012,6 +1015,16 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             particles.remove(0); // If too many particles on screen, remove the first particles in arrayList.
     }
 
+    public void checkWin() { // Triggers win condition when all enemies are dead.
+        if (room.get(room.size() - 1).enemy.size() == 0)
+            win();
+    }
+
+    public void win() {
+        win = true;
+        gameOver = true;
+    }
+
     public void keyTyped(KeyEvent e) {
     }
 
@@ -1125,8 +1138,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void reset() {
         gameOver = false;
 
-        healthMax = healthMax - 1; // Reduces maximum health by 1.
         health = healthMax;
+
+        for (int i = 0; i < room.size(); i++)
+            for (int j = 0; j < room.get(i).enemy.size(); j++)
+                if (room.get(i).enemy.get(j).isBoss)
+                    room.get(i).enemy.get(j).x = CHUNK * 2;
 
         checkPan(); // Makes sure camera pans up to room above players death.
 

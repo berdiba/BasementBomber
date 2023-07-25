@@ -48,11 +48,11 @@ public class Ladder {
             if (Panel.lastRoom < level || Panel.lastRoom > level || Panel.gameOver)
                 // Triggers when player is one room above or below ladder.
                 ladderImg = new ImageIcon("ladderDark.png").getImage();
-            if (!Panel.gameOver) {
+            if (!Panel.gameOver || level == 0) {
                 if (Panel.lastRoom == level)
                     // Triggers when player is in the same room as ladder.
                     ladderImg = new ImageIcon("ladderDarkTop.png").getImage();
-                if (Panel.lastRoom == level - 1)
+                if (Panel.lastRoom == level - 1 || level == 0 && Panel.gameOver)
                     // Triggers when player is one room above player. Overrides ladderDark.
                     ladderImg = new ImageIcon("ladderDarkBottom.png").getImage();
                 if (Panel.lastRoom == level && level == 0)
@@ -62,10 +62,10 @@ public class Ladder {
         } else { // Broken ladder variants.
             if (Panel.lastRoom < level || Panel.lastRoom > level || Panel.gameOver)
                 ladderImg = new ImageIcon("ladderBrokenDark.png").getImage();
-            if (!Panel.gameOver) {
+            if (!Panel.gameOver || level ==0) {
                 if (Panel.lastRoom == level)
                     ladderImg = new ImageIcon("ladderBrokenDarkTop.png").getImage();
-                if (Panel.lastRoom == level - 1)
+                if (Panel.lastRoom == level - 1 || level == 0 && Panel.gameOver)
                     ladderImg = new ImageIcon("ladderBrokenDarkBottom.png").getImage();
                 if (Panel.lastRoom == level && level == 0)
                     ladderImg = new ImageIcon("ladderBroken.png").getImage();
