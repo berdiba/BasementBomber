@@ -54,6 +54,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     static Image buttonsImg; // buttonsImg set up later on.
     static Image deathButtonsImg;
+    static Image winButtonsImg;
+    static Image winButtonsDarkImg;
     static Image menuButtonsImg;
 
     // Integers.
@@ -85,7 +87,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int deathCooldown = gameTime, deathCooldownTime = 60, deathUIY = HEIGHT;
     // deathCoolDown used for wait time after death before player can press buttons.
 
-    static int healthMax = 2, health = healthMax, healthCooldown = gameTime;
+    static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
     static int titleUIWobbleX, titleUIWobbleY;
@@ -152,7 +154,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void run() { // Game loop.
         long lastTime = System.nanoTime();
-        double ticks = 30.0; // Game will refresh 60.0 times per second.
+        double ticks = 60.0; // Game will refresh 60.0 times per second.
         double ns = 1000000000 / ticks;
         double delta = 0;
         while (true) { // Constantly run.
@@ -197,10 +199,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         if (Math.sin(gameTime / 4) > 0) { // Alternates between dark and light button.
             buttonsImg = new ImageIcon("buttons1.png").getImage();
             deathButtonsImg = new ImageIcon("deathButtons1.png").getImage();
+            winButtonsImg = new ImageIcon("winButtons1.png").getImage();
+            winButtonsDarkImg = new ImageIcon("winButtonsDark1.png").getImage();
             menuButtonsImg = new ImageIcon("menuButtons1.png").getImage();
         } else {
             buttonsImg = new ImageIcon("buttons2.png").getImage();
             deathButtonsImg = new ImageIcon("deathButtons2.png").getImage();
+            winButtonsImg = new ImageIcon("winButtons2.png").getImage();
+            winButtonsDarkImg = new ImageIcon("winButtonsDark2.png").getImage();
             menuButtonsImg = new ImageIcon("menuButtons2.png").getImage();
         }
     }
@@ -411,11 +417,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         if (win)
             missionFailedImg = new ImageIcon("missionSuccess.png").getImage();
 
-        if (gameOver) { // Only paints on gameOver screen.
+        if (gameOver && !win) // Only paints on gameOver screen.
             if (deathUIY < HEIGHT / 2) // This makes deathButtons appear to slide in from behind missionFailedImg.
                 g2D.drawImage(deathButtonsImg, WIDTH / 2 - deathButtonsImg.getWidth(null) / 2,
                         HEIGHT - deathUIY + deathButtonsImg.getHeight(null) / 2, null);
 
+        if (gameOver) {
             // Draw missionFailed title image.
             g2D.drawImage(titleBG1Img, WIDTH / 2 - titleBG1Img.getWidth(null) / 2 + titleUIWobbleX,
                     deathUIY - titleBG1Img.getHeight(null) / 3 + titleUIWobbleY, null);
@@ -429,8 +436,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void paintMenuUI(Graphics g, Graphics2D g2D) { // Paints title screen interface.
-        if (titleScreen) {
 
+        if (titleScreen) {
             g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
                     HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
                             - Math.min(gameTime * 8 - 480, 0),
@@ -451,6 +458,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                             - Math.min(gameTime * 8 - 240, 0),
                     null);
         }
+
+        if (win && parallax < 256)
+            g2D.drawImage(winButtonsImg, WIDTH / 2 - winButtonsImg.getWidth(null) / 2,
+                    HEIGHT - winButtonsImg.getHeight(null) * 2, null);
+        else if (win)
+            g2D.drawImage(winButtonsDarkImg, WIDTH / 2 - winButtonsDarkImg.getWidth(null) / 2,
+                    HEIGHT - winButtonsDarkImg.getHeight(null) * 2, null);
     }
 
     public void move() {
@@ -1072,12 +1086,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 // If player on ladder and ladder top, player won't fall
                 // but can't climb any higher.
             }
-        } else if (gameOver && deathCooldown < gameTime - deathCooldownTime)
+        } else if (gameOver && deathCooldown < gameTime - deathCooldownTime || win)
             // Only trigger on game over screen.
             // 1 second delay between game over and acceptung user input.
             switch (e.getKeyCode()) {
                 case 32: // Spacebar.
-                    reset();
+                    if (!win)
+                        reset();
                     break;
                 case 81:
                     System.exit(0);
