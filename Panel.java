@@ -85,7 +85,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int deathCooldown = gameTime, deathCooldownTime = 60, deathUIY = HEIGHT;
     // deathCoolDown used for wait time after death before player can press buttons.
 
-    static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
+    static int healthMax = 2, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
     static int titleUIWobbleX, titleUIWobbleY;
@@ -152,7 +152,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void run() { // Game loop.
         long lastTime = System.nanoTime();
-        double ticks = 60.0; // Game will refresh 60.0 times per second.
+        double ticks = 30.0; // Game will refresh 60.0 times per second.
         double ns = 1000000000 / ticks;
         double delta = 0;
         while (true) { // Constantly run.
@@ -629,7 +629,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
                     lastInRoom = lastRoom;
             }
-        if (gameOver && win && parallax < parallaxMax) // Pan upwards quickly if player wins.
+        if (gameOver && win && parallax < parallaxMax) // Pan upwards if player wins.
             parallax = parallax + 2;
         else if (gameOver && parallax > -HEIGHT * 3 && !win)
             parallax = parallax - 2; // Pan downwards if player dies.
@@ -649,34 +649,30 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 panYAccelerating = true;
                 // Check center of room against center of screen.
                 if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
-                    parallax -= panYSpeed; // Reduce parallax.
                     panYSpeed++; // Increase panYSpeed towards maximum of 32.
                 } else {
                     panYAccelerating = false;
                     // Set panYAccelerating to be false, stopping above statement re-triggering.
-                    if (panYSpeed >= 8) {
-                        parallax -= panYSpeed; // Reduce parallax.
-                        panYSpeed--;
-                    }
                 }
+                parallax -= panYSpeed; // Reduce parallax.
             } else
                 panYDone = true; // Once finished panning, set panYDone to true.
         } else { // If up is false.
             if (room.get(level).col.y + room.get(level).col.height / 2 < HEIGHT / 2) {
+                System.out.println(panYSpeed);
                 // Check center of room against center of screen.
                 if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
-                    parallax += panYSpeed; // Increase parallax.
                     panYSpeed++; // Increase panYSpeed towards maximum of 32.
                 } else {
                     panYAccelerating = false;
                     // Set panYAccelerating to be false, stopping above statement re-triggering.
-                    if (panYSpeed >= 8) {
-                        parallax += panYSpeed; // Increase parallax.
-                        panYSpeed--;
-                    }
                 }
-            } else
+                parallax += panYSpeed; // Increase parallax.
+            } else {
                 panYDone = true;
+                System.out.println("panY finished");
+
+            }
         }
     }
 
