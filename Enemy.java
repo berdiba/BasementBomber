@@ -36,7 +36,7 @@ public class Enemy {
 
     int launchSpeed, launchSpeedMax;
 
-    Boolean takingAction = false, facingLeft = true, isBoss;
+    Boolean takingAction = false, facingLeft = false, isBoss, isDummy;
 
     Image enemyImg;
 
@@ -44,12 +44,12 @@ public class Enemy {
     Rectangle viewCol;
     Rectangle damageColLeft, damageColRight;
 
-    public Enemy(int level, boolean isBoss) {
+    public Enemy(int level, boolean isBoss, boolean isDummy) {
         this.level = level;
         this.isBoss = isBoss;
+        this.isDummy = isDummy;
 
-        if (!isBoss) {
-
+        if (!isBoss && !isDummy) {
             enemyImg = new ImageIcon("enemy" + level + ".png").getImage();
 
             width = enemyImg.getWidth(null);
@@ -79,8 +79,10 @@ public class Enemy {
 
             launchSpeedMax = 20;
 
-        } else
+        } else if (isBoss)
             bossEnemy();
+        else if (isDummy)
+            dummyEnemy();
     }
 
     public void bossEnemy() {
@@ -103,6 +105,26 @@ public class Enemy {
         launchSpeedMax = 8;
     }
 
+    public void dummyEnemy() {
+        enemyImg = new ImageIcon("dummy.png").getImage();
+
+        width = enemyImg.getWidth(null);
+        height = enemyImg.getHeight(null);
+
+        x = CHUNK * 8;
+        y = Panel.HEIGHT / 2 - height;
+
+        speedMax = 0; // Dummy cannot move.
+        chaseSpeed = 0;
+
+        healthMax = 2048;
+        health = healthMax;
+
+        col = new Rectangle(x, y, width, height);
+
+        launchSpeedMax = 4;
+    }
+
     public void paint(Graphics g) {
         Graphics2D g2D = (Graphics2D) g;
 
@@ -119,7 +141,7 @@ public class Enemy {
                 break;
         }
 
-        if (Panel.lastRoom == level) { // Activate when player enters enemies level.
+        if (Panel.lastRoom == level || isDummy) { // Activate when player enters enemies level.
             if (growHeight < height) {
                 growHeight = growHeight + height / 4; // Increase growheight.
                 if (facingLeft)
@@ -147,11 +169,13 @@ public class Enemy {
     }
 
     public void move() {
-        y = y + up + gravity + -Math.abs(launchSpeed * 2 / 3);
+        if (!isDummy)
+            y = y + up + gravity + -Math.abs(launchSpeed * 2 / 3);
         x = x + launchSpeed;
+
         col = new Rectangle(x + colXOffset, y + Panel.parallax + colYOffset, width - colXOffset * 2,
                 height - colYOffset * 2);
-        // Update enemy collider.
+
         if (isBoss || level == 3) // Boss and mummies has double view distance.
             viewCol = new Rectangle(col.x - viewDistance * 2, col.y, col.width + viewDistance * 4, col.height);
         else if (level == 4) // Level 4 enemies sans boss have small view distance.
@@ -159,11 +183,15 @@ public class Enemy {
         else // Other enemies have normal view distance.
             viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);
 
-        // Update enemy range of vision.
-        damageColLeft = new Rectangle(col.x, col.y + Panel.PIXEL, 1, col.height);
-        damageColRight = new Rectangle(col.x + col.width, col.y + Panel.PIXEL, 1, col.height);
+        if (!isDummy) {
+            damageColLeft = new Rectangle(col.x, col.y + Panel.PIXEL, 1, col.height);
+            damageColRight = new Rectangle(col.x + col.width, col.y + Panel.PIXEL, 1, col.height);
+        } else {
+            damageColLeft = new Rectangle(0, 0, 0, 0);
+            damageColRight = new Rectangle(0, 0, 0, 0);
+        }
 
-        if (decisionTime < newDecision && !takingAction) // Triggers only when player isnt taking an action.
+        if (decisionTime < newDecision && !takingAction) // Triggers only when enemy isnt taking an action.
             decisionTime++; // Increace decisionTime until it reaches newDecision
         else {
             takingAction = true; // When decisionTime = newDecision, take an action.
@@ -203,19 +231,23 @@ public class Enemy {
     }
 
     public void moveLeft() {
-        facingLeft = true;
-        x = x - speed; // Move left.
-        if (col.intersects(Panel.wallLeftCol))
-            decision = 2; // Makes enemy move right instead for remaining decision duration.
-        wobble = (int) (Math.sin(Panel.gameTime) * 2); // Alternates between -1 and 1.
+        if (!isDummy) {
+            facingLeft = true;
+            x = x - speed; // Move left.
+            if (col.intersects(Panel.wallLeftCol))
+                decision = 2; // Makes enemy move right instead for remaining decision duration.
+            wobble = (int) (Math.sin(Panel.gameTime) * 2); // Alternates between -1 and 1.
+        }
     }
 
     public void moveRight() { // Same thing as moveLeft but in opposite direction.
-        facingLeft = false;
-        x = x + speed;
-        if (col.intersects(Panel.wallRightCol))
-            decision = 1;
-        wobble = (int) (Math.sin(Panel.gameTime) * 2);
+        if (!isDummy) {
+            facingLeft = false;
+            x = x + speed;
+            if (col.intersects(Panel.wallRightCol))
+                decision = 1;
+            wobble = (int) (Math.sin(Panel.gameTime) * 2);
+        }
     }
 
     public void checkCollisions() {

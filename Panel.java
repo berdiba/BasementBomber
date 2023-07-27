@@ -52,7 +52,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Image titleBG1Img = new ImageIcon("titleBG1.png").getImage();
     static Image titleBG2Img = new ImageIcon("titleBG2.png").getImage();
 
-    static Image buttonsImg; // buttonsImg set up later on.
+    // Buttons Imgs set up later on.
+    static Image buttonsImg;
     static Image deathButtonsImg;
     static Image winButtonsImg;
     static Image winButtonsDarkImg;
@@ -107,33 +108,29 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int fogX = 0, fog2X = -WIDTH, fogSpeed = 1;
     // Duplicate fog placed behind original to create seamless fog movement.
 
-    // Booleans.
-    boolean movingLeft = false, movingRight = false, facingLeft = false;
-    boolean touchingGround = true, playerJumped = false;
-    boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
-    boolean showControlls = true, panYAccelerating = false, panYDone = false;
-    boolean inWallLeft = false, inWallRight = false;
-    boolean reloadBarRed = false, shootButtonPushed = false;
-    boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
+    static boolean movingLeft = false, movingRight = false, facingLeft = false;
+    static boolean touchingGround = true, playerJumped = false;
+    static boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
+    static boolean showControlls = true, panYAccelerating = false, panYDone = false;
+    static boolean inWallLeft = false, inWallRight = false;
+    static boolean reloadBarRed = false, shootButtonPushed = false;
+    static boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
     static boolean titleScreen = true, gameOver = false, win = false, settings = false, extraBlood = false;
 
-    // Rectangles
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
             playerHeight - playerColYOffset * 2);; // Collision box for player.
     static Rectangle groundCol = new Rectangle(-CHUNK, HEIGHT / 2 + parallax, WIDTH + CHUNK * 2, CHUNK);
     static Rectangle wallLeftCol = new Rectangle(0, -HEIGHT * 8, CHUNK * 2 + 8, HEIGHT * 16);
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
 
-    // Colors.
-    Color playerBlood, enemyBlood, blast, wood;
+    static Color playerBlood, enemyBlood, blast, wood;
 
-    // ArrayLists
     static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
     static ArrayList<Room> room = new ArrayList<Room>();
     static ArrayList<Ladder> ladder = new ArrayList<Ladder>();
     static ArrayList<Particles> particles = new ArrayList<Particles>();
 
-    public Panel() {
+    public Panel() { // Sets up some properties.
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
         this.setBackground(new Color(175, 207, 194)); // Sets background colour to be a teal-ish.
 
@@ -142,9 +139,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         startGame();
     }
 
-    public void startGame() {
-        // Upon starting the game, add ladders and rooms to arraylists.
-
+    public void startGame() { // Adds rooms and ladders to ArrayLists, starts gameThread.
         for (int i = 0; i < 5; i++) {
             room.add(new Room(roomYBase + roomYLevel * i, i));
             if (i % 2 == 0)
@@ -154,7 +149,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
 
         gameThread = new Thread(this);
-        gameThread.start();
+        gameThread.start(); // Nessesary for game to function properly.
     }
 
     public void run() { // Game loop.
@@ -194,7 +189,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintPlayer(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
-        // paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintDeathUI(g, g2D);
         paintMenuUI(g, g2D);
     }
@@ -514,7 +509,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             settingsExtraBloodImg = new ImageIcon("offButton.png").getImage();
     }
 
-    public void move() {
+    public void move() { // Controlls all movement.
         // Update player position.
         playerY = playerY + playerUp + gravity + playerClimbSpeedUp + playerClimbSpeedDown
                 + -Math.abs(launchSpeed * 2 / 3);
@@ -595,6 +590,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             room.get(i).col.y = room.get(i).y + parallax;
             room.get(i).ceiling.y = room.get(i).y - CHUNK / 2 + parallax;
             room.get(i).floor.y = room.get(i).y + Room.height + parallax;
+            room.get(0).top.y = room.get(0).y - CHUNK * 4 / 3 + parallax;
             // Enemy col updated in enemy move function.
         }
 
@@ -612,7 +608,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public void accelarate() {
+    public void accelarate() { // Controlls player smoothly accelarating and decelarating up to max speed.
         if (movingLeft && !inWallLeft) { // Check direction.
             if (playerLeft > -playerSpeed) // Check if player can accelarate any more.
                 if (key == 'a') { // Check to see if key pressed is 'a'.
@@ -634,7 +630,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             playerRight--;
     }
 
-    public void dash() {
+    public void dash() { // Makes player quickly dash forward in specified direction after cooldown.
         if (dashCooldown > gameTime - dashCooldownTime && canDash) {
             dashing = true;
             if (facingLeft) // Dash in the direction player is facing.
@@ -651,7 +647,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public void checkCollisions() {
+    public void checkCollisions() { // Detection of collisions between everything.
         if (!gameOver) {
             if (playerJump < 0) // Constantly increase playerjump towards 0 if it is less than 1.
                 playerJump++;
@@ -863,7 +859,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             }
 
             for (int j = 0; j < particles.size(); j++)
-                if (particles.get(j).col.intersects(room.get(i).floor)) { // Stop particles from phasing through floor.
+                if (particles.get(j).col.intersects(room.get(i).floor) || 
+                particles.get(j).col.intersects(room.get(0).top)) { // Stop particles from phasing through floor.
                     particles.get(j).ySpeed = -Math.abs(particles.get(j).ySpeed / 2);
                     particles.get(j).xSpeed = particles.get(j).xSpeed / 2;
                 }
@@ -933,7 +930,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             damageFlash--; // Decrease damageFlash to 0.
     }
 
-    public void damage(Boolean isLeft) {
+    public void damage(Boolean isLeft) { // Reduces player health, deals knockback, calls kill funcion.
         damageFlash = damageFlashMax; // Set damageFlash to its maximum value.
         playerJump = 0; // Stops player from being able to be launched and jump at the same time.
 
@@ -972,7 +969,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             kill();
     }
 
-    public void kill() { // When player reaches 0 health, kill player.
+    public void kill() { // Kills player, sets player respawn location, enables deathUI.
         if (lastRoom == 0)
             lastRoom = 1;
 
@@ -986,7 +983,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         gameOver = true;
     }
 
-    public void checkProjectileCollisions() {
+    public void checkProjectileCollisions() { // Collisions between enemies and projectiles.
+        // Detects when an enemy gets hit by a projectile, then deals damage to the
+        // enemy, puts out particles, and knocks enemy back.
         for (int i = 0; i < projectile.size(); i++)
             for (int j = 0; j < room.size(); j++)
                 for (int k = 0; k < room.get(j).enemy.size(); k++) { // Run thru every projectile and enemy per level.
@@ -997,7 +996,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                                 1, room.get(j).enemy.get(k).col.height))
                             for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++) {
 
-                                changeEnemyBloodColour(room.get(j).level);
+                                changeEnemyBloodColour(room.get(j).level, room.get(j).enemy.get(k).isDummy);
 
                                 particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
                                         room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, 10, -10,
@@ -1010,7 +1009,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                                 room.get(j).enemy.get(k).col.height))
                             for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++) {
 
-                                changeEnemyBloodColour(room.get(j).level);
+                                changeEnemyBloodColour(room.get(j).level, room.get(j).enemy.get(k).isDummy);
 
                                 particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
                                         room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, -10, -10,
@@ -1030,12 +1029,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 }
     }
 
-    public void changeEnemyBloodColour(int level) {
+    public void changeEnemyBloodColour(int level, boolean isDummy) { // Changes blood colour depending on enemy type.
         colorMod = (int) (Math.random() * 40); // Adds random variation to particle colours.
 
         switch (level) {
-            case 0: // Red blood.
-                enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+            case 0:
+                if (!isDummy) // Red blood.
+                    enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+                else // Dummy brown.
+                    enemyBlood = new Color(colorMod + 100, colorMod + 70, colorMod + 60);
                 break;
             case 1: // Blue-green goblin blood.
                 enemyBlood = new Color(20, (100 - colorMod), (colorMod + 110));
@@ -1052,34 +1054,31 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public void killStrayProjectiles() {
+    public void killStrayProjectiles() { // Kills particles that travel off screen.
         for (int i = 0; i < projectile.size(); i++)
             if (projectile.get(i).x < -WIDTH || projectile.get(i).x > WIDTH * 2)
-                projectile.remove(i); // Remove projectiles that travel off the screen.
+                projectile.remove(i);
     }
 
-    public void killOldParticles() { // Removes particles.
+    public void killOldParticles() { // Removes particles after a certian time.
         for (int i = 0; i < particles.size(); i++)
             if (particles.get(i).age >= particles.get(i).ageMax)
-                particles.remove(i); // Remove projectiles that travel off the screen.
+                particles.remove(i);
         if (particles.size() > particlesMax)
             particles.remove(0); // If too many particles on screen, remove the first particles in arrayList.
     }
 
     public void checkWin() { // Triggers win condition when all enemies are dead.
-        if (room.get(room.size() - 1).enemy.size() == 0)
-            win();
+        if (room.get(room.size() - 1).enemy.size() == 0) {
+            win = true;
+            gameOver = true;
+        }
     }
 
-    public void win() {
-        win = true;
-        gameOver = true;
+    public void keyTyped(KeyEvent e) { // Nessesary for the keyBoardListener to function properly.
     }
 
-    public void keyTyped(KeyEvent e) {
-    }
-
-    public void keyPressed(KeyEvent e) {
+    public void keyPressed(KeyEvent e) { // Manages all keyboard presses.
         if (!gameOver && !titleScreen) { // Player can only move if not dead / on title screen.
             switch (e.getKeyCode()) {
                 case 37: // Move left.
@@ -1175,7 +1174,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public void shoot() {
+    public void shoot() { // Shoots bullet from player traveling in direction player is facing.
         if (shootCooldown < gameTime - shootCooldownTime) {
             shootButtonPushed = true;
             reloadBarRed = false; // Stops reloadBar staying red when space is held down.
@@ -1203,14 +1202,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             reloadBarRed = true;
     }
 
-    public void jump() {
+    public void jump() { // Manages player jump.
         if (!playerJumped) { // Player cannot jump in mid-air.
             playerJump = playerJumpHeight;
             playerJumped = true;
         }
     }
 
-    public void reset() {
+    public void reset() { // Resets health and nessesaey UI elements.
         gameOver = false;
 
         health = healthMax;
@@ -1250,7 +1249,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public void keyReleased(KeyEvent e) {
+    public void keyReleased(KeyEvent e) { // Detects when keys are released.
         switch (e.getKeyCode()) {
             case 37:
                 movingLeft = false;

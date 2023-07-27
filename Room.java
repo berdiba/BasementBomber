@@ -25,7 +25,7 @@ public class Room {
     Image roomOutlineImg;
 
     Rectangle col;
-    Rectangle ceiling, floor;
+    Rectangle ceiling, floor, top; // Top used for particle collisions from dummy.
 
     ArrayList<Enemy> enemy = new ArrayList<Enemy>();
 
@@ -36,9 +36,12 @@ public class Room {
         roomImg = new ImageIcon("room" + level + "Dark.png").getImage();
         // Images named "room1, room2..." each level will have different image.
         col = new Rectangle(x, y, width, height); // Paralax added later in Panel.
-        ceiling = new Rectangle(x, y + height, width, CHUNK / 2);
-        floor = new Rectangle(x, y - CHUNK / 2, width, CHUNK / 2);
+        ceiling = new Rectangle(x, y - CHUNK / 2, width, CHUNK / 2);
+        floor = new Rectangle(x, y + height, width, CHUNK / 2);
         // Creates rectangle 1 chunk tall at the bottom of a room.
+
+        if (level == 0)
+        top = new Rectangle(x, y - CHUNK * 4 / 3, width, CHUNK / 2);
 
         populate();
     }
@@ -70,15 +73,16 @@ public class Room {
 
     public void populate() { // Adds enemies to the level.
         for (int i = 0; i < Math.min(level, 3) + 4; i++) {
-            enemy.add(new Enemy(level, false));
+            enemy.add(new Enemy(level, false, false));
         }
+        if (level == 0)
+            enemy.add(new Enemy(level, false, true));
         if (level == 4)
-            enemy.add(new Enemy(level, true));
-
+            enemy.add(new Enemy(level, true, false));
     }
 
-    public boolean isClear() {
-        if (enemy.size() == 0)
+    public boolean isClear() { // Enemies on level 0 include indestructable surface dummy, which is ignored.
+        if (enemy.size() == 0 || level == 0 && enemy.size() - 1 == 0)
             return true;
         else
             return false;
