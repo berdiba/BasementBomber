@@ -194,7 +194,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintPlayer(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
-        // paintCol(g, g2D);
+        paintCol(g, g2D);
         paintDeathUI(g, g2D);
         paintMenuUI(g, g2D);
     }
@@ -769,17 +769,16 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 onLadderTop = false;
 
             if (ladder.get(i).bottomCol.contains(playerCol)) {
-                // Check to see if player is colliding with bottoms of the ladders.
                 onLadderBottom = true;
                 break;
-                // Set onLadderTop to true. This variable controlls jittering that happens if
-                // player is holiding down buttons when on ladder.
             } else
                 onLadderBottom = false;
         }
 
-        if (onLadder)
-            gravity = 0; // So that player can stay still while on ladder.
+        if (onLadder && inRoom != -1)
+            gravity = 1; // So that player very slowly slides down ladder.
+        else if (onLadder)
+            gravity = 0;
         else
             gravity = gravityMax;
     }
@@ -1088,6 +1087,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         movingLeft = true;
                     }
                     break;
+                case 38:
+                    if (touchingGround && !onLadder) // Player cannot jump while on ladder.
+                        jump();
+                    else if (onLadder && !onLadderTop) {
+                        playerClimbSpeedUp = -playerClimbSpeedMax;
+                        climbingLadder = true;
+                        System.out.println(climbingLadder);
+                    }
+                    break;
                 case 39: // Move right.
                     if (!inWallRight) {
                         key = 'd';
@@ -1116,17 +1124,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     break;
             }
 
-            if (e.getKeyCode() == 38) {
-                if (touchingGround && !onLadder) // Player cannot jump while on ladder.
-                    jump();
-                else if (onLadder && !onLadderTop) {
-                    playerClimbSpeedUp = -playerClimbSpeedMax;
-                    climbingLadder = true;
-
-                }
-                // If player on ladder and ladder top, player won't fall
-                // but can't climb any higher.
-            }
         } else if (gameOver && deathCooldown < gameTime - deathCooldownTime || win)
             // Only trigger on game over screen.
             // 1 second delay between game over and acceptung user input.
