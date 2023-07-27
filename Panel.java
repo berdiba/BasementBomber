@@ -908,11 +908,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
                     room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
 
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && room.get(i).enemy.get(j).isBoss) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && room.get(i).enemy.get(j).isBoss && difficulty != 0) {
                     canDash = false;
                     damage(false);
                 }
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight) && room.get(i).enemy.get(j).isBoss) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight) && room.get(i).enemy.get(j).isBoss&& difficulty != 0) {
                     canDash = false;
                     damage(true);
                 }
