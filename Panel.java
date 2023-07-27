@@ -497,9 +497,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void checkSettingsButtons() { // Controlls visuals of settings buttons.
         switch (difficulty) {
-            case 0 -> settingsDifficultyImg = new ImageIcon("easyButton.png").getImage();
-            case 1 -> settingsDifficultyImg = new ImageIcon("normalButton.png").getImage();
-            case 2 -> settingsDifficultyImg = new ImageIcon("hardButton.png").getImage();
+            case 0:
+                settingsDifficultyImg = new ImageIcon("easyButton.png").getImage();
+                break;
+            case 1:
+                settingsDifficultyImg = new ImageIcon("normalButton.png").getImage();
+                break;
+            case 2:
+                settingsDifficultyImg = new ImageIcon("hardButton.png").getImage();
+                break;
         }
 
         if (extraBlood)
@@ -1150,11 +1156,21 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             }
             if (settings)
                 switch (e.getKeyCode()) {
-                    case 49 -> difficulty = 0; // Easy.
-                    case 50 -> difficulty = 1; // Normal.
-                    case 51 -> difficulty = 2; // Hard.
-                    case 52 -> extraBlood = false;
-                    case 53 -> extraBlood = true;
+                    case 49:
+                        difficulty = 0; // Easy.
+                        break;
+                    case 50:
+                        difficulty = 1; // Normal.
+                        break;
+                    case 51:
+                        difficulty = 2; // Hard.
+                        break;
+                    case 52:
+                        extraBlood = false;
+                        break;
+                    case 53:
+                        extraBlood = true;
+                        break;
                 }
         }
     }
