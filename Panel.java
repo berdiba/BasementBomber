@@ -57,8 +57,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Image winButtonsImg;
     static Image winButtonsDarkImg;
     static Image menuButtonsImg;
+    static Image settingsButtonsImg;
+    static Image settingsDifficultyImg;
+    static Image settingsExtraBloodImg;
 
     // Integers.
+    static int difficulty = 1; // Ranges between 0 and 2. 1 Default.
+
     static int parallaxMax = HEIGHT * 2, parallax = parallaxMax;
     static int panYSpeed = 8;
     static int inRoom = -1, lastInRoom = inRoom, lastRoom = -1;
@@ -110,7 +115,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     boolean inWallLeft = false, inWallRight = false;
     boolean reloadBarRed = false, shootButtonPushed = false;
     boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
-    static boolean titleScreen = true, gameOver = false, win = false;
+    static boolean titleScreen = true, gameOver = false, win = false, settings = false, extraBlood = false;
 
     // Rectangles
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
@@ -202,12 +207,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             winButtonsImg = new ImageIcon("winButtons1.png").getImage();
             winButtonsDarkImg = new ImageIcon("winButtonsDark1.png").getImage();
             menuButtonsImg = new ImageIcon("menuButtons1.png").getImage();
+            settingsButtonsImg = new ImageIcon("settingsButtons1.png").getImage();
         } else {
             buttonsImg = new ImageIcon("buttons2.png").getImage();
             deathButtonsImg = new ImageIcon("deathButtons2.png").getImage();
+            winButtonsDarkImg = new ImageIcon("winButtonsDark2.png").getImage();
             winButtonsImg = new ImageIcon("winButtons2.png").getImage();
             winButtonsDarkImg = new ImageIcon("winButtonsDark2.png").getImage();
             menuButtonsImg = new ImageIcon("menuButtons2.png").getImage();
+            settingsButtonsImg = new ImageIcon("settingsButtons2.png").getImage();
         }
     }
 
@@ -271,6 +279,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void paintParticles(Graphics g, Graphics2D g2D) { // Paints particles.
         for (int i = 0; i < particles.size(); i++)
             particles.get(i).paint(g);
+
+        if (extraBlood) // Manages extra blood option in settings.
+            particlesDensity = 128;
+        else
+            particlesDensity = 1024;
     }
 
     public void paintCol(Graphics g, Graphics2D g2D) { // Paints collision boxes for everything.
@@ -436,12 +449,27 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void paintMenuUI(Graphics g, Graphics2D g2D) { // Paints title screen interface.
+        checkSettingsButtons();
 
         if (titleScreen) {
-            g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
-                    HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
-                            - Math.min(gameTime * 8 - 480, 0),
-                    null);
+            if (settings) { // Displaying all settings options.
+                g2D.drawImage(settingsButtonsImg, WIDTH / 2 - settingsButtonsImg.getWidth(null) / 2,
+                        HEIGHT / 2 + settingsButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
+                                - Math.min(gameTime * 8 - 480, 0),
+                        null);
+                g2D.drawImage(settingsDifficultyImg, CHUNK * 7 + PIXEL * 5,
+                        HEIGHT / 2 + settingsDifficultyImg.getHeight(null)
+                                + CHUNK * 3 + parallax - parallaxMax - Math.min(gameTime * 8 - 480, 0),
+                        null);
+                g2D.drawImage(settingsExtraBloodImg, CHUNK * 13 + PIXEL * 8,
+                        HEIGHT / 2 + settingsExtraBloodImg.getHeight(null)
+                                + CHUNK * 3 + parallax - parallaxMax - Math.min(gameTime * 8 - 480, 0),
+                        null);
+            } else
+                g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
+                        HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
+                                - Math.min(gameTime * 8 - 480, 0),
+                        null);
 
             g2D.drawImage(titleBG2Img, WIDTH / 2 - titleBG2Img.getWidth(null) / 2 - titleUIWobbleX / 2,
                     HEIGHT / 2 - titleBG2Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
@@ -465,6 +493,19 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         else if (win)
             g2D.drawImage(winButtonsDarkImg, WIDTH / 2 - winButtonsDarkImg.getWidth(null) / 2,
                     HEIGHT - winButtonsDarkImg.getHeight(null) * 2, null);
+    }
+
+    public void checkSettingsButtons() { // Controlls visuals of settings buttons.
+        switch (difficulty) {
+            case 0 -> settingsDifficultyImg = new ImageIcon("easyButton.png").getImage();
+            case 1 -> settingsDifficultyImg = new ImageIcon("normalButton.png").getImage();
+            case 2 -> settingsDifficultyImg = new ImageIcon("hardButton.png").getImage();
+        }
+
+        if (extraBlood)
+            settingsExtraBloodImg = new ImageIcon("onButton.png").getImage();
+        else
+            settingsExtraBloodImg = new ImageIcon("offButton.png").getImage();
     }
 
     public void move() {
@@ -1090,25 +1131,37 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             // Only trigger on game over screen.
             // 1 second delay between game over and acceptung user input.
             switch (e.getKeyCode()) {
-                case 32: // Spacebar.
+                case 32: // Reset.
                     if (!win)
                         reset();
                     break;
-                case 81:
+                case 81: // Quit.
                     System.exit(0);
                     break;
             }
-        else if (titleScreen && gameTime > 60)
+        else if (titleScreen && gameTime > 60) {
             // Only trigger on title screen.
             // 1 second delay between game start and acceptung user input.
             switch (e.getKeyCode()) {
-                case 32:
+                case 32: // Start.
                     titleScreen = false;
                     break;
-                case 81:
+                case 83: // Settings.
+                    settings = !settings;
+                    break;
+                case 81: // Quit.
                     System.exit(0);
                     break;
             }
+            if (settings)
+                switch (e.getKeyCode()) {
+                    case 49 -> difficulty = 0; // Easy.
+                    case 50 -> difficulty = 1; // Normal.
+                    case 51 -> difficulty = 2; // Hard.
+                    case 52 -> extraBlood = false;
+                    case 53 -> extraBlood = true;
+                }
+        }
     }
 
     public void shoot() {
