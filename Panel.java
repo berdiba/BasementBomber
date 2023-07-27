@@ -194,7 +194,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintPlayer(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
-        //paintCol(g, g2D);
+        // paintCol(g, g2D);
         paintDeathUI(g, g2D);
         paintMenuUI(g, g2D);
     }
@@ -676,10 +676,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 panYDone = false;
                 if (lastInRoom > lastRoom) {
                     panY(lastRoom, true); // Pan up to specified room.
-                    System.out.println("PANNING UP");
                 } else {
                     panY(lastRoom, false);
-                    System.out.println("PANNING DOWN");
                 }
                 if (panYDone) // Once panYDone is true, set lastInRoom to be inRoom.
                     lastInRoom = lastRoom;
@@ -714,7 +712,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 panYDone = true; // Once finished panning, set panYDone to true.
         } else { // If up is false.
             if (room.get(level).col.y + room.get(level).col.height / 2 < HEIGHT / 2) {
-                System.out.println(panYSpeed);
                 // Check center of room against center of screen.
                 if (panYSpeed <= 32 && panYAccelerating) { // Make sure panYSpeed is less than / equal to 32.
                     panYSpeed++; // Increase panYSpeed towards maximum of 32.
@@ -725,8 +722,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 parallax += panYSpeed; // Increase parallax.
             } else {
                 panYDone = true;
-                System.out.println("panY finished");
-
             }
         }
     }
@@ -1093,7 +1088,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     else if (onLadder && !onLadderTop) {
                         playerClimbSpeedUp = -playerClimbSpeedMax;
                         climbingLadder = true;
-                        System.out.println(climbingLadder);
                     }
                     break;
                 case 39: // Move right.
@@ -1141,14 +1135,17 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             // 1 second delay between game start and acceptung user input.
             switch (e.getKeyCode()) {
                 case 32: // Start game.
-                    scaleDifficulty();
-                    titleScreen = false;
+                    if (!settings) {
+                        scaleDifficulty();
+                        titleScreen = false;
+                    }
                     break;
                 case 83: // Settings.
                     settings = !settings;
                     break;
                 case 81: // Quit.
-                    System.exit(0);
+                    if (!settings)
+                        System.exit(0);
                     break;
             }
             if (settings)

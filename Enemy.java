@@ -55,8 +55,12 @@ public class Enemy {
             width = enemyImg.getWidth(null);
             height = enemyImg.getHeight(null);
 
-            x = (int) (Math.random() * (Room.width - width) + Room.x);
+            if (level % 2 == 0) // Even levels where ladder is on the right.
+                x = (int) (Math.random() * (Room.width / 2 - width) + Room.x);
             // Set x to be random number within room bounds.
+            else
+                x = (int) (Math.random() * (Room.width / 2 - width) + Room.x + Room.width / 2);
+
             y = Panel.roomYBase + Panel.roomYLevel * level + Room.height - height;
 
             if (level != 3)
