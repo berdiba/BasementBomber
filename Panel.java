@@ -194,7 +194,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintPlayer(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
-        paintCol(g, g2D);
+        //paintCol(g, g2D);
         paintDeathUI(g, g2D);
         paintMenuUI(g, g2D);
     }
@@ -671,7 +671,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void checkPan() { // Detects when panY should be triggered.
-        if (lastRoom >= 0 && !gameOver) // Makes sure pan only triggers when player is in a room.
+        if (lastRoom >= 0) // Makes sure pan only triggers when player is in a room.
             if (lastInRoom != lastRoom) { // Check to see if player is in a new room.
                 panYDone = false;
                 if (lastInRoom > lastRoom) {
