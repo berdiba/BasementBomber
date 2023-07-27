@@ -92,7 +92,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int deathCooldown = gameTime, deathCooldownTime = 60, deathUIY = HEIGHT;
     // deathCoolDown used for wait time after death before player can press buttons.
 
-    static int healthMax = 10, health = healthMax, healthCooldown = gameTime;
+    static int healthMax = 8, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
     static int titleUIWobbleX, titleUIWobbleY;
@@ -1143,7 +1143,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             // Only trigger on title screen.
             // 1 second delay between game start and acceptung user input.
             switch (e.getKeyCode()) {
-                case 32: // Start.
+                case 32: // Start game.
+                    scaleDifficulty();
                     titleScreen = false;
                     break;
                 case 83: // Settings.
@@ -1212,6 +1213,31 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         checkPan(); // Makes sure camera pans up to room above players death.
 
         deathUIY = HEIGHT; // Resets deathUIY back to bottom of screen.
+    }
+
+    public void scaleDifficulty() { // Manages variables related to game difficulty.
+        switch (difficulty) {
+            case 0: // Easy.
+                healthMax = 10;
+                health = healthMax;
+                dashResetCooldownTime = 15;
+                shootCooldownTime = 30;
+                heartFullImg = new ImageIcon("heartFullEasy.png").getImage();
+                break;
+            case 1: // Normal.
+                healthMax = 8;
+                health = healthMax;
+                dashResetCooldownTime = 30;
+                shootCooldownTime = 60;
+                break;
+            case 2: // Hard.
+                healthMax = 6;
+                health = healthMax;
+                dashResetCooldownTime = 60;
+                shootCooldownTime = 120;
+                heartFullImg = new ImageIcon("heartFullHard.png").getImage();
+                break;
+        }
     }
 
     public void keyReleased(KeyEvent e) {
