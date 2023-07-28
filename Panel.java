@@ -1069,7 +1069,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void checkWin() { // Triggers win condition when all enemies are dead.
-        if (room.get(room.size() - 1).enemy.size() == 0) {
+        if (room.get(room.size() - 1).enemy.size() == 0 && shootCooldown < gameTime - shootCooldownTime) {
             win = true;
             gameOver = true;
         }
