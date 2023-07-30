@@ -905,7 +905,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 } else
                     room.get(i).enemy.get(j).up = 0; // Let enemy fall back down to ground.
 
-                if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor))
+                if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor) && !room.get(i).enemy.get(j).isDummy)
                     room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
 
                 if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && room.get(i).enemy.get(j).isBoss && difficulty != 0) {

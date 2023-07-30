@@ -126,6 +126,9 @@ public class Enemy {
     }
 
     public void paint(Graphics g) {
+        if (isDummy)
+            System.out.println(y);
+
         Graphics2D g2D = (Graphics2D) g;
 
         switch (level) { // Determines enemies appearance based on health and level.
@@ -140,6 +143,34 @@ public class Enemy {
                     enemyImg = new ImageIcon("enemy3hurt2.png").getImage();
                 break;
         }
+
+        if (isBoss)
+            switch (health) {
+                case 1:
+                    enemyImg = new ImageIcon("enemy" + level + "BossHurt8.png").getImage();
+                    break;
+                case 2:
+                    enemyImg = new ImageIcon("enemy" + level + "BossHurt7.png").getImage();
+                    break;
+                case 3:
+                    enemyImg = new ImageIcon("enemy" + level + "BossHurt6.png").getImage();
+                    break;
+                case 4:
+                    enemyImg = new ImageIcon("enemy" + level + "BossHurt5.png").getImage();
+                    break;
+                case 6:
+                    enemyImg = new ImageIcon("enemy" + level + "BossHurt4.png").getImage();
+                    break;
+                case 10:
+                    enemyImg = new ImageIcon("enemy" + level + "BossHurt3.png").getImage();
+                    break;
+                case 14:
+                    enemyImg = new ImageIcon("enemy" + level + "BossHurt2.png").getImage();
+                    break;
+                case 18:
+                    enemyImg = new ImageIcon("enemy" + level + "BossHurt1.png").getImage();
+                    break;
+            }
 
         if (Panel.lastRoom == level || isDummy) { // Activate when player enters enemies level.
             if (growHeight < height) {
