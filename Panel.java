@@ -115,7 +115,20 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static boolean inWallLeft = false, inWallRight = false;
     static boolean reloadBarRed = false, shootButtonPushed = false;
     static boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
-    static boolean titleScreen = true, gameOver = false, win = false, settings = false, extraBlood = false;
+    static boolean titleScreen = true, gameOver = false, win = false;
+    static boolean settings = false, extraBlood = false, partyMode = false;
+
+    static enum Difficulty {
+        EASY, NORM, HARD
+    } // Enumerators are like strings that can only have specified values.
+
+    static enum GameSpeed {
+        SLOW, NORM, FAST
+    }
+
+    static enum EnemyCount {
+        LOW, NORM, HIGH
+    }
 
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
             playerHeight - playerColYOffset * 2);; // Collision box for player.
@@ -124,6 +137,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
 
     static Color playerBlood, enemyBlood, blast, wood;
+    static Color rainbow;
 
     static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
     static ArrayList<Room> room = new ArrayList<Room>();
@@ -189,9 +203,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintPlayer(g, g2D);
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
-        //paintCol(g, g2D);
+        // paintCol(g, g2D);
         paintDeathUI(g, g2D);
         paintMenuUI(g, g2D);
+        if (partyMode)
+            paintPartyMode(g, g2D);
     }
 
     public void buttonFlash() { // Controlls repeated flashing of any button tooltips.
@@ -250,15 +266,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void paintPlayer(Graphics g, Graphics2D g2D) { // Paints player.
         if (!onLadder) {
             if (facingLeft) { // Player faces direction of travel.
-                g2D.drawImage(playerImg, playerX + playerWidth - recoil / 2, playerY + playerWobble + parallax,
-                        -playerWidth, playerHeight, null);
-                g2D.drawImage(playerItemImg, playerX + playerWidth - recoil, playerY + playerWobble + parallax,
-                        -playerWidth, playerHeight, null);
+                g2D.drawImage(playerImg, playerX + playerWidth - recoil / 2 + damageWobbleX,
+                        playerY + playerWobble + parallax, -playerWidth, playerHeight, null);
+                g2D.drawImage(playerItemImg, playerX + playerWidth - recoil + damageWobbleX,
+                        playerY + playerWobble + parallax, -playerWidth, playerHeight, null);
             } else {
-                g2D.drawImage(playerImg, playerX + recoil / 2, playerY + playerWobble + parallax, playerWidth,
-                        playerHeight, null);
-                g2D.drawImage(playerItemImg, playerX + recoil, playerY + playerWobble + parallax, playerWidth,
-                        playerHeight, null);
+                g2D.drawImage(playerImg, playerX + recoil / 2 + damageWobbleX,
+                        playerY + playerWobble + parallax, playerWidth, playerHeight, null);
+                g2D.drawImage(playerItemImg, playerX + recoil + damageWobbleX,
+                        playerY + playerWobble + parallax, playerWidth, playerHeight, null);
             }
         } else { // Draw player differently when on ladder.
             if (climbingLadder)
@@ -490,6 +506,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     HEIGHT - winButtonsDarkImg.getHeight(null) * 2, null);
     }
 
+    public void paintPartyMode(Graphics g, Graphics2D g2D) {
+        rainbow = Color.getHSBColor((float) Math.abs(Math.sin((float) gameTime / 60)), 1.0f, 1.0f);
+
+        g.setColor(new Color(rainbow.getRed(), rainbow.getGreen(), rainbow.getBlue(), 40));
+        g2D.setStroke(new BasicStroke(CHUNK * 4));
+        g.fillRect(0, 0, WIDTH, HEIGHT);
+    }
+
     public void checkSettingsButtons() { // Controlls visuals of settings buttons.
         switch (difficulty) {
             case 0:
@@ -524,7 +548,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         if (damageFlash > 0) {
             damageWobbleX = (int) (Math.sin(gameTime) * 3); // Similar to playerWobble, alternating between +/- 1.
             damageWobbleY = (int) (Math.sin(gameTime + 1) * 3);
-        } else if (gameOver) {
+        } else if (gameOver || !partyMode) {
             damageWobbleX = (int) (Math.sin((double) gameTime / 2) * 2);
         } else {
             damageWobbleX = 0;
@@ -859,8 +883,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             }
 
             for (int j = 0; j < particles.size(); j++)
-                if (particles.get(j).col.intersects(room.get(i).floor) || 
-                particles.get(j).col.intersects(room.get(0).top)) { // Stop particles from phasing through floor.
+                if (particles.get(j).col.intersects(room.get(i).floor) ||
+                        particles.get(j).col.intersects(room.get(0).top)) { // Stop particles from phasing through
+                                                                            // floor.
                     particles.get(j).ySpeed = -Math.abs(particles.get(j).ySpeed / 2);
                     particles.get(j).xSpeed = particles.get(j).xSpeed / 2;
                 }
@@ -908,11 +933,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (room.get(i).enemy.get(j).col.intersects(room.get(i).floor) && !room.get(i).enemy.get(j).isDummy)
                     room.get(i).enemy.get(j).y--; // Make sure enemy doesent get stuck in ground.
 
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && room.get(i).enemy.get(j).isBoss && difficulty != 0) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft) && room.get(i).enemy.get(j).isBoss
+                        && difficulty != 0) {
                     canDash = false;
                     damage(false);
                 }
-                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight) && room.get(i).enemy.get(j).isBoss&& difficulty != 0) {
+                if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight) && room.get(i).enemy.get(j).isBoss
+                        && difficulty != 0) {
                     canDash = false;
                     damage(true);
                 }

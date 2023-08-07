@@ -126,9 +126,6 @@ public class Enemy {
     }
 
     public void paint(Graphics g) {
-        if (isDummy)
-            System.out.println(y);
-
         Graphics2D g2D = (Graphics2D) g;
 
         switch (level) { // Determines enemies appearance based on health and level.
@@ -176,26 +173,31 @@ public class Enemy {
             if (growHeight < height) {
                 growHeight = growHeight + height / 4; // Increase growheight.
                 if (facingLeft)
-                    g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height, -width + wobble,
-                            growHeight,
-                            null);
+                    g2D.drawImage(enemyImg, x + width + Panel.damageWobbleX,
+                            y + Panel.parallax - growHeight + height + Panel.damageWobbleY,
+                            -width + wobble, growHeight, null);
                 else
-                    g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight,
-                            null);
+                    g2D.drawImage(enemyImg, x + Panel.damageWobbleX,
+                            y + Panel.parallax - growHeight + height + wobble + Panel.damageWobbleY,
+                            width, growHeight, null);
             } else if (facingLeft)
-                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height + wobble, -width,
-                        growHeight,
-                        null);
+                g2D.drawImage(enemyImg, x + width + Panel.damageWobbleX,
+                        y + Panel.parallax - growHeight + height + wobble, -width + Panel.damageWobbleY,
+                        growHeight, null);
             else
-                g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight, null);
+                g2D.drawImage(enemyImg, x + Panel.damageWobbleX,
+                        y + Panel.parallax - growHeight + height + wobble + Panel.damageWobbleY,
+                        width, growHeight, null);
         } else if (growHeight > 0) {
             growHeight = growHeight - height / 4; // Decrease growheight.
             if (facingLeft)
-                g2D.drawImage(enemyImg, x + width, y + Panel.parallax - growHeight + height, -width + wobble,
-                        growHeight,
-                        null);
+                g2D.drawImage(enemyImg, x + width + Panel.damageWobbleX,
+                        y + Panel.parallax - growHeight + height + Panel.damageWobbleY,
+                        -width + wobble, growHeight, null);
             else
-                g2D.drawImage(enemyImg, x, y + Panel.parallax - growHeight + height + wobble, width, growHeight, null);
+                g2D.drawImage(enemyImg, x + Panel.damageWobbleX,
+                        y + Panel.parallax - growHeight + height + wobble + Panel.damageWobbleY,
+                        width, growHeight, null);
         }
     }
 
