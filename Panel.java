@@ -190,10 +190,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
         // paintCol(g, g2D);
-        paintDeathUI(g, g2D);
-        paintMenuUI(g, g2D);
         if (partyMode && partyModeActive) // PartyModeActive only triggers when titleScreen is false.
             paintPartyMode(g, g2D);
+        paintDeathUI(g, g2D);
+        paintMenuUI(g, g2D);
     }
 
     public void buttonFlash() { // Controlls repeated flashing of any button tooltips.
@@ -226,6 +226,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         g.setColor(new Color(39, 46, 69)); // Set colour to ground colour.
         g2D.fillRect(groundCol.x + damageWobbleX, groundCol.y + damageWobbleY, groundCol.width, HEIGHT * 16);
         g2D.drawImage(groundImg, groundCol.x + damageWobbleX + CHUNK, groundCol.y + damageWobbleY, null);
+
+        if (partyMode && partyModeActive)
+            paintPartyMode(g, g2D); // Trigger in foreground as well to have bolder strobe effect in background.
 
         for (int i = 0; i < room.size(); i++) {
             // Creates temp variable i, runs code until i is no longer < than room.size().
@@ -352,6 +355,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         for (int i = 0; i < projectile.size(); i++)
             g.drawRect(projectile.get(i).col.x, projectile.get(i).col.y, projectile.get(i).col.width,
                     projectile.get(i).col.height);
+    }
+
+    public void paintPartyMode(Graphics g, Graphics2D g2D) {
+        rainbow = Color.getHSBColor((float) Math.abs(Math.sin((float) gameTime / 60)), 1.0f, 1.0f);
+
+        g.setColor(new Color(rainbow.getRed(), rainbow.getGreen(), rainbow.getBlue(), 20));
+        g.fillRect(0, 0, WIDTH, HEIGHT);
     }
 
     public void paintUI(Graphics g, Graphics2D g2D) { // Paints user interface.
@@ -484,14 +494,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         else if (win)
             g2D.drawImage(winButtonsDarkImg, WIDTH / 2 - winButtonsDarkImg.getWidth(null) / 2,
                     HEIGHT - winButtonsDarkImg.getHeight(null) * 2, null);
-    }
-
-    public void paintPartyMode(Graphics g, Graphics2D g2D) {
-        rainbow = Color.getHSBColor((float) Math.abs(Math.sin((float) gameTime / 60)), 1.0f, 1.0f);
-
-        g.setColor(new Color(rainbow.getRed(), rainbow.getGreen(), rainbow.getBlue(), 40));
-        g2D.setStroke(new BasicStroke(CHUNK * 4));
-        g.fillRect(0, 0, WIDTH, HEIGHT);
     }
 
     public void checkSettingsButtons() { // Controlls visuals of settings buttons.
