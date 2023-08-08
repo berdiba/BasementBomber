@@ -40,9 +40,9 @@ public class Enemy {
 
     Image enemyImg;
 
-    Rectangle col;
-    Rectangle viewCol;
-    Rectangle damageColLeft, damageColRight;
+    Rectangle col = new Rectangle(0, 0, 1, 1);
+    Rectangle viewCol = new Rectangle(0, 0, 1, 1);
+    Rectangle damageColLeft = new Rectangle(0, 0, 1, 1), damageColRight = new Rectangle(0, 0, 1, 1);
 
     public Enemy(int level, boolean isBoss, boolean isDummy) {
         this.level = level;

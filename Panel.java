@@ -17,6 +17,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     // World variables.
     Thread gameThread;
 
+    double ticks = 60.0;
+    double ns = 1000000000 / ticks;
+
     final static int WIDTH = 1400, HEIGHT = 600, PIXEL = 4, CHUNK = PIXEL * 16;
 
     static int gravityMax = 10, gravity = gravityMax;
@@ -53,17 +56,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Image titleBG2Img = new ImageIcon("titleBG2.png").getImage();
 
     // Buttons Imgs set up later on.
-    static Image buttonsImg;
-    static Image deathButtonsImg;
-    static Image winButtonsImg;
-    static Image winButtonsDarkImg;
-    static Image menuButtonsImg;
-    static Image settingsButtonsImg;
-    static Image settingsDifficultyImg;
-    static Image settingsExtraBloodImg;
+    static Image buttonsImg, deathButtonsImg, winButtonsImg, winButtonsDarkImg, menuButtonsImg, settingsButtonsImg,
+            settingsDifficultyImg, settingsGameSpeedImg, settingsEnemyCountImg, settingsExtraBloodImg,
+            settingsPartyModeImg;
 
     // Integers.
     static int difficulty = 1; // Ranges between 0 and 2. 1 Default.
+    static int gameSpeed = 1;
+    static int enemyCount = 1;
 
     static int parallaxMax = HEIGHT * 2, parallax = parallaxMax;
     static int panYSpeed = 8;
@@ -100,7 +100,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int damageFlashMax = 8, damageFlash;
     static int UIOffset = 0;
 
-    static int particlesDensity = 1024, particlesMax = 4, colorMod;
+    static int particlesDensity = 1024, bloodDensity = particlesDensity, particlesMax = 4, colorMod;
     // particlesDensity inversely proportional to particles.
 
     static int launchSpeed, launchSpeedMax = playerSpeedMax * 2;
@@ -116,19 +116,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static boolean reloadBarRed = false, shootButtonPushed = false;
     static boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
     static boolean titleScreen = true, gameOver = false, win = false;
-    static boolean settings = false, extraBlood = false, partyMode = false;
-
-    static enum Difficulty {
-        EASY, NORM, HARD
-    } // Enumerators are like strings that can only have specified values.
-
-    static enum GameSpeed {
-        SLOW, NORM, FAST
-    }
-
-    static enum EnemyCount {
-        LOW, NORM, HIGH
-    }
+    static boolean settings = false, extraBlood = false, partyMode = false, partyModeActive = false;
 
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
             playerHeight - playerColYOffset * 2);; // Collision box for player.
@@ -168,8 +156,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void run() { // Game loop.
         long lastTime = System.nanoTime();
-        double ticks = 60.0; // Game will refresh 60.0 times per second.
-        double ns = 1000000000 / ticks;
         double delta = 0;
         while (true) { // Constantly run.
             long now = System.nanoTime();
@@ -206,7 +192,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         // paintCol(g, g2D);
         paintDeathUI(g, g2D);
         paintMenuUI(g, g2D);
-        if (partyMode)
+        if (partyMode && partyModeActive) // PartyModeActive only triggers when titleScreen is false.
             paintPartyMode(g, g2D);
     }
 
@@ -253,7 +239,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 if (!gameOver)
                     room.get(i).enemy.get(j).paint(g); // Paint enemies.
         }
-
     }
 
     public void paintProjectiles(Graphics g, Graphics2D g2D) { // Paints player projectiles.
@@ -290,11 +275,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void paintParticles(Graphics g, Graphics2D g2D) { // Paints particles.
         for (int i = 0; i < particles.size(); i++)
             particles.get(i).paint(g);
-
-        if (extraBlood) // Manages extra blood option in settings.
-            particlesDensity = 128;
-        else
-            particlesDensity = 1024;
     }
 
     public void paintCol(Graphics g, Graphics2D g2D) { // Paints collision boxes for everything.
@@ -465,37 +445,37 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         if (titleScreen) {
             if (settings) { // Displaying all settings options.
                 g2D.drawImage(settingsButtonsImg, WIDTH / 2 - settingsButtonsImg.getWidth(null) / 2,
-                        HEIGHT / 2 + settingsButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
-                                - Math.min(gameTime * 8 - 480, 0),
+                        HEIGHT / 2 - settingsButtonsImg.getHeight(null) / 2 - 1,
                         null);
-                g2D.drawImage(settingsDifficultyImg, CHUNK * 7 + PIXEL * 5,
-                        HEIGHT / 2 + settingsDifficultyImg.getHeight(null)
-                                + CHUNK * 3 + parallax - parallaxMax - Math.min(gameTime * 8 - 480, 0),
-                        null);
-                g2D.drawImage(settingsExtraBloodImg, CHUNK * 13 + PIXEL * 8,
-                        HEIGHT / 2 + settingsExtraBloodImg.getHeight(null)
-                                + CHUNK * 3 + parallax - parallaxMax - Math.min(gameTime * 8 - 480, 0),
-                        null);
-            } else
+                g2D.drawImage(settingsDifficultyImg, CHUNK * 11 + PIXEL * 11, CHUNK + PIXEL * 13, null);
+                g2D.drawImage(settingsGameSpeedImg, CHUNK * 11 + PIXEL * 11, CHUNK * 2 + PIXEL * 10 + 2, null);
+                g2D.drawImage(settingsEnemyCountImg, CHUNK * 11 + PIXEL * 11, CHUNK * 3 + PIXEL * 8, null);
+                g2D.drawImage(settingsExtraBloodImg, CHUNK * 11 + PIXEL * 11, CHUNK * 4 + PIXEL * 5 + 2, null);
+                g2D.drawImage(settingsPartyModeImg, CHUNK * 11 + PIXEL * 11, CHUNK * 5 + PIXEL * 3, null);
+
+            } else {
                 g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
                         HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
                                 - Math.min(gameTime * 8 - 480, 0),
                         null);
 
-            g2D.drawImage(titleBG2Img, WIDTH / 2 - titleBG2Img.getWidth(null) / 2 - titleUIWobbleX / 2,
-                    HEIGHT / 2 - titleBG2Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
-                            - titleUIWobbleY / 2 - Math.min(gameTime * 8 - 240, 0),
-                    null);
+                g2D.drawImage(titleBG2Img, WIDTH / 2 - titleBG2Img.getWidth(null) / 2 - titleUIWobbleX / 2,
+                        HEIGHT / 2 - titleBG2Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
+                                - titleUIWobbleY / 2 - Math.min(gameTime * 8 - 240, 0),
+                        null);
 
-            g2D.drawImage(titleBG1Img, WIDTH / 2 - titleBG1Img.getWidth(null) / 2 + titleUIWobbleX,
-                    HEIGHT / 2 - titleBG1Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax + titleUIWobbleY
-                            - Math.min(gameTime * 8 - 240, 0),
-                    null);
+                g2D.drawImage(titleBG1Img, WIDTH / 2 - titleBG1Img.getWidth(null) / 2 + titleUIWobbleX,
+                        HEIGHT / 2 - titleBG1Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
+                                + titleUIWobbleY
+                                - Math.min(gameTime * 8 - 240, 0),
+                        null);
 
-            g2D.drawImage(titleImg, WIDTH / 2 - titleImg.getWidth(null) / 2 - titleUIWobbleX,
-                    HEIGHT / 2 - titleBG1Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax - titleUIWobbleY
-                            - Math.min(gameTime * 8 - 240, 0),
-                    null);
+                g2D.drawImage(titleImg, WIDTH / 2 - titleImg.getWidth(null) / 2 - titleUIWobbleX,
+                        HEIGHT / 2 - titleBG1Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
+                                - titleUIWobbleY
+                                - Math.min(gameTime * 8 - 240, 0),
+                        null);
+            }
         }
 
         if (win && parallax < 256)
@@ -520,10 +500,34 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 settingsDifficultyImg = new ImageIcon("easyButton.png").getImage();
                 break;
             case 1:
-                settingsDifficultyImg = new ImageIcon("normalButton.png").getImage();
+                settingsDifficultyImg = new ImageIcon("normButton.png").getImage();
                 break;
             case 2:
                 settingsDifficultyImg = new ImageIcon("hardButton.png").getImage();
+                break;
+        }
+
+        switch (gameSpeed) {
+            case 0:
+                settingsGameSpeedImg = new ImageIcon("slowButton.png").getImage();
+                break;
+            case 1:
+                settingsGameSpeedImg = new ImageIcon("normButton.png").getImage();
+                break;
+            case 2:
+                settingsGameSpeedImg = new ImageIcon("fastButton.png").getImage();
+                break;
+        }
+
+        switch (enemyCount) {
+            case 0:
+                settingsEnemyCountImg = new ImageIcon("lowButton.png").getImage();
+                break;
+            case 1:
+                settingsEnemyCountImg = new ImageIcon("normButton.png").getImage();
+                break;
+            case 2:
+                settingsEnemyCountImg = new ImageIcon("highButton.png").getImage();
                 break;
         }
 
@@ -531,6 +535,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             settingsExtraBloodImg = new ImageIcon("onButton.png").getImage();
         else
             settingsExtraBloodImg = new ImageIcon("offButton.png").getImage();
+
+        if (partyMode)
+            settingsPartyModeImg = new ImageIcon("onButton.png").getImage();
+        else
+            settingsPartyModeImg = new ImageIcon("offButton.png").getImage();
     }
 
     public void move() { // Controlls all movement.
@@ -548,7 +557,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         if (damageFlash > 0) {
             damageWobbleX = (int) (Math.sin(gameTime) * 3); // Similar to playerWobble, alternating between +/- 1.
             damageWobbleY = (int) (Math.sin(gameTime + 1) * 3);
-        } else if (gameOver || !partyMode) {
+        } else if (gameOver || partyMode) {
             damageWobbleX = (int) (Math.sin((double) gameTime / 2) * 2);
         } else {
             damageWobbleX = 0;
@@ -902,7 +911,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                             particlesDensity * 8; j++) {
 
                         colorMod = (int) (Math.random() * 40);
-                        wood = new Color(120 + colorMod * 2, 50 + colorMod * 2, 40 + colorMod * 2);
+                        changeWoodColour();
 
                         particles.add(new Particles(ladder.get(i).x,
                                 ladder.get(i).y + ladder.get(i).col.height / 2, ladder.get(i).col.width / 2,
@@ -915,6 +924,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                             ladder.get(i).offset * 2) / 2; // Remove bottom half of ladder col.
                 }
             }
+    }
+
+    public void changeWoodColour() {
+        if (!partyMode)
+            wood = new Color(120 + colorMod * 2, 50 + colorMod * 2, 40 + colorMod * 2);
+        else
+            wood = new Color(
+                    Color.getHSBColor((float) (Math.random() * 360), 0.8f, 0.6f).getRGB());
     }
 
     public void checkEnemyCollisions() { // Manages enemy collisions with ground, and hitting player.
@@ -969,9 +986,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
             playerLeft = 0;
             playerRight = 0;
-            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++) {
+            for (int i = 0; i < (playerWidth * playerHeight) / bloodDensity * 4; i++) {
                 colorMod = (int) (Math.random() * 40);
-                playerBlood = new Color((colorMod * 2 + 110), 20, 20);
+                changePlayerBloodColour();
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, 10, -10,
                         playerBlood, 60, 1, 0.2f, true, true));
             }
@@ -982,9 +999,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 launchSpeed = -launchSpeedMax * 2 / 3;
             playerLeft = 0;
             playerRight = 0;
-            for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity; i++) {
+            for (int i = 0; i < (playerWidth * playerHeight) / bloodDensity * 4; i++) {
                 colorMod = (int) (Math.random() * 40);
-                playerBlood = new Color((colorMod * 2 + 110), 20, 20);
+                changePlayerBloodColour();
                 particles.add(new Particles(playerX, playerY, playerWidth, playerHeight, -10, -10,
                         playerBlood, 60, 1, 0.2f, true, true));
             }
@@ -994,6 +1011,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             healthCooldown = gameTime;
         } else if (health == 1)
             kill();
+    }
+
+    public void changePlayerBloodColour() {
+        if (!partyMode)
+            playerBlood = new Color((colorMod * 2 + 110), 20, 20);
+        else
+            playerBlood = new Color(
+                    Color.getHSBColor((float) (Math.random() * 360), 0.8f, 0.6f).getRGB());
     }
 
     public void kill() { // Kills player, sets player respawn location, enables deathUI.
@@ -1021,7 +1046,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         if (projectile.get(i).col.intersects(room.get(j).enemy.get(k).col.x,
                                 room.get(j).enemy.get(k).col.y,
                                 1, room.get(j).enemy.get(k).col.height))
-                            for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++) {
+                            for (int l = 0; l < (playerWidth * playerHeight) / bloodDensity * 16; l++) {
 
                                 changeEnemyBloodColour(room.get(j).level, room.get(j).enemy.get(k).isDummy);
 
@@ -1034,7 +1059,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         else if (projectile.get(i).col.intersects(room.get(j).enemy.get(k).col.x +
                                 room.get(j).enemy.get(k).col.width, room.get(j).enemy.get(k).col.y, 1,
                                 room.get(j).enemy.get(k).col.height))
-                            for (int l = 0; l < (playerWidth * playerHeight) / particlesDensity * 16; l++) {
+                            for (int l = 0; l < (playerWidth * playerHeight) / bloodDensity * 16; l++) {
 
                                 changeEnemyBloodColour(room.get(j).level, room.get(j).enemy.get(k).isDummy);
 
@@ -1059,25 +1084,30 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void changeEnemyBloodColour(int level, boolean isDummy) { // Changes blood colour depending on enemy type.
         colorMod = (int) (Math.random() * 40); // Adds random variation to particle colours.
 
-        switch (level) {
-            case 0:
-                if (!isDummy) // Red blood.
-                    enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
-                else // Dummy brown.
+        if (!partyMode)
+            switch (level) {
+                case 0:
+                    if (!isDummy) // Red blood.
+                        enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+                    else // Dummy brown.
+                        enemyBlood = new Color(colorMod + 100, colorMod + 70, colorMod + 60);
+                    break;
+                case 1: // Blue-green goblin blood.
+                    enemyBlood = new Color(20, (100 - colorMod), (colorMod + 110));
+                    break;
+                case 2: // Robot "blood".
+                    enemyBlood = new Color(colorMod + 40, colorMod + 60, colorMod + 80);
+                    break;
+                case 3: // Mummy brown.
                     enemyBlood = new Color(colorMod + 100, colorMod + 70, colorMod + 60);
-                break;
-            case 1: // Blue-green goblin blood.
-                enemyBlood = new Color(20, (100 - colorMod), (colorMod + 110));
-                break;
-            case 2: // Robot "blood".
-                enemyBlood = new Color(colorMod + 40, colorMod + 60, colorMod + 80);
-                break;
-            case 3: // Mummy brown.
-                enemyBlood = new Color(colorMod + 100, colorMod + 70, colorMod + 60);
-                break;
-            default: // Red blood;
-                enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
-                break;
+                    break;
+                default: // Red blood;
+                    enemyBlood = new Color((colorMod * 2 + 110), 20, 20);
+                    break;
+            }
+        else {
+            enemyBlood = new Color(
+                    Color.getHSBColor((float) (Math.random() * 360), 0.8f, 0.6f).getRGB());
         }
     }
 
@@ -1096,7 +1126,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void checkWin() { // Triggers win condition when all enemies are dead.
-        if (room.get(room.size() - 1).enemy.size() == 0 && shootCooldown < gameTime - shootCooldownTime) {
+        if (room.get(room.size() - 1).enemy.size() == 0 && shootCooldown < gameTime - shootCooldownTime
+                && !titleScreen) {
             win = true;
             gameOver = true;
         }
@@ -1168,7 +1199,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             switch (e.getKeyCode()) {
                 case 32: // Start game.
                     if (!settings) {
-                        scaleDifficulty();
+                        applySettings();
+                        for (int i = 0; i < room.size(); i++)
+                            room.get(i).populate();
                         titleScreen = false;
                     }
                     break;
@@ -1183,19 +1216,28 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             if (settings)
                 switch (e.getKeyCode()) {
                     case 49:
-                        difficulty = 0; // Easy.
+                        if (difficulty < 2)
+                            difficulty++;
+                        else
+                            difficulty = 0;
                         break;
                     case 50:
-                        difficulty = 1; // Normal.
+                        if (gameSpeed < 2)
+                            gameSpeed++;
+                        else
+                            gameSpeed = 0;
                         break;
                     case 51:
-                        difficulty = 2; // Hard.
+                        if (enemyCount < 2)
+                            enemyCount++;
+                        else
+                            enemyCount = 0;
                         break;
                     case 52:
-                        extraBlood = false;
+                        extraBlood = !extraBlood;
                         break;
                     case 53:
-                        extraBlood = true;
+                        partyMode = !partyMode;
                         break;
                 }
         }
@@ -1212,13 +1254,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             for (int i = 0; i < (playerWidth * playerHeight) / particlesDensity * 8; i++)
                 if (facingLeft) {
                     colorMod = (int) (Math.random() * 40); // Randomise particle colour.
-                    blast = new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60);
+                    changeBlastColour();
                     particles.add(new Particles(playerX + playerWidth * 3 / 4, playerY + playerHeight / 2,
                             16, 8, 20, 1, blast, // Add shoot particles.
                             10, 6, 2, false, true));
                 } else {
                     colorMod = (int) (Math.random() * 40);
-                    blast = new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60);
+                    changeBlastColour();
                     particles.add(new Particles(playerX + playerWidth / 4, playerY + playerHeight / 2,
                             -16, 8, -20, 1, blast,
                             10, 6, 2, false, true));
@@ -1227,6 +1269,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
         if (!(shootCooldown < gameTime - shootCooldownTime) && !shootButtonPushed)
             reloadBarRed = true;
+    }
+
+    public void changeBlastColour() {
+        if (!partyMode)
+            blast = new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60);
+        else
+            blast = new Color(
+                    Color.getHSBColor((float) (Math.random() * 360), 0.7f, 0.8f).getRGB());
     }
 
     public void jump() { // Manages player jump.
@@ -1251,7 +1301,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         deathUIY = HEIGHT; // Resets deathUIY back to bottom of screen.
     }
 
-    public void scaleDifficulty() { // Manages variables related to game difficulty.
+    public void applySettings() { // Initiates settings.
+        scaleDifficulty();
+        scaleGameSpeed();
+        scaleEnemyCount();
+        toggleExtraBlood();
+        togglePartyMode();
+    }
+
+    public void scaleDifficulty() {
         switch (difficulty) {
             case 0: // Easy.
                 healthMax = 10;
@@ -1274,6 +1332,42 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 heartFullImg = new ImageIcon("heartFullHard.png").getImage();
                 break;
         }
+    }
+
+    public void scaleGameSpeed() {
+        if (gameSpeed == 0)
+            ticks = 40.0;
+        if (gameSpeed == 1)
+            ticks = 60.0;
+        if (gameSpeed == 2)
+            ticks = 80.0;
+        ns = 1000000000 / ticks;
+    }
+
+    public void scaleEnemyCount() {
+        if (enemyCount == 0) {
+            Room.enemyCountBase = 2;
+            Room.enemyCountMod = 2;
+        }
+        if (enemyCount == 1) {
+            Room.enemyCountBase = 4;
+            Room.enemyCountMod = 3;
+        }
+        if (enemyCount == 2) {
+            Room.enemyCountBase = 6;
+            Room.enemyCountMod = 6;
+        }
+    }
+
+    public void toggleExtraBlood() { // Manages extra blood option in settings.
+        if (extraBlood)
+            bloodDensity = 256;
+        else
+            bloodDensity = 1024;
+    }
+
+    public void togglePartyMode() {
+        partyModeActive = true; // Makes sure party mode only triggers once titleScreen has been disabled.
     }
 
     public void keyReleased(KeyEvent e) { // Detects when keys are released.

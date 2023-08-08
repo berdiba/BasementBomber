@@ -16,10 +16,12 @@ import java.util.ArrayList;
 public class Room {
     static int CHUNK = Panel.CHUNK;
 
-    static int x = CHUNK * 2;
     int y, level;
+    static int x = CHUNK * 2;
     static int width = CHUNK * 18, height = CHUNK * 3;
     static int outlineOffset = Panel.PIXEL * 8; // Offset of the roomOutline.
+
+    static int enemyCountBase = 4, enemyCountMod = 3;
 
     Image roomImg; // Images defined later on.
     Image roomOutlineImg;
@@ -42,8 +44,6 @@ public class Room {
 
         if (level == 0)
         top = new Rectangle(x, y - CHUNK * 4 / 3, width, CHUNK / 2);
-
-        populate();
     }
 
     public void paint(Graphics g) { // Will be called in Panel paint method.
@@ -72,7 +72,7 @@ public class Room {
     }
 
     public void populate() { // Adds enemies to the level.
-        for (int i = 0; i < Math.min(level, 3) + 4; i++) {
+        for (int i = 0; i < Math.min(level, enemyCountMod) + enemyCountBase; i++) {
             enemy.add(new Enemy(level, false, false));
         }
         if (level == 0)
