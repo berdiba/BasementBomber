@@ -55,6 +55,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Image titleBG1Img = new ImageIcon("titleBG1.png").getImage();
     static Image titleBG2Img = new ImageIcon("titleBG2.png").getImage();
 
+    static Image partyTextImg = new ImageIcon("partyText.png").getImage();
+    static Image selectionImg = new ImageIcon("selection.png").getImage();
+
     // Buttons Imgs set up later on.
     static Image buttonsImg, deathButtonsImg, winButtonsImg, winButtonsDarkImg, menuButtonsImg, settingsButtonsImg,
             settingsDifficultyImg, settingsGameSpeedImg, settingsEnemyCountImg, settingsExtraBloodImg,
@@ -64,6 +67,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int difficulty = 1; // Ranges between 0 and 2. 1 Default.
     static int gameSpeed = 1;
     static int enemyCount = 1;
+    static int selection = 0; // Controlls highlight on buttons.
 
     static int parallaxMax = HEIGHT * 2, parallax = parallaxMax;
     static int panYSpeed = 8;
@@ -358,9 +362,20 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     }
 
     public void paintPartyMode(Graphics g, Graphics2D g2D) {
-        rainbow = Color.getHSBColor((float) Math.abs(Math.sin((float) gameTime / 60)), 1.0f, 1.0f);
+        g2D.drawImage(partyTextImg, WIDTH - partyTextImg.getWidth(null),
+                (int) (Math.sin((float) gameTime / 15) * PIXEL * 4) - CHUNK / 4, null);
+        g2D.drawImage(partyTextImg, 0, (int) (Math.sin((float) gameTime / 15) * PIXEL * 4) - CHUNK / 4, null);
 
-        g.setColor(new Color(rainbow.getRed(), rainbow.getGreen(), rainbow.getBlue(), 20));
+        if (difficulty == 2 && gameSpeed == 2 && enemyCount == 2)
+            rainbow = new Color((float) Math.abs(Math.sin((float) gameTime / 10)), 0f, 0f);
+        else if (difficulty == 2) // Hard mode gives flashing red lights.
+            rainbow = new Color((float) Math.abs(Math.sin((float) gameTime / 30)),
+                    0f, (float) Math.abs(Math.cos((float) gameTime / 30)));
+        else
+            rainbow = Color.getHSBColor((float) Math.abs(Math.sin((float) gameTime / 60)), 1.0f, 1.0f);
+
+        g.setColor(new Color(rainbow.getRed(), rainbow.getGreen(), rainbow.getBlue(),
+                Math.max(1, difficulty * 2) * 10));
         g.fillRect(0, 0, WIDTH, HEIGHT);
     }
 
@@ -454,15 +469,19 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         if (titleScreen) {
             if (settings) { // Displaying all settings options.
+                if (selection != 0) // Display selection outlinearound button just pressed for settings.
+                    g2D.drawImage(selectionImg, CHUNK * 13 + PIXEL * 13 + 2,
+                            CHUNK + PIXEL * 13 + (selection - 1) * 54, null);
+
                 g2D.drawImage(settingsButtonsImg, WIDTH / 2 - settingsButtonsImg.getWidth(null) / 2,
                         HEIGHT / 2 - settingsButtonsImg.getHeight(null) / 2 - 1,
                         null);
+
                 g2D.drawImage(settingsDifficultyImg, CHUNK * 11 + PIXEL * 11, CHUNK + PIXEL * 13, null);
                 g2D.drawImage(settingsGameSpeedImg, CHUNK * 11 + PIXEL * 11, CHUNK * 2 + PIXEL * 10 + 2, null);
                 g2D.drawImage(settingsEnemyCountImg, CHUNK * 11 + PIXEL * 11, CHUNK * 3 + PIXEL * 8, null);
                 g2D.drawImage(settingsExtraBloodImg, CHUNK * 11 + PIXEL * 11, CHUNK * 4 + PIXEL * 5 + 2, null);
                 g2D.drawImage(settingsPartyModeImg, CHUNK * 11 + PIXEL * 11, CHUNK * 5 + PIXEL * 3, null);
-
             } else {
                 g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
                         HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
@@ -1222,24 +1241,29 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                             difficulty++;
                         else
                             difficulty = 0;
+                        selection = 1;
                         break;
                     case 50:
                         if (gameSpeed < 2)
                             gameSpeed++;
                         else
                             gameSpeed = 0;
+                        selection = 2;
                         break;
                     case 51:
                         if (enemyCount < 2)
                             enemyCount++;
                         else
                             enemyCount = 0;
+                        selection = 3;
                         break;
                     case 52:
                         extraBlood = !extraBlood;
+                        selection = 4;
                         break;
                     case 53:
                         partyMode = !partyMode;
+                        selection = 5;
                         break;
                 }
         }
@@ -1400,6 +1424,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             case 16:
                 dashBarRed = false;
                 dashButtonPushed = false;
+                break;
+            case 49, 50, 51, 52, 53:
+                selection = 0;
                 break;
         }
     }
