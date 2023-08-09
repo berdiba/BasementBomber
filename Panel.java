@@ -30,6 +30,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     // Images.
     static Image backgroundImg = new ImageIcon("background.png").getImage();
     static Image groundImg = new ImageIcon("ground.png").getImage();
+    static Image foregroundDecorImg = new ImageIcon("foregroundDecor.png").getImage();
     static Image fogImg = new ImageIcon("fog.png").getImage();
 
     static Image playerImg = new ImageIcon("player.png").getImage();
@@ -191,11 +192,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintParticles(g, g2D);
             paintProjectiles(g, g2D);
             paintPlayer(g, g2D);
-            paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         }
         // paintCol(g, g2D);
         if (partyMode && partyModeActive) // PartyModeActive only triggers when titleScreen is false.
             paintPartyMode(g, g2D);
+        if (!gameOver && !titleScreen)
+            paintUI(g, g2D); // Do this last, as UI renders ontop of everything else.
         paintDeathUI(g, g2D);
         paintMenuUI(g, g2D);
     }
@@ -230,6 +232,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         g.setColor(new Color(39, 46, 69)); // Set colour to ground colour.
         g2D.fillRect(groundCol.x + damageWobbleX, groundCol.y + damageWobbleY, groundCol.width, HEIGHT * 16);
         g2D.drawImage(groundImg, groundCol.x + damageWobbleX + CHUNK, groundCol.y + damageWobbleY, null);
+
+        g2D.drawImage(foregroundDecorImg, damageWobbleX,
+                groundCol.y + damageWobbleY - foregroundDecorImg.getHeight(null), null);
 
         if (partyMode && partyModeActive)
             paintPartyMode(g, g2D); // Trigger in foreground as well to have bolder strobe effect in background.
