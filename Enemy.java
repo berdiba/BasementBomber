@@ -211,7 +211,7 @@ public class Enemy {
 
         if (isBoss || level == 3) // Boss and mummies has double view distance.
             viewCol = new Rectangle(col.x - viewDistance * 2, col.y, col.width + viewDistance * 4, col.height);
-        else if (level == 4) // Level 4 enemies sans boss have small view distance.
+        else if (level == 4 || level == 2) // Level 4 enemies sans boss have small view distance.
             viewCol = new Rectangle(col.x - viewDistance / 2, col.y, col.width + viewDistance, col.height);
         else // Other enemies have normal view distance.
             viewCol = new Rectangle(col.x - viewDistance, col.y, col.width + viewDistance * 2, col.height);

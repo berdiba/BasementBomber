@@ -61,12 +61,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     // Buttons Imgs set up later on.
     static Image buttonsImg, deathButtonsImg, winButtonsImg, winButtonsDarkImg, menuButtonsImg, settingsButtonsImg,
-            settingsDifficultyImg, settingsGameSpeedImg, settingsEnemyCountImg, settingsExtraBloodImg,
+            settingsDifficultyImg, settingsGameSpeedImg, settingsDashPowerImg, settingsEnemyCountImg,
+            settingsExtraBloodImg,
             settingsPartyModeImg;
 
     // Integers.
     static int difficulty = 1; // Ranges between 0 and 2. 1 Default.
     static int gameSpeed = 1;
+    static int dashPower = 1;
     static int enemyCount = 1;
     static int selection = 0; // Controlls highlight on buttons.
 
@@ -371,7 +373,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 (int) (Math.sin((float) gameTime / 15) * PIXEL * 4) - CHUNK / 4, null);
         g2D.drawImage(partyTextImg, 0, (int) (Math.sin((float) gameTime / 15) * PIXEL * 4) - CHUNK / 4, null);
 
-        if (difficulty == 2 && gameSpeed == 2 && enemyCount == 2)
+        if (difficulty == 2 && gameSpeed == 2 && dashPower == 0 && enemyCount == 2)
             rainbow = new Color((float) Math.abs(Math.sin((float) gameTime / 10)), 0f, 0f);
         else if (difficulty == 2) // Hard mode gives flashing red lights.
             rainbow = new Color((float) Math.abs(Math.sin((float) gameTime / 30)),
@@ -476,17 +478,18 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             if (settings) { // Displaying all settings options.
                 if (selection != 0) // Display selection outlinearound button just pressed for settings.
                     g2D.drawImage(selectionImg, CHUNK * 13 + PIXEL * 13 + 2,
-                            CHUNK + PIXEL * 13 + (selection - 1) * 54, null);
+                            CHUNK + PIXEL * 5 + (selection - 1) * 54, null);
 
                 g2D.drawImage(settingsButtonsImg, WIDTH / 2 - settingsButtonsImg.getWidth(null) / 2,
-                        HEIGHT / 2 - settingsButtonsImg.getHeight(null) / 2 - 1,
+                        HEIGHT / 2 - settingsButtonsImg.getHeight(null) / 2,
                         null);
 
-                g2D.drawImage(settingsDifficultyImg, CHUNK * 11 + PIXEL * 11, CHUNK + PIXEL * 13, null);
-                g2D.drawImage(settingsGameSpeedImg, CHUNK * 11 + PIXEL * 11, CHUNK * 2 + PIXEL * 10 + 2, null);
-                g2D.drawImage(settingsEnemyCountImg, CHUNK * 11 + PIXEL * 11, CHUNK * 3 + PIXEL * 8, null);
-                g2D.drawImage(settingsExtraBloodImg, CHUNK * 11 + PIXEL * 11, CHUNK * 4 + PIXEL * 5 + 2, null);
-                g2D.drawImage(settingsPartyModeImg, CHUNK * 11 + PIXEL * 11, CHUNK * 5 + PIXEL * 3, null);
+                g2D.drawImage(settingsDifficultyImg, CHUNK * 11 + PIXEL * 11, CHUNK + PIXEL * 5, null);
+                g2D.drawImage(settingsGameSpeedImg, CHUNK * 11 + PIXEL * 11, CHUNK * 2 + PIXEL * 2 + 2, null);
+                g2D.drawImage(settingsDashPowerImg, CHUNK * 11 + PIXEL * 11, CHUNK * 3, null);
+                g2D.drawImage(settingsEnemyCountImg, CHUNK * 11 + PIXEL * 11, CHUNK * 3 + PIXEL * 13 + 2, null);
+                g2D.drawImage(settingsExtraBloodImg, CHUNK * 11 + PIXEL * 11, CHUNK * 4 + PIXEL * 11, null);
+                g2D.drawImage(settingsPartyModeImg, CHUNK * 11 + PIXEL * 11, CHUNK * 5 + PIXEL * 8 + 2, null);
             } else {
                 g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
                         HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
@@ -542,6 +545,18 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 break;
             case 2:
                 settingsGameSpeedImg = new ImageIcon("fastButton.png").getImage();
+                break;
+        }
+
+        switch (dashPower) {
+            case 0:
+                settingsDashPowerImg = new ImageIcon("lowButton.png").getImage();
+                break;
+            case 1:
+                settingsDashPowerImg = new ImageIcon("normButton.png").getImage();
+                break;
+            case 2:
+                settingsDashPowerImg = new ImageIcon("highButton.png").getImage();
                 break;
         }
 
@@ -1256,19 +1271,26 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         selection = 2;
                         break;
                     case 51:
+                        if (dashPower < 2)
+                            dashPower++;
+                        else
+                            dashPower = 0;
+                        selection = 3;
+                        break;
+                    case 52:
                         if (enemyCount < 2)
                             enemyCount++;
                         else
                             enemyCount = 0;
-                        selection = 3;
-                        break;
-                    case 52:
-                        extraBlood = !extraBlood;
                         selection = 4;
                         break;
                     case 53:
-                        partyMode = !partyMode;
+                        extraBlood = !extraBlood;
                         selection = 5;
+                        break;
+                    case 54:
+                        partyMode = !partyMode;
+                        selection = 6;
                         break;
                 }
         }
@@ -1335,6 +1357,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void applySettings() { // Initiates settings.
         scaleDifficulty();
         scaleGameSpeed();
+        scaleDashPower();
         scaleEnemyCount();
         toggleExtraBlood();
         togglePartyMode();
@@ -1373,6 +1396,15 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         if (gameSpeed == 2)
             ticks = 80.0;
         ns = 1000000000 / ticks;
+    }
+
+    public void scaleDashPower() {
+        if (dashPower == 0)
+            dashSpeedMax = playerSpeed * 3 / 2;
+        if (dashPower == 1)
+            dashSpeedMax = playerSpeed * 5 / 2;
+        if (dashPower == 2)
+            dashSpeedMax = playerSpeed * 4;
     }
 
     public void scaleEnemyCount() {
@@ -1430,7 +1462,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 dashBarRed = false;
                 dashButtonPushed = false;
                 break;
-            case 49, 50, 51, 52, 53:
+            case 49, 50, 51, 52, 53, 54:
                 selection = 0;
                 break;
         }
