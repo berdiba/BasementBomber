@@ -138,6 +138,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static ArrayList<Room> room = new ArrayList<Room>();
     static ArrayList<Ladder> ladder = new ArrayList<Ladder>();
     static ArrayList<Particles> particles = new ArrayList<Particles>();
+    static ArrayList<Explosion> explosion = new ArrayList<Explosion>();
 
     public Panel() { // Sets up some properties.
         this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -192,6 +193,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         paintForeground(g, g2D);
         if (!gameOver && !titleScreen) { // Player not drawn when game over.
             paintParticles(g, g2D);
+            paintExplosions(g, g2D);
             paintProjectiles(g, g2D);
             paintPlayer(g, g2D);
         }
@@ -284,6 +286,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             else
                 g2D.drawImage(playerOnLadderImg, playerX, playerY + parallax, playerWidth, playerHeight, null);
         }
+    }
+
+    public void paintExplosions(Graphics g, Graphics2D g2D) { // Paints explosions.
+        for (int i = 0; i < explosion.size(); i++)
+            explosion.get(i).paint(g2D);
     }
 
     public void paintParticles(Graphics g, Graphics2D g2D) { // Paints particles.
@@ -655,6 +662,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         moveCol();
         accelarate();
         dash();
+        updateExplosions();
     }
 
     public void moveCol() { // Adds parallax effect to colliders.
@@ -719,6 +727,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             dashSpeed = dashSpeed * 3 / 4;
             dashing = false;
         }
+    }
+
+    public void updateExplosions() {
+        for (int i = 0; i < explosion.size(); i++)
+            explosion.get(i).update();
     }
 
     public void checkCollisions() { // Detection of collisions between everything.
@@ -1111,8 +1124,20 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                                 room.get(j).enemy.get(k).launch(false);
 
                             }
+
+                        if (room.get(j).enemy.get(k).isBoss)
+                            explosion.add(new Explosion(room.get(j).enemy.get(k).x - PIXEL * 4,
+                                    room.get(j).enemy.get(k).y, gameTime));
+                        else if (room.get(j).enemy.get(k).level == 4)
+                            explosion.add(new Explosion(room.get(j).enemy.get(k).x - PIXEL * 4,
+                                    room.get(j).enemy.get(k).y - PIXEL * 12, gameTime));
+                        else
+                            explosion.add(new Explosion(room.get(j).enemy.get(k).x - PIXEL * 4,
+                                    room.get(j).enemy.get(k).y - PIXEL * 8, gameTime));
+
                         if (room.get(j).enemy.get(k).health > 1) {
                             // If enemy has over 1 health, subtract 1 instead of killing them.
+
                             room.get(j).enemy.get(k).health--;
                         } else
                             room.get(j).enemy.remove(k); // Remove enemy.
