@@ -7,10 +7,8 @@
  */
 
 import java.awt.*;
-import java.awt.event.*;
 import javax.swing.*;
 import java.lang.Math;
-import java.awt.geom.*;
 
 public class Enemy {
     static int CHUNK = Panel.CHUNK;
