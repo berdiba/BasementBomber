@@ -7,10 +7,8 @@
  */
 
 import java.awt.*;
-import java.awt.event.*;
 import javax.swing.*;
 import java.lang.Math;
-import java.awt.geom.*;
 import java.util.ArrayList;
 
 public class Room {
@@ -29,7 +27,7 @@ public class Room {
     Rectangle col;
     Rectangle ceiling, floor, top; // Top used for particle collisions from dummy.
 
-    ArrayList<Enemy> enemy = new ArrayList<Enemy>();
+    ArrayList<Enemy> enemy = new ArrayList<Enemy>(); // Arraylist which holds all enemy classes.
 
     public Room(int y, int level) {
         this.y = y; // Setting x, y, level to be ints passed from Panel.
@@ -42,8 +40,8 @@ public class Room {
         floor = new Rectangle(x, y + height, width, CHUNK / 2);
         // Creates rectangle 1 chunk tall at the bottom of a room.
 
-        if (level == 0)
-        top = new Rectangle(x, y - CHUNK * 4 / 3, width, CHUNK / 2);
+        if (level == 0) // Creates extra collision box on level 0 for particle collisions on surface.
+            top = new Rectangle(x, y - CHUNK * 4 / 3, width, CHUNK / 2);
     }
 
     public void paint(Graphics g) { // Will be called in Panel paint method.
