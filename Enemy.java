@@ -34,9 +34,10 @@ public class Enemy {
 
     int launchSpeed, launchSpeedMax;
 
-    Boolean takingAction = false, facingLeft = false, isBoss, isDummy;
+    Boolean takingAction = false, facingLeft = false, isBoss, isDummy, chasing = false;
 
     Image enemyImg;
+    Image alertImg;
 
     Rectangle col = new Rectangle(0, 0, 1, 1);
     Rectangle viewCol = new Rectangle(0, 0, 1, 1);
@@ -49,6 +50,7 @@ public class Enemy {
 
         if (!isBoss && !isDummy) {
             enemyImg = new ImageIcon("enemy" + level + ".png").getImage();
+            alertImg = new ImageIcon("alert.png").getImage();
 
             width = enemyImg.getWidth(null);
             height = enemyImg.getHeight(null);
@@ -197,6 +199,9 @@ public class Enemy {
                         y + Panel.parallax - growHeight + height + wobble + Panel.damageWobbleY,
                         width, growHeight, null);
         }
+
+        if (chasing)
+        g2D.drawImage(alertImg, x + Panel.damageWobbleX + width / 2 - PIXEL, y + Panel.parallax + wobble + Panel.damageWobbleY - height, null);
     }
 
     public void move() {
@@ -283,6 +288,7 @@ public class Enemy {
 
     public void checkCollisions() {
         if (viewCol.intersects(Panel.playerCol)) { // Trigger when player is within enemies line of sight.
+            chasing = true;
             decisionTime = decisionMax; // Reset decision.
             speed = speedMax + chaseSpeed; // Increase speed.
             if (viewCol.x + viewCol.width / 2 > Panel.playerCol.x + Panel.playerCol.width / 2) {
@@ -290,8 +296,10 @@ public class Enemy {
             } else {
                 decision = 2;
             }
-        } else
+        } else {
+            chasing = false;
             speed = speedMax; // Set speed back to normal.
+        }
 
         if (x < Room.x - PIXEL)
             launch(true);
