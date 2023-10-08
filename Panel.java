@@ -475,22 +475,27 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public void paintEnemyHealthBar(Graphics g, Graphics2D g2D) {
+    public void paintEnemyHealthBar(Graphics g, Graphics2D g2D) { // Paints health bar at bottom of screen.
+        // EnemyHealthBar represents total enemy health in the room that player is in.
 
-        if (!enemyHealthMaxCalculated) {
+        if (!enemyHealthMaxCalculated) { // Run only once at the start of the game.
             for (int i = 0; i < room.size(); i++) {
-                enemyHealthMaxTemp = 0;
+                enemyHealthMaxTemp = 0; // Reset enemyHealthMaxTemp.
                 for (int j = 0; j < room.get(i).enemy.size(); j++)
-                    enemyHealthMaxTemp += room.get(i).enemy.get(j).health;
+                    if (!room.get(i).enemy.get(j).isDummy) // ignore dummy.
+                        enemyHealthMaxTemp += room.get(i).enemy.get(j).health;
+                // Add total enemy health in specified room to HealthMaxTemp, then add
+                // HealthMaxTemp to HealthMax arrayList.
                 enemyHealthMax.add(enemyHealthMaxTemp);
             }
-            enemyHealthMaxCalculated = true;
+            enemyHealthMaxCalculated = true; // Make sure enemy health doesent calculate again.
         }
 
-        enemyHealthCurrent = 0; // Each time paintEnemyHealthBar runs recalculate current enemyHealthCurrent.
+        enemyHealthCurrent = 0; // Each time paintEnemyHealthBar runs recalculate enemyHealthCurrent.
         for (int i = 0; i < room.get(Math.max(0, lastInRoom)).enemy.size(); i++)
-            if (!room.get(Math.max(0, lastInRoom)).enemy.get(i).isDummy)
-                enemyHealthCurrent += room.get(Math.max(0, lastInRoom)).enemy.get(i).health;
+            if (!room.get(Math.max(0, lastInRoom)).enemy.get(i).isDummy) // ignore dummy.
+                enemyHealthCurrent += room.get(Math.max(0, lastInRoom)).enemy.get(i).health; // Add current enemy
+                                                                                             // health.
 
         if (enemyHealthMax.get(Math.max(0, lastInRoom)) > 0)
             if (enemyHealthCurrent == enemyHealthMax.get(Math.max(0, lastInRoom)))
@@ -502,10 +507,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 g.setColor(new Color(148, 90, 80));
                 g2D.fillRect(WIDTH / 2 - enemyHealthBarFullImg.getWidth(null) / 2 + PIXEL * 2,
                         HEIGHT - CHUNK * 3 / 2 + PIXEL * 2,
-                        ((enemyHealthCurrent * enemyHealthBarFullImg.getWidth(null)) / enemyHealthMax.get(Math.max(0, lastInRoom))) - PIXEL * 4,
+                        ((enemyHealthCurrent * enemyHealthBarFullImg.getWidth(null))
+                                / enemyHealthMax.get(Math.max(0, lastInRoom))) - PIXEL * 4,
                         enemyHealthBarFullImg.getHeight(null) - PIXEL * 4 + 1);
 
-                        System.out.println(HEIGHT - CHUNK * 3 / 2 + PIXEL * 2);
+                System.out.println(enemyHealthMax.get(0));
             }
     }
 
