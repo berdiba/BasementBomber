@@ -201,7 +201,8 @@ public class Enemy {
         }
 
         if (chasing)
-        g2D.drawImage(alertImg, x + Panel.damageWobbleX + width / 2 - PIXEL, y + Panel.parallax + wobble + Panel.damageWobbleY - height, null);
+            g2D.drawImage(alertImg, x + Panel.damageWobbleX + width / 2 - PIXEL,
+                    y + Panel.parallax + wobble + Panel.damageWobbleY - height, null);
     }
 
     public void move() {
@@ -287,7 +288,9 @@ public class Enemy {
     }
 
     public void checkCollisions() {
-        if (viewCol.intersects(Panel.playerCol)) { // Trigger when player is within enemies line of sight.
+        if (viewCol.intersects(Panel.playerCol) || health < healthMax && level == Panel.inRoom) {
+            // Trigger when player is within enemies line of sight,
+            // or when player is in same room as enemy and enemy has taken damage.
             chasing = true;
             decisionTime = decisionMax; // Reset decision.
             speed = speedMax + chaseSpeed; // Increase speed.

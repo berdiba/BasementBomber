@@ -51,6 +51,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Image dashBarFullImg = new ImageIcon("dashBarFull.png").getImage();
     static Image dashBarRedImg = new ImageIcon("dashBarRed.png").getImage();
 
+    static Image enemyHealthBarEmptyImg = new ImageIcon("enemyHealthBarEmpty.png").getImage();
+    static Image enemyHealthBarFullImg = new ImageIcon("enemyHealthBarFull.png").getImage();
+
     static Image missionFailedImg = new ImageIcon("missionFailed.png").getImage();
     static Image titleImg = new ImageIcon("title.png").getImage();
     static Image titleBG1Img = new ImageIcon("titleBG1.png").getImage();
@@ -74,7 +77,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     static int parallaxMax = HEIGHT * 2, parallax = parallaxMax;
     static int panYSpeed = 8;
-    static int inRoom = -1, lastInRoom = inRoom, lastRoom = -1;
+    static int inRoom = -1, lastInRoom = -1, lastRoom = -1;
     static int roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4;
 
     static int playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
@@ -100,6 +103,10 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static int deathCooldown = gameTime, deathCooldownTime = 60, deathUIY = HEIGHT;
     // deathCoolDown used for wait time after death before player can press buttons.
 
+    static int enemyHealthCurrent;
+    static int enemyHealthMaxTemp; // Used to count up total enemy health on specific level.
+    ArrayList<Integer> enemyHealthMax = new ArrayList<Integer>();
+
     static int healthMax = 8, health = healthMax, healthCooldown = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
     static int damageWobbleX, damageWobbleY;
@@ -124,6 +131,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
     static boolean titleScreen = true, gameOver = false, win = false;
     static boolean settings = false, extraBlood = false, partyMode = false, partyModeActive = false;
+    static boolean enemyHealthMaxCalculated = false;
 
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
             playerHeight - playerColYOffset * 2);; // Collision box for player.
@@ -402,6 +410,13 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             // When parallax increases, buttons are moved off screen.
         }
 
+        paintPlayerHearts(g, g2D);
+        paintReloadBar(g, g2D);
+        paintDashBar(g, g2D);
+        paintEnemyHealthBar(g, g2D);
+    }
+
+    public void paintPlayerHearts(Graphics g, Graphics2D g2D) {
         if (damageFlash > 0) { // Paint red hearts if player is damaged.
             for (int i = 0; i < healthMax; i++) // Paint empty red hearts equal to healthMax.
                 g2D.drawImage(heartEmptyRedImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4 + damageWobbleX,
@@ -415,7 +430,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             for (int i = 0; i < health; i++) // Paint full hearts ontop of empty hearts equal to current health.
                 g2D.drawImage(heartFullImg, (CHUNK + CHUNK / 8) * i + CHUNK / 4, CHUNK / 4 + UIOffset, null);
         }
+    }
 
+    public void paintReloadBar(Graphics g, Graphics2D g2D) {
         if (shootCooldown < gameTime - shootCooldownTime) { // Paint full reloadBar if player can shoot.
             g2D.drawImage(reloadBarFullImg, WIDTH - reloadBarWidth - CHUNK / 4, CHUNK / 4 + UIOffset, null);
         } else {
@@ -433,7 +450,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         reloadBarHeight - PIXEL * 3);
             }
         }
+    }
 
+    public void paintDashBar(Graphics g, Graphics2D g2D) {
         if (dashCooldown < gameTime - dashResetCooldownTime) { // Paint dashBarFull.
             g2D.drawImage(dashBarFullImg, WIDTH - dashBarWidth - CHUNK / 4, reloadBarHeight + CHUNK / 2 + UIOffset,
                     null);
@@ -454,6 +473,40 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         dashBarHeight - PIXEL * 3);
             }
         }
+    }
+
+    public void paintEnemyHealthBar(Graphics g, Graphics2D g2D) {
+
+        if (!enemyHealthMaxCalculated) {
+            for (int i = 0; i < room.size(); i++) {
+                enemyHealthMaxTemp = 0;
+                for (int j = 0; j < room.get(i).enemy.size(); j++)
+                    enemyHealthMaxTemp += room.get(i).enemy.get(j).health;
+                enemyHealthMax.add(enemyHealthMaxTemp);
+            }
+            enemyHealthMaxCalculated = true;
+        }
+
+        enemyHealthCurrent = 0; // Each time paintEnemyHealthBar runs recalculate current enemyHealthCurrent.
+        for (int i = 0; i < room.get(Math.max(0, lastInRoom)).enemy.size(); i++)
+            if (!room.get(Math.max(0, lastInRoom)).enemy.get(i).isDummy)
+                enemyHealthCurrent += room.get(Math.max(0, lastInRoom)).enemy.get(i).health;
+
+        if (enemyHealthMax.get(Math.max(0, lastInRoom)) > 0)
+            if (enemyHealthCurrent == enemyHealthMax.get(Math.max(0, lastInRoom)))
+                g2D.drawImage(enemyHealthBarFullImg, WIDTH / 2 - enemyHealthBarFullImg.getWidth(null) / 2,
+                        HEIGHT - CHUNK * 3 / 2, null);
+            else {
+                g2D.drawImage(enemyHealthBarEmptyImg, WIDTH / 2 - enemyHealthBarFullImg.getWidth(null) / 2,
+                        HEIGHT - CHUNK * 3 / 2, null);
+                g.setColor(new Color(148, 90, 80));
+                g2D.fillRect(WIDTH / 2 - enemyHealthBarFullImg.getWidth(null) / 2 + PIXEL * 2,
+                        HEIGHT - CHUNK * 3 / 2 + PIXEL * 2,
+                        ((enemyHealthCurrent * enemyHealthBarFullImg.getWidth(null)) / enemyHealthMax.get(Math.max(0, lastInRoom))) - PIXEL * 4,
+                        enemyHealthBarFullImg.getHeight(null) - PIXEL * 4 + 1);
+
+                        System.out.println(HEIGHT - CHUNK * 3 / 2 + PIXEL * 2);
+            }
     }
 
     public void paintDeathUI(Graphics g, Graphics2D g2D) { // Paints death screen interface.
