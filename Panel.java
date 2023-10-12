@@ -61,6 +61,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     static Image partyTextImg = new ImageIcon("partyText.png").getImage();
     static Image selectionImg = new ImageIcon("selection.png").getImage();
+    static Image PGImg = new ImageIcon("PG.png").getImage();
 
     // Buttons Imgs set up later on.
     static Image buttonsImg, deathButtonsImg, winButtonsImg, winButtonsDarkImg, menuButtonsImg, settingsButtonsImg,
@@ -375,9 +376,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             }
 
         g.setColor(Color.pink);
-        for (int i = 0; i < particles.size(); i++)
+        for (int i = 0; i < particles.size(); i++) // Run thru all particles.
             g.drawRect(particles.get(i).col.x, particles.get(i).col.y, particles.get(i).col.width,
-                    particles.get(i).col.height);
+                    particles.get(i).col.height); // Paint particles
         for (int i = 0; i < projectile.size(); i++)
             g.drawRect(projectile.get(i).col.x, projectile.get(i).col.y, projectile.get(i).col.width,
                     projectile.get(i).col.height);
@@ -387,6 +388,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         g2D.drawImage(partyTextImg, WIDTH - partyTextImg.getWidth(null),
                 (int) (Math.sin((float) gameTime / 15) * PIXEL * 4) - CHUNK / 4, null);
         g2D.drawImage(partyTextImg, 0, (int) (Math.sin((float) gameTime / 15) * PIXEL * 4) - CHUNK / 4, null);
+        // Paints the image partyTextImg on left and right side of screen, which bobs up
+        // and down.
 
         if (difficulty == 2 && gameSpeed == 2 && dashPower == 0 && enemyCount == 2)
             rainbow = new Color((float) Math.abs(Math.sin((float) gameTime / 10)), 0f, 0f);
@@ -395,6 +398,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     0f, (float) Math.abs(Math.cos((float) gameTime / 30)));
         else
             rainbow = Color.getHSBColor((float) Math.abs(Math.sin((float) gameTime / 60)), 1.0f, 1.0f);
+        // Rainbow overlay to be painted ontop of screen.
 
         g.setColor(new Color(rainbow.getRed(), rainbow.getGreen(), rainbow.getBlue(),
                 Math.max(1, difficulty * 2) * 10));
@@ -510,8 +514,6 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         ((enemyHealthCurrent * enemyHealthBarFullImg.getWidth(null))
                                 / enemyHealthMax.get(Math.max(0, lastInRoom))) - PIXEL * 4,
                         enemyHealthBarFullImg.getHeight(null) - PIXEL * 4 + 1);
-
-                System.out.println(enemyHealthMax.get(0));
             }
     }
 
@@ -541,14 +543,14 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         checkSettingsButtons();
 
         if (titleScreen) {
-            if (settings) { // Displaying all settings options.
+            g2D.drawImage(PGImg, PIXEL * 2, PIXEL * 2, null);
+            if (settings) { // Displaying all settings options. sweeney
                 if (selection != 0) // Display selection outlinearound button just pressed for settings.
                     g2D.drawImage(selectionImg, CHUNK * 13 + PIXEL * 13 + 2,
                             CHUNK + PIXEL * 5 + (selection - 1) * 54, null);
 
                 g2D.drawImage(settingsButtonsImg, WIDTH / 2 - settingsButtonsImg.getWidth(null) / 2,
-                        HEIGHT / 2 - settingsButtonsImg.getHeight(null) / 2,
-                        null);
+                        HEIGHT / 2 - settingsButtonsImg.getHeight(null) / 2, null);
 
                 g2D.drawImage(settingsDifficultyImg, CHUNK * 11 + PIXEL * 11, CHUNK + PIXEL * 5, null);
                 g2D.drawImage(settingsGameSpeedImg, CHUNK * 11 + PIXEL * 11, CHUNK * 2 + PIXEL * 2 + 2, null);
@@ -556,6 +558,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 g2D.drawImage(settingsEnemyCountImg, CHUNK * 11 + PIXEL * 11, CHUNK * 3 + PIXEL * 13 + 2, null);
                 g2D.drawImage(settingsExtraBloodImg, CHUNK * 11 + PIXEL * 11, CHUNK * 4 + PIXEL * 11, null);
                 g2D.drawImage(settingsPartyModeImg, CHUNK * 11 + PIXEL * 11, CHUNK * 5 + PIXEL * 8 + 2, null);
+                // Paint all settings button images.
             } else {
                 g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
                         HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
@@ -661,7 +664,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             playerWobble = (int) (Math.sin(gameTime) * 2);
         } // Alternates between 1 and -1 to create a bobbing up and down motion.
 
-        if (damageFlash > 0) {
+        if (damageFlash > 0) { // Triggers when player takes damage, and lasts for 8 frames.
             damageWobbleX = (int) (Math.sin(gameTime) * 3); // Similar to playerWobble, alternating between +/- 1.
             damageWobbleY = (int) (Math.sin(gameTime + 1) * 3);
         } else if (gameOver || partyMode) {
@@ -1083,7 +1086,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                     damage(true);
                 }
             }
-        if (damageFlash > 0)
+
+        if (damageFlash > 0) // damageFlash controlls the hearts going red on screen and screen wobble.
             damageFlash--; // Decrease damageFlash to 0.
     }
 
@@ -1546,10 +1550,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 dashBarRed = false;
                 dashButtonPushed = false;
                 break;
-            case 49, 50, 51, 52, 53, 54:
-                selection = 0;
-                break;
         }
+        if (e.getKeyCode() >= 49 && e.getKeyCode() <= 54)
+            selection = 0;
     }
 
     public boolean isFocusTraversable() { // Lets JPanel accept users input.
