@@ -15,17 +15,19 @@ import java.util.ArrayList;
 
 public class Panel extends JPanel implements Runnable, KeyListener {
     // World variables.
-    Thread gameThread;
+    Thread gameThread; // The thread that runs the game.
 
-    double ticks = 60.0;
+    double ticks = 60.0; // Used for the game's clock.
     double ns = 1000000000 / ticks;
 
     final static int WIDTH = 1400, HEIGHT = 600, PIXEL = 4, CHUNK = PIXEL * 16;
+    // Defines screen dimensions and base units of measurement used to place game
+    // components such as UI, background, enemies.
 
-    static int gravityMax = 10, gravity = gravityMax;
+    static int gravityMax = 10, gravity = gravityMax; // Gravity for player.
     static int gameTime = 0;
 
-    static char key; // Used for player movement left / right.
+    static char key; // Used to store key pressed for player movement left / right.
 
     // Images.
     static Image backgroundImg = new ImageIcon("background.png").getImage();
@@ -66,25 +68,28 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     // Buttons Imgs set up later on.
     static Image buttonsImg, deathButtonsImg, winButtonsImg, winButtonsDarkImg, menuButtonsImg, settingsButtonsImg,
             settingsDifficultyImg, settingsGameSpeedImg, settingsDashPowerImg, settingsEnemyCountImg,
-            settingsExtraBloodImg,
-            settingsPartyModeImg;
+            settingsExtraBloodImg, settingsPartyModeImg;
 
     // Integers.
-    static int difficulty = 1; // Ranges between 0 and 2. 1 Default.
-    static int gameSpeed = 1;
-    static int dashPower = 1;
-    static int enemyCount = 1;
-    static int selection = 0; // Controlls highlight on buttons.
+    static int difficulty = 1; // All theese range between 0 and 2... 1 Default.
+    static int gameSpeed = 1; // Increases / reduces framerate slightly.
+    static int dashPower = 1; // Makes dash shorter / longer.
+    static int enemyCount = 1; // Reduces / increases enemies that appear.
+    static int selection = 0; // Controlls green highlight position on buttons.
 
-    static int parallaxMax = HEIGHT * 2, parallax = parallaxMax;
-    static int panYSpeed = 8;
-    static int inRoom = -1, lastInRoom = -1, lastRoom = -1;
-    static int roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4;
+    static int parallaxMax = HEIGHT * 2, parallax = parallaxMax; // Parallax moves all objects up and down screen.
+    static int panYSpeed = 8; // Used for panning down from room to room.
+    // Used for room detection. inRoom is the current room the player is in including outside (-1). 
+    // lastInRoom does not count the outside world as a room. lastRoom detects previous room.
+    // Used for lighting of rooms and ladders, enemy visibility, respawning, vertical panning...
+    static int inRoom = -1, lastInRoom = -1, lastRoom = -1; 
+    static int roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4; // Used for positioning rooms on screen.
 
     static int playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
-    static int playerHeight = playerImg.getHeight(null);
+    static int playerHeight = playerImg.getHeight(null); // Controll height and width of player.
 
-    static int playerXStart = WIDTH / 2 - playerWidth / 2, playerYStart = HEIGHT / 2 - playerHeight;
+    // Player starting positions. 
+    static int playerXStart = WIDTH / 2 - playerWidth / 2, playerYStart = HEIGHT / 2 - playerHeight; 
     static int playerX = playerXStart, playerY = playerYStart;
     static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 

@@ -10,10 +10,6 @@ import java.awt.*;
 import javax.swing.*;
 
 public class Frame extends JFrame {
-    JMenuBar menuBar;
-    JMenu menu;
-    JMenuItem menuItem;
-
     Panel panel;
 
     static Image iconImg = new ImageIcon("icon.png").getImage();
