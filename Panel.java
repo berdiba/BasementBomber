@@ -64,6 +64,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Image partyTextImg = new ImageIcon("partyText.png").getImage();
     static Image selectionImg = new ImageIcon("selection.png").getImage();
     static Image PGImg = new ImageIcon("PG.png").getImage();
+    static Image VersionImg = new ImageIcon("Version.png").getImage();
 
     // Buttons Imgs set up later on.
     static Image buttonsImg, deathButtonsImg, winButtonsImg, winButtonsDarkImg, menuButtonsImg, settingsButtonsImg,
@@ -79,65 +80,72 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     static int parallaxMax = HEIGHT * 2, parallax = parallaxMax; // Parallax moves all objects up and down screen.
     static int panYSpeed = 8; // Used for panning down from room to room.
-    // Used for room detection. inRoom is the current room the player is in including outside (-1). 
-    // lastInRoom does not count the outside world as a room. lastRoom detects previous room.
-    // Used for lighting of rooms and ladders, enemy visibility, respawning, vertical panning...
-    static int inRoom = -1, lastInRoom = -1, lastRoom = -1; 
+    // Used for room detection. inRoom is the current room the player is in
+    // including outside (-1).
+    // lastInRoom does not count the outside world as a room. lastRoom detects
+    // previous room.
+    // Used for lighting of rooms and ladders, enemy visibility, respawning,
+    // vertical panning...
+    static int inRoom = -1, lastInRoom = -1, lastRoom = -1;
     static int roomYBase = CHUNK * 6, roomYLevel = CHUNK * 4; // Used for positioning rooms on screen.
 
     static int playerWidth = playerImg.getWidth(null); // Null because theres no specified image observer.
     static int playerHeight = playerImg.getHeight(null); // Controll height and width of player.
 
-    // Player starting positions. 
-    static int playerXStart = WIDTH / 2 - playerWidth / 2, playerYStart = HEIGHT / 2 - playerHeight; 
+    // Player starting positions.
+    static int playerXStart = WIDTH / 2 - playerWidth / 2, playerYStart = HEIGHT / 2 - playerHeight;
     static int playerX = playerXStart, playerY = playerYStart;
     static int playerColXOffset = 8, playerColYOffset = 2; // x and y offsets of player collider.
 
-    static int playerSpeedMax = 10, playerSpeed = playerSpeedMax, playerJumpHeight = -24;
+    static int playerSpeedMax = 10, playerSpeed = playerSpeedMax, playerJumpHeight = -24; // Variables for movement.
     static int playerSpeedLadder = 2, playerClimbSpeedUp = 0, playerClimbSpeedDown = 0, playerClimbSpeedMax = 6;
     static int playerLeft = 0, playerRight = 0, playerUp = 0, playerJump = 0;
     static int playerWobble = 0; // Controls the bobbing up and down of player when walking.
 
-    static int dashResetCooldownTime = 30, dashResetCooldown = -dashResetCooldownTime;
+    static int dashResetCooldownTime = 30, dashResetCooldown = -dashResetCooldownTime; // Variables for dashing.
     static int dashCooldownTime = 10, dashCooldown = -dashCooldownTime;
     static int dashSpeedMax = playerSpeed * 5 / 2, dashSpeed = 0;
 
-    static int recoil, recoilMax = -6; // Controls weapon x recoil when it shoots.
+    static int recoil, recoilMax = -6; // Controls weapon horizontal recoil when it shoots. Purely visual.
     static int shootCooldown = gameTime, shootCooldownTime = 60; // CooldownTime measured in ticks.
     static int reloadBarWidth = reloadBarEmptyImg.getWidth(null), reloadBarHeight = reloadBarEmptyImg.getHeight(null);
     static int dashBarWidth = dashBarEmptyImg.getWidth(null), dashBarHeight = dashBarEmptyImg.getHeight(null);
     static int deathCooldown = gameTime, deathCooldownTime = 60, deathUIY = HEIGHT;
     // deathCoolDown used for wait time after death before player can press buttons.
 
-    static int enemyHealthCurrent;
+    static int enemyHealthCurrent; // Shows up as progress on the big red bar at the bottom of the screen.
     static int enemyHealthMaxTemp; // Used to count up total enemy health on specific level.
-    ArrayList<Integer> enemyHealthMax = new ArrayList<Integer>();
+    ArrayList<Integer> enemyHealthMax = new ArrayList<Integer>(); // Stores an array of total enemy health per level.
 
-    static int healthMax = 8, health = healthMax, healthCooldown = gameTime;
+    // Player health variables.
+    // invinvibilityFrames makes player immune to damage for a short period after
+    // being hit.
+    static int healthMax = 8, health = healthMax, invinvibilityFrames = gameTime;
     static int healthWidth = (CHUNK + CHUNK / 8) * healthMax + CHUNK / 4;
-    static int damageWobbleX, damageWobbleY;
-    static int titleUIWobbleX, titleUIWobbleY;
-    static int damageFlashMax = 8, damageFlash;
+    static int damageWobbleX, damageWobbleY; // Controlls screen shake when being hit.
+    static int titleUIWobbleX, titleUIWobbleY; // Controlls title animation.
+    static int damageFlashMax = 8, damageFlash; // Controlls visual effects that occur when player takes damage.
     static int UIOffset = 0;
 
     static int particlesDensity = 1024, bloodDensity = particlesDensity, particlesMax = 4, colorMod;
-    // particlesDensity inversely proportional to particles.
+    // particlesDensity inversely proportional to particle ammount.
+    // colorMod is random number 1-40 that adds variation to particle colours.
 
-    static int launchSpeed, launchSpeedMax = playerSpeedMax * 2;
+    static int launchSpeed, launchSpeedMax = playerSpeedMax * 2; // launchSpeed controlls knockback when player is hit.
 
     static int fogX = 0, fog2X = -WIDTH, fogSpeed = 1;
     // Duplicate fog placed behind original to create seamless fog movement.
 
-    static boolean movingLeft = false, movingRight = false, facingLeft = false;
-    static boolean touchingGround = true, playerJumped = false;
+    static boolean movingLeft = false, movingRight = false, facingLeft = false; // Player movement booleans.
+    static boolean touchingGround = true, playerJumped = false; // Used for knowing when player can jump.
     static boolean onLadder = false, climbingLadder = false, onLadderTop = false, onLadderBottom = false;
-    static boolean showControlls = true, panYAccelerating = false, panYDone = false;
-    static boolean inWallLeft = false, inWallRight = false;
-    static boolean reloadBarRed = false, shootButtonPushed = false;
+    static boolean panYAccelerating = false, panYDone = false; // Used for panning to make it look smooth and nautral.
+    static boolean inWallLeft = false, inWallRight = false; // Boundaries for stopping player from dashing thru walls.
+    static boolean reloadBarRed = false, shootButtonPushed = false; // Makes reload bar go red when player can't shoot.
     static boolean canDash = true, dashing = false, dashBarFull = false, dashBarRed = false, dashButtonPushed = false;
-    static boolean titleScreen = true, gameOver = false, win = false;
-    static boolean settings = false, extraBlood = false, partyMode = false, partyModeActive = false;
-    static boolean enemyHealthMaxCalculated = false;
+    static boolean titleScreen = true, gameOver = false, win = false; // Determines when to show witle, win screen etc.
+    static boolean settings = false, extraBlood = false, partyMode = false, partyModeActive = false; // Settings things.
+    static boolean enemyHealthMaxCalculated = false; // Makes sure enemyHealthMax is only calculated once at the start.
 
     static Rectangle playerCol = new Rectangle(0, 0, playerWidth - playerColXOffset * 2,
             playerHeight - playerColYOffset * 2);; // Collision box for player.
@@ -145,11 +153,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     static Rectangle wallLeftCol = new Rectangle(0, -HEIGHT * 8, CHUNK * 2 + 8, HEIGHT * 16);
     static Rectangle wallRightCol = new Rectangle(WIDTH - CHUNK * 2, -HEIGHT * 8, CHUNK * 2, HEIGHT * 16);
 
-    static Color playerBlood, enemyBlood, blast, wood;
-    static Color rainbow;
+    static Color playerBlood, enemyBlood, blast, wood; // Controlls colours of specific particles.
+    static Color rainbow; // Used for party mode. Enemies pop into confetti.
 
-    static ArrayList<Projectile> projectile = new ArrayList<Projectile>();
-    static ArrayList<Room> room = new ArrayList<Room>();
+    static ArrayList<Projectile> projectile = new ArrayList<Projectile>(); // Holds all projectiles.
+    static ArrayList<Room> room = new ArrayList<Room>(); // Holds all rooms.
     static ArrayList<Ladder> ladder = new ArrayList<Ladder>();
     static ArrayList<Particles> particles = new ArrayList<Particles>();
     static ArrayList<Explosion> explosion = new ArrayList<Explosion>();
@@ -211,7 +219,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintProjectiles(g, g2D);
             paintPlayer(g, g2D);
         }
-        // paintCol(g, g2D);
+        //paintCol(g, g2D);
         if (partyMode && partyModeActive) // PartyModeActive only triggers when titleScreen is false.
             paintPartyMode(g, g2D);
         if (!gameOver && !titleScreen)
@@ -413,11 +421,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
     public void paintUI(Graphics g, Graphics2D g2D) { // Paints user interface.
         UIOffset = -Math.max(parallax / 8, 0); // Used for making UI slide onto screen at start of game.
 
-        if (showControlls) {
-            g2D.drawImage(buttonsImg, WIDTH / 4 + playerX / 2 + playerWidth / 2 - buttonsImg.getWidth(null) / 2,
-                    HEIGHT / 2 + PIXEL * 10 + parallax * 3, null);
-            // When parallax increases, buttons are moved off screen.
-        }
+        g2D.drawImage(buttonsImg, WIDTH / 4 + playerX / 2 + playerWidth / 2 - buttonsImg.getWidth(null) / 2,
+                HEIGHT / 2 + PIXEL * 10 + parallax * 3, null); // When parallax increases, buttons are moved off screen.
 
         paintPlayerHearts(g, g2D);
         paintReloadBar(g, g2D);
@@ -549,6 +554,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         if (titleScreen) {
             g2D.drawImage(PGImg, PIXEL * 2, PIXEL * 2, null);
+            g2D.drawImage(VersionImg, WIDTH - VersionImg.getWidth(null) - PIXEL * 2, PIXEL * 2, null);
             if (settings) { // Displaying all settings options. sweeney
                 if (selection != 0) // Display selection outlinearound button just pressed for settings.
                     g2D.drawImage(selectionImg, CHUNK * 13 + PIXEL * 13 + 2,
@@ -1083,11 +1089,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 }
 
                 if (playerCol.intersects(room.get(i).enemy.get(j).damageColLeft)
-                        && !dashing && healthCooldown < gameTime - 30 && !gameOver) {
+                        && !dashing && invinvibilityFrames < gameTime - 30 && !gameOver) {
                     damage(false); // Player cant get hurt while dashing.
                 }
                 if (playerCol.intersects(room.get(i).enemy.get(j).damageColRight)
-                        && !dashing && healthCooldown < gameTime - 30 && !gameOver) {
+                        && !dashing && invinvibilityFrames < gameTime - 30 && !gameOver) {
                     damage(true);
                 }
             }
@@ -1101,7 +1107,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         playerJump = 0; // Stops player from being able to be launched and jump at the same time.
 
         if (isLeft) {
-            if (health > 1 && healthCooldown < gameTime - 30)
+            if (health > 1 && invinvibilityFrames < gameTime - 30)
                 launchSpeed = launchSpeedMax; // Launches the player left.
             else
                 launchSpeed = launchSpeedMax * 2 / 3; // Launches the player less strongly.
@@ -1115,7 +1121,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         playerBlood, 60, 1, 0.2f, true, true));
             }
         } else {
-            if (health > 1 && healthCooldown < gameTime - 30)
+            if (health > 1 && invinvibilityFrames < gameTime - 30)
                 launchSpeed = -launchSpeedMax; // Launches the player right.
             else
                 launchSpeed = -launchSpeedMax * 2 / 3;
@@ -1128,9 +1134,9 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                         playerBlood, 60, 1, 0.2f, true, true));
             }
         }
-        if (health > 1 && healthCooldown < gameTime - 30) {
+        if (health > 1 && invinvibilityFrames < gameTime - 30) {
             health--;
-            healthCooldown = gameTime;
+            invinvibilityFrames = gameTime;
         } else if (health == 1)
             kill();
     }

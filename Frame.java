@@ -21,7 +21,7 @@ public class Frame extends JFrame {
         this.add(panel);
         
         this.setIconImage(iconImg);
-        this.setTitle("Basement Bomber");
+        this.setTitle("BASEMENT BOMBER");
 
         this.pack();
         this.setLocationRelativeTo(null);
