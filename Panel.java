@@ -219,7 +219,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             paintProjectiles(g, g2D);
             paintPlayer(g, g2D);
         }
-        //paintCol(g, g2D);
+        // paintCol(g, g2D);
         if (partyMode && partyModeActive) // PartyModeActive only triggers when titleScreen is false.
             paintPartyMode(g, g2D);
         if (!gameOver && !titleScreen)
@@ -574,7 +574,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 g2D.drawImage(menuButtonsImg, WIDTH / 2 - menuButtonsImg.getWidth(null) / 2,
                         HEIGHT / 2 + menuButtonsImg.getHeight(null) + CHUNK * 3 + parallax - parallaxMax
                                 - Math.min(gameTime * 8 - 480, 0),
-                        null);
+                        null); // Drawing different images.
 
                 g2D.drawImage(titleBG2Img, WIDTH / 2 - titleBG2Img.getWidth(null) / 2 - titleUIWobbleX / 2,
                         HEIGHT / 2 - titleBG2Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
@@ -583,19 +583,18 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
                 g2D.drawImage(titleBG1Img, WIDTH / 2 - titleBG1Img.getWidth(null) / 2 + titleUIWobbleX,
                         HEIGHT / 2 - titleBG1Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
-                                + titleUIWobbleY
-                                - Math.min(gameTime * 8 - 240, 0),
+                                + titleUIWobbleY - Math.min(gameTime * 8 - 240, 0),
                         null);
 
                 g2D.drawImage(titleImg, WIDTH / 2 - titleImg.getWidth(null) / 2 - titleUIWobbleX,
                         HEIGHT / 2 - titleBG1Img.getHeight(null) / 2 - CHUNK / 2 + parallax - parallaxMax
-                                - titleUIWobbleY
-                                - Math.min(gameTime * 8 - 240, 0),
+                                - titleUIWobbleY - Math.min(gameTime * 8 - 240, 0),
                         null);
             }
         }
 
-        if (win && parallax < 256)
+        if (win && parallax < 256) // This changes the text at the bottom of the win screen from light to dark as
+                                   // the screen pans upwards out of the ground to keep contrast with background.
             g2D.drawImage(winButtonsImg, WIDTH / 2 - winButtonsImg.getWidth(null) / 2,
                     HEIGHT - winButtonsImg.getHeight(null) * 2, null);
         else if (win)
@@ -605,7 +604,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void checkSettingsButtons() { // Controlls visuals of settings buttons.
         switch (difficulty) {
-            case 0:
+            case 0: // Different values of Difficulty correspond to different difficulties.
                 settingsDifficultyImg = new ImageIcon("easyButton.png").getImage();
                 break;
             case 1:
@@ -688,21 +687,22 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         titleUIWobbleX = (int) (Math.sin((double) gameTime / 16) * 4); // Controlls wobble seen in game over screen.
         titleUIWobbleY = (int) (Math.sin((double) gameTime / 16 + 1) * 4);
 
-        if (onLadder) {
+        if (onLadder) { // Player whilst on the ladder has slower horizontal movement and does not
+                        // wobble up and down.
             playerSpeed = playerSpeedLadder;
             playerWobble = 0;
         } else {
             playerSpeed = playerSpeedMax;
         }
 
-        fogX = fogX + fogSpeed;
+        fogX = fogX + fogSpeed; // Slowly pan fog across screen.
         fog2X = fog2X + fogSpeed;
         if (fogX >= WIDTH)
             fogX = -WIDTH;
         if (fog2X >= WIDTH)
             fog2X = -WIDTH;
 
-        if (!onLadder) {
+        if (!onLadder) { // Player cannot climb ladder when not on the ladder.
             playerClimbSpeedUp = 0;
             playerClimbSpeedDown = 0;
         }
@@ -717,7 +717,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
         if (recoil < 0)
             recoil++;
-        // When recoil is set to be recoilMax, slowly push gun back to original
+        // When recoil is set to be recoilMax, slowly pull gun back to original
         // position.
 
         for (int i = 0; i < room.size(); i++) {
@@ -802,7 +802,7 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    public void updateExplosions() {
+    public void updateExplosions() { // Animates explosions.
         for (int i = 0; i < explosion.size(); i++)
             explosion.get(i).update();
     }
@@ -1169,24 +1169,27 @@ public class Panel extends JPanel implements Runnable, KeyListener {
         for (int i = 0; i < projectile.size(); i++)
             for (int j = 0; j < room.size(); j++)
                 for (int k = 0; k < room.get(j).enemy.size(); k++) { // Run thru every projectile and enemy per level.
-                    if (room.get(j).enemy.get(k).col.intersects(projectile.get(i).col)) {
+                    if (room.get(j).enemy.get(k).col.intersects(projectile.get(i).col)) { // If enemy touch projectile.
 
                         if (projectile.get(i).col.intersects(room.get(j).enemy.get(k).col.x,
                                 room.get(j).enemy.get(k).col.y,
-                                1, room.get(j).enemy.get(k).col.height))
+                                1, room.get(j).enemy.get(k).col.height)) // Checks the direction of intersection.
                             for (int l = 0; l < (playerWidth * playerHeight) / bloodDensity * 16; l++) {
 
+                                // Make sure blood from bullet impact is correct colour.
                                 changeEnemyBloodColour(room.get(j).level, room.get(j).enemy.get(k).isDummy);
 
+                                // Add blood particles.
                                 particles.add(new Particles(room.get(j).enemy.get(k).x, room.get(j).enemy.get(k).y,
                                         room.get(j).enemy.get(k).width, room.get(j).enemy.get(k).height, 10, -10,
                                         enemyBlood, 60, 1, 0.2f, true, true));
 
-                                room.get(j).enemy.get(k).launch(true);
+                                room.get(j).enemy.get(k).launch(true); // Launch enemy in opposite direction of
+                                                                       // collision.
                             }
                         else if (projectile.get(i).col.intersects(room.get(j).enemy.get(k).col.x +
                                 room.get(j).enemy.get(k).col.width, room.get(j).enemy.get(k).col.y, 1,
-                                room.get(j).enemy.get(k).col.height))
+                                room.get(j).enemy.get(k).col.height)) // Same process for other direction of impact.
                             for (int l = 0; l < (playerWidth * playerHeight) / bloodDensity * 16; l++) {
 
                                 changeEnemyBloodColour(room.get(j).level, room.get(j).enemy.get(k).isDummy);
@@ -1199,19 +1202,19 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
                             }
 
-                        if (room.get(j).enemy.get(k).isBoss)
+                        if (room.get(j).enemy.get(k).isBoss) // Paint explosion relative to boss.
                             explosion.add(new Explosion(room.get(j).enemy.get(k).x - PIXEL * 4,
                                     room.get(j).enemy.get(k).y, gameTime));
-                        else if (room.get(j).enemy.get(k).level == 4)
+                        else if (room.get(j).enemy.get(k).level == 4) // Different sizes of enemies require specific
+                                                                      // positioning of explosion.
                             explosion.add(new Explosion(room.get(j).enemy.get(k).x - PIXEL * 4,
                                     room.get(j).enemy.get(k).y - PIXEL * 12, gameTime));
-                        else
+                        else // Default explosion position.
                             explosion.add(new Explosion(room.get(j).enemy.get(k).x - PIXEL * 4,
                                     room.get(j).enemy.get(k).y - PIXEL * 8, gameTime));
 
                         if (room.get(j).enemy.get(k).health > 1) {
                             // If enemy has over 1 health, subtract 1 instead of killing them.
-
                             room.get(j).enemy.get(k).health--;
                         } else
                             room.get(j).enemy.remove(k); // Remove enemy.
@@ -1357,17 +1360,17 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 switch (e.getKeyCode()) {
                     case 49:
                         if (difficulty < 2)
-                            difficulty++;
+                            difficulty++; // Add 1 to difficulty if it is less than 2.
                         else
-                            difficulty = 0;
-                        selection = 1;
+                            difficulty = 0; // Otherwise cycle back to 0.
+                        selection = 1; // Make green outline appear on 'difficulty' button.
                         break;
                     case 50:
                         if (gameSpeed < 2)
                             gameSpeed++;
                         else
                             gameSpeed = 0;
-                        selection = 2;
+                        selection = 2; // Make green outline appear on 'selection' button.
                         break;
                     case 51:
                         if (dashPower < 2)
@@ -1423,12 +1426,12 @@ public class Panel extends JPanel implements Runnable, KeyListener {
             reloadBarRed = true;
     }
 
-    public void changeBlastColour() {
+    public void changeBlastColour() { // Changes blast colour from back of players gun.
         if (!partyMode)
             blast = new Color(colorMod * 2 + 170, colorMod * 2 + 120, colorMod * 2 + 60);
         else
             blast = new Color(
-                    Color.getHSBColor((float) (Math.random() * 360), 0.7f, 0.8f).getRGB());
+                    Color.getHSBColor((float) (Math.random() * 360), 0.7f, 0.8f).getRGB()); // Confetti.
     }
 
     public void jump() { // Manages player jump.
@@ -1489,11 +1492,11 @@ public class Panel extends JPanel implements Runnable, KeyListener {
 
     public void scaleGameSpeed() {
         if (gameSpeed == 0)
-            ticks = 40.0;
+            ticks = 40.0; // Slower game speed.
         if (gameSpeed == 1)
-            ticks = 60.0;
+            ticks = 60.0; // 60 frames per second.
         if (gameSpeed == 2)
-            ticks = 80.0;
+            ticks = 80.0; // Faster game speed.
         ns = 1000000000 / ticks;
     }
 
@@ -1562,8 +1565,8 @@ public class Panel extends JPanel implements Runnable, KeyListener {
                 dashButtonPushed = false;
                 break;
         }
-        if (e.getKeyCode() >= 49 && e.getKeyCode() <= 54)
-            selection = 0;
+        if (e.getKeyCode() >= 49 && e.getKeyCode() <= 54) // If any settings button is released.
+            selection = 0; // Make green ring around setting buttons dissapear.
     }
 
     public boolean isFocusTraversable() { // Lets JPanel accept users input.
